@@ -86,6 +86,60 @@ target_include_directories(package_loader_test
         ${PROJECT_SOURCE_DIR}/src/package
 )
 
+# Standalone test for the Arch Linux repository backend.
+add_executable(arch_repository_test
+    tests/arch_repository_test.cpp
+    src/repository/arch_repository.cpp
+    src/repository/repository_index.cpp
+    src/dependency/parser.cpp
+    src/dependency/constraint.cpp
+    src/version/version.cpp
+)
+
+target_include_directories(arch_repository_test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/repository
+        ${PROJECT_SOURCE_DIR}/src/package
+        ${PROJECT_SOURCE_DIR}/src/dependency
+        ${PROJECT_SOURCE_DIR}/src/version
+)
+
+add_test(NAME arch_repository_test COMMAND arch_repository_test)
+
+# Standalone test for Arch-compatible version ordering.
+add_executable(arch_version_test
+    tests/arch_version_test.cpp
+    src/version/version.cpp
+)
+
+target_include_directories(arch_version_test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/version
+)
+
+add_test(NAME arch_version_test COMMAND arch_version_test)
+
+# Live Arch repository integration test.
+#
+# This target intentionally is not registered with CTest because it requires
+# network access and depends on the current state of an external mirror.
+add_executable(arch_repository_live_test
+    tests/arch_repository_live.cpp
+    src/repository/arch_repository.cpp
+    src/repository/repository_index.cpp
+    src/dependency/parser.cpp
+    src/dependency/constraint.cpp
+    src/version/version.cpp
+)
+
+target_include_directories(arch_repository_live_test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/repository
+        ${PROJECT_SOURCE_DIR}/src/package
+        ${PROJECT_SOURCE_DIR}/src/dependency
+        ${PROJECT_SOURCE_DIR}/src/version
+)
+
 # Standalone test for dependency resolution.
 add_executable(dependency_resolver_test
     tests/dependency_resolver_test.cpp
