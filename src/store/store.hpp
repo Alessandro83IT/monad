@@ -3,6 +3,7 @@
 #include "../package/package.hpp"
 
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -38,6 +39,17 @@ std::filesystem::path install(
  */
 std::filesystem::path find(
     const std::string& package_name
+);
+
+/*
+ * Find an exact package version in the immutable store.
+ *
+ * Unlike the name-only lookup, this function never selects another
+ * version: it returns only the requested package/version entry.
+ */
+std::optional<std::filesystem::path> find(
+    const std::string& package_name,
+    const std::string& package_version
 );
 
 /*

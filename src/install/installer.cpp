@@ -38,6 +38,28 @@ std::filesystem::path install_one_package(
         << "Installazione di: " << package.name
         << " " << package.version << '\n';
 
+    /*
+     * The immutable store is content-preserving: if this exact package
+     * version already exists and has valid Athena metadata, rebuilding
+     * it would be unnecessary. The installer can reuse the existing
+     * store entry and proceed directly to generation construction.
+     */
+    const auto existing =
+        athena::store::find(
+            package.name,
+            package.version
+        );
+
+    if (existing.has_value()) {
+        std::cout
+            << "Entry già presente nello store, "
+            << "riutilizzo: "
+            << *existing
+            << '\n';
+
+        return *existing;
+    }
+
     const std::filesystem::path destination =
         athena::paths::downloads() /
         ("athena-" + package.name + "-" + package.version + ".tar.gz");
@@ -289,10 +311,33 @@ void install_plan(
         << target.id
         << "...\n";
 
-    generations.switch_to(
-        target.id,
-        target_root
-    );
+    try {
+        generations.switch_to(
+            target.id,
+            target_root
+        );
+    }
+    catch (...) {
+        /*
+         * switch_to() has already restored the previous filesystem
+         * state when activation fails. The target generation itself
+         * belongs to this failed transaction and must therefore be
+         * discarded rather than becoming an orphaned history entry.
+         */
+        try {
+            generations.discard(
+                target.id
+            );
+        }
+        catch (...) {
+            /*
+             * Preserve the original activation failure. Metadata
+             * cleanup failures must not hide the root cause.
+             */
+        }
+
+        throw;
+    }
 
     std::cout
         << "Generation "

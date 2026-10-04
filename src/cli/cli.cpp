@@ -5,11 +5,13 @@
 #include "../download/downloader.hpp"
 #include "../verify/verifier.hpp"
 #include "../install/installer.hpp"
+#include "../install/remover.hpp"
 #include "../paths/paths.hpp"
 #include "../archive/archive.hpp"
 #include "../store/store.hpp"
 #include "../store/metadata.hpp"
 #include "../activation/activation.hpp"
+#include "../generation/generation.hpp"
 
 #include <iostream>
 #include <filesystem>
@@ -32,7 +34,8 @@ void print_help()
         << "  install     Install a package\n"
         << "  remove      Remove a package\n"
         << "  list        List installed packages\n"
-        << "  info        Show package information\n\n"
+        << "  info        Show package information\n"
+        << "  generation  Manage package generations\n\n"
         << "Options:\n"
         << "  -h, --help      Show this help message\n"
         << "  -V, --version   Show version information\n";
@@ -310,43 +313,221 @@ int run(int argc, char* argv[])
     }
 
      /*
-     * Remove a package from the active system.
+     * Remove packages through the transactional removal pipeline.
      *
-     * The package remains in the immutable store.
-     * Only its activated files are deactivated.
+     * The remover reconstructs the active environment from the current
+     * generation, validates the requested state, creates a new generation
+     * and switches to it atomically from the CLI's point of view.
      */
     if (command_line.command == "remove") {
 
         if (command_line.arguments.empty()) {
             std::cout
-                << "Usage: athena remove <package>\n";
+                << "Usage: athena remove <package> [package...]\n";
             return 1;
         }
 
         try {
 
-            const std::string package_name =
-                command_line.arguments[0];
-
-            const auto store_directory =
-                athena::store::find(
-                    package_name
-                );
-
-            std::cout
-                << "Rimozione del pacchetto: "
-                << package_name
-                << '\n';
-
-            athena::activation::deactivate(
-                store_directory,
-                "/tmp/athena-install-test/usr"
+            athena::install::remove_packages(
+                command_line.arguments,
+                "/tmp/athena-install-test"
             );
 
             std::cout
                 << "Rimozione completata.\n";
 
             return 0;
+        }
+        catch (const std::exception& error) {
+
+            std::cerr
+                << "Errore: "
+                << error.what()
+                << '\n';
+
+            return 1;
+        }
+    }
+
+    /*
+     * Manage persistent package generations.
+     *
+     * GenerationManager owns generation metadata and filesystem
+     * transitions. The CLI only validates arguments and presents
+     * the resulting state to the user.
+     */
+    if (command_line.command == "generation") {
+
+        if (command_line.arguments.empty()) {
+            std::cout
+                << "Usage: athena generation "
+                << "<list|current|switch|rollback> [id]\n";
+            return 1;
+        }
+
+        const std::string subcommand =
+            command_line.arguments[0];
+
+        athena::generation::GenerationManager generations(
+            athena::paths::root()
+        );
+
+        try {
+
+            /*
+             * Ensure Generation 0 exists before querying the current
+             * generation. This is also how install/remove initialize
+             * the generation subsystem.
+             */
+            generations.initialize();
+
+            if (subcommand == "list") {
+
+                if (command_line.arguments.size() != 1) {
+                    std::cout
+                        << "Usage: athena generation list\n";
+                    return 1;
+                }
+
+                const auto current =
+                    generations.current();
+
+                for (const auto& generation :
+                     generations.list()) {
+
+                    std::cout
+                        << (generation.id == current.id
+                            ? "* "
+                            : "  ")
+                        << generation.id
+                        << " ("
+                        << generation.entries.size()
+                        << " packages)\n";
+                }
+
+                return 0;
+            }
+
+            if (subcommand == "current") {
+
+                if (command_line.arguments.size() != 1) {
+                    std::cout
+                        << "Usage: athena generation current\n";
+                    return 1;
+                }
+
+                const auto current =
+                    generations.current();
+
+                std::cout
+                    << "Current generation: "
+                    << current.id
+                    << '\n';
+
+                for (const auto& entry :
+                     current.entries) {
+
+                    std::cout
+                        << "  "
+                        << entry.package
+                        << " -> "
+                        << entry.store_path
+                        << '\n';
+                }
+
+                return 0;
+            }
+
+            if (subcommand == "switch") {
+
+                if (command_line.arguments.size() != 2) {
+                    std::cout
+                        << "Usage: athena generation switch <id>\n";
+                    return 1;
+                }
+
+                std::uint64_t id = 0;
+
+                try {
+                    id = std::stoull(
+                        command_line.arguments[1]
+                    );
+                }
+                catch (const std::exception&) {
+                    std::cerr
+                        << "Errore: identificatore di generation "
+                        << "non valido.\n";
+                    return 1;
+                }
+
+                generations.switch_to(
+                    id,
+                    "/tmp/athena-install-test"
+                );
+
+                std::cout
+                    << "Passaggio alla generation "
+                    << id
+                    << " completato.\n";
+
+                return 0;
+            }
+
+            if (subcommand == "rollback") {
+
+                if (command_line.arguments.size() != 1) {
+                    std::cout
+                        << "Usage: athena generation rollback\n";
+                    return 1;
+                }
+
+                const auto current =
+                    generations.current();
+
+                const auto all =
+                    generations.list();
+
+                const athena::generation::Generation*
+                    previous = nullptr;
+
+                for (const auto& generation : all) {
+
+                    if (generation.id >= current.id) {
+                        break;
+                    }
+
+                    previous = &generation;
+                }
+
+                if (previous == nullptr) {
+                    throw std::runtime_error(
+                        "Nessuna generation precedente disponibile."
+                    );
+                }
+
+                const auto previous_id =
+                    previous->id;
+
+                generations.switch_to(
+                    previous_id,
+                    "/tmp/athena-install-test"
+                );
+
+                std::cout
+                    << "Rollback completato: generation "
+                    << previous_id
+                    << ".\n";
+
+                return 0;
+            }
+
+            std::cerr
+                << "Sottocomando generation sconosciuto: "
+                << subcommand
+                << '\n';
+
+            return 1;
         }
         catch (const std::exception& error) {
 

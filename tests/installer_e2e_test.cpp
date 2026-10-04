@@ -292,6 +292,27 @@ int main()
             fixture_c1
         );
 
+        /*
+         * Generation 3 failure fixture:
+         *
+         *   D1 is successfully built and stored, but activation will
+         *   intentionally fail because the target path is occupied by
+         *   a regular file instead of being available for a symlink.
+         */
+        const auto fixture_d1 = create_fixture(
+            fixture_root,
+            "athena-e2e-d",
+            "1.0",
+            "d.txt",
+            "Athena package D version 1"
+        );
+
+        const auto package_d1 = make_package(
+            "athena-e2e-d",
+            "1.0",
+            fixture_d1
+        );
+
         const auto target_root =
             test_root / "active";
 
@@ -505,6 +526,143 @@ int main()
         assert(std::filesystem::is_directory(store_a2));
         assert(std::filesystem::is_directory(store_b1));
         assert(std::filesystem::is_directory(store_c1));
+
+
+        /*
+         * Verify the complete failed-install transaction.
+         *
+         * D1 must first reach the immutable store. Activation is then
+         * forced to fail by occupying its target path with a regular
+         * file. install_plan() must restore the previous filesystem
+         * state and discard the newly created generation.
+         */
+        const auto generations_before_failure =
+            generations.list();
+
+        const auto generation_before_failure =
+            generations.current();
+
+        const auto conflicting_target =
+            target_root /
+            "share/athena-e2e/d.txt";
+
+        std::filesystem::create_directories(
+            conflicting_target.parent_path()
+        );
+
+        {
+            std::ofstream conflict(
+                conflicting_target
+            );
+
+            conflict
+                << "This regular file intentionally blocks activation.\\n";
+        }
+
+        athena::install::InstallPlan failing_plan;
+        failing_plan.add(package_d1);
+
+        bool installation_failed = false;
+
+        try {
+            athena::install::install_plan(
+                failing_plan,
+                target_root
+            );
+        }
+        catch (const std::runtime_error&) {
+            installation_failed = true;
+        }
+
+        assert(installation_failed);
+
+        /*
+         * The failed transaction must leave the previously active
+         * generation selected.
+         */
+        const auto generation_after_failure =
+            generations.current();
+
+        assert(
+            generation_after_failure.id ==
+            generation_before_failure.id
+        );
+
+        /*
+         * The failed generation must have been discarded rather than
+         * remaining as an orphaned historical generation.
+         */
+        const auto generations_after_failure =
+            generations.list();
+
+        assert(
+            generations_after_failure.size() ==
+            generations_before_failure.size()
+        );
+
+        /*
+         * The conflicting regular file must remain untouched.
+         * switch_to() must not replace user data when activation fails.
+         */
+        assert(
+            std::filesystem::is_regular_file(
+                conflicting_target
+            )
+        );
+
+        /*
+         * D1 was installed into the immutable store before activation
+         * failed. discard() removes only generation metadata; the
+         * store object remains available for the garbage collector.
+         */
+        const auto store_d1 =
+            athena::paths::store() /
+            "athena-e2e-d-1.0";
+
+        assert(
+            std::filesystem::is_directory(
+                store_d1
+            )
+        );
+
+        /*
+         * The previously active packages must still be active after
+         * the failed transaction.
+         */
+        assert_active(
+            target_root,
+            store_a1,
+            "a.txt"
+        );
+
+        assert_active(
+            target_root,
+            store_b1,
+            "b.txt"
+        );
+
+        /*
+         * The regular conflict file is not a symlink, so verify its
+         * contents independently.
+         */
+        {
+            std::ifstream conflict(
+                conflicting_target
+            );
+
+            std::string contents;
+            std::getline(
+                conflict,
+                contents
+            );
+
+            /*
+             * The exact text is irrelevant. What matters is that the
+             * pre-existing regular file survived the failed activation
+             * unchanged as a regular file with readable contents.
+             */
+            assert(!contents.empty());
+        }
 
         std::filesystem::remove_all(test_root);
         athena::paths::reset_root();

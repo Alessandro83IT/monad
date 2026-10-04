@@ -617,6 +617,125 @@ int main()
         )
     );
 
+
+    /*
+     * Verify explicit disposal of a generation that belongs to a
+     * failed or otherwise abandoned transaction.
+     *
+     * Discarding a non-current generation removes only its metadata.
+     * The immutable store is deliberately left untouched and remains
+     * under the control of the garbage collector.
+     */
+    const auto disposable_generation =
+        manager.create(
+            {
+                {
+                    "disposable-package",
+                    transition_b.string()
+                }
+            }
+        );
+
+    assert(
+        manager.get(disposable_generation.id).id ==
+        disposable_generation.id
+    );
+
+    const auto disposable_directory =
+        test_root /
+        "generations" /
+        std::to_string(disposable_generation.id);
+
+    assert(
+        std::filesystem::exists(
+            disposable_directory
+        )
+    );
+
+    manager.discard(
+        disposable_generation.id
+    );
+
+    assert(
+        !std::filesystem::exists(
+            disposable_directory
+        )
+    );
+
+    /*
+     * Discarding generation metadata must never remove immutable
+     * store objects. Store lifetime is managed independently by GC.
+     */
+    assert(
+        std::filesystem::is_directory(
+            transition_b
+        )
+    );
+
+    /*
+     * Reading a discarded generation must fail because its immutable
+     * metadata no longer exists.
+     */
+    bool discarded_generation_missing = false;
+
+    try {
+        manager.get(
+            disposable_generation.id
+        );
+    }
+    catch (const std::runtime_error&) {
+        discarded_generation_missing = true;
+    }
+
+    assert(discarded_generation_missing);
+
+    /*
+     * The current generation must never be discardable. This protects
+     * the persistent current pointer from referring to missing
+     * generation metadata.
+     */
+    bool current_discard_failed = false;
+
+    try {
+        manager.discard(
+            manager.current().id
+        );
+    }
+    catch (const std::runtime_error&) {
+        current_discard_failed = true;
+    }
+
+    assert(current_discard_failed);
+
+    /*
+     * The current generation must remain valid after the rejected
+     * discard operation.
+     */
+    const auto preserved_current =
+        manager.current();
+
+    assert(
+        preserved_current.id ==
+        transition_generation_b.id
+    );
+
+    /*
+     * Historical generations remain untouched by discard().
+     */
+    assert(
+        manager.get(
+            transition_generation_a.id
+        ).id ==
+        transition_generation_a.id
+    );
+
+    assert(
+        manager.get(
+            transition_generation_b.id
+        ).id ==
+        transition_generation_b.id
+    );
+
     std::filesystem::remove_all(test_root);
 
     std::cout

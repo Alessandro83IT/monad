@@ -40,15 +40,26 @@ std::filesystem::path install(
         athena::paths::store() /
         (package.name + "-" + package.version);
 
-    /*
-     * Athena currently treats an existing store entry as a duplicate
-     * installation rather than replacing it.
-     */
     if (std::filesystem::exists(destination)) {
-        throw std::runtime_error(
-            "Il pacchetto è già presente nello store: " +
-            destination.string()
-        );
+        /*
+         * A complete store entry is immutable and must never be
+         * overwritten. An older/incomplete entry without a manifest,
+         * however, is not a valid store entry and can be replaced by
+         * the freshly built package.
+         */
+        const std::filesystem::path manifest_file =
+            destination /
+            ".athena" /
+            "manifest.toml";
+
+        if (std::filesystem::exists(manifest_file)) {
+            throw std::runtime_error(
+                "Il pacchetto è già presente nello store: " +
+                destination.string()
+            );
+        }
+
+        std::filesystem::remove_all(destination);
     }
 
     /*
@@ -191,6 +202,74 @@ std::filesystem::path install(
         destination,
         manifest_entries
     );
+
+    return destination;
+}
+
+/*
+ * Find an exact package/version entry in the immutable store.
+ *
+ * This lookup is used by the installer to reuse an immutable store
+ * entry that has already been built. It deliberately checks Athena
+ * metadata rather than trusting the directory name alone.
+ */
+std::optional<std::filesystem::path> find(
+    const std::string& package_name,
+    const std::string& package_version
+)
+{
+    const std::filesystem::path destination =
+        athena::paths::store() /
+        (package_name + "-" + package_version);
+
+    /*
+     * A missing exact entry is a normal condition during installation.
+     * Invalid metadata, on the other hand, remains an error and must not
+     * be silently treated as a cache miss.
+     */
+    if (!std::filesystem::is_directory(destination)) {
+        return std::nullopt;
+    }
+
+    const std::filesystem::path metadata_file =
+        destination /
+        ".athena" /
+        "metadata.toml";
+
+    if (!std::filesystem::exists(metadata_file)) {
+        /*
+         * An incomplete store directory is not a valid immutable
+         * object. Treat it as a cache miss so the installer can
+         * rebuild and replace it transactionally.
+         */
+        return std::nullopt;
+    }
+
+    /*
+     * A store entry is reusable only when it contains the manifest
+     * required by the activation layer. Older or incomplete entries
+     * must fall back to a fresh build instead of failing later during
+     * generation activation.
+     */
+    const std::filesystem::path manifest_file =
+        destination /
+        ".athena" /
+        "manifest.toml";
+
+    if (!std::filesystem::exists(manifest_file)) {
+        return std::nullopt;
+    }
+
+    const auto metadata =
+        athena::store::read_metadata(destination);
+
+    if (metadata.name != package_name ||
+        metadata.version != package_version) {
+        throw std::runtime_error(
+            "Metadata dello store non corrispondenti al pacchetto richiesto: " +
+            destination.string()
+        );
+    }
 
     return destination;
 }

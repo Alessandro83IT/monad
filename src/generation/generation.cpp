@@ -283,6 +283,52 @@ Generation GenerationManager::get(
 }
 
 /*
+ * Discard a generation that is no longer part of a successful
+ * transaction.
+ *
+ * Generations are immutable once committed, but a newly created
+ * generation may still belong to an in-progress transaction. The
+ * transaction owner may explicitly discard that generation if
+ * activation fails.
+ *
+ * The current generation is protected because deleting it would
+ * invalidate the persistent environment state.
+ */
+void GenerationManager::discard(
+    std::uint64_t id
+)
+{
+    const auto current_generation =
+        current();
+
+    if (current_generation.id == id) {
+        throw std::runtime_error(
+            "Impossibile eliminare la generation corrente: " +
+            std::to_string(id)
+        );
+    }
+
+    const auto directory =
+        generations_directory_ /
+        std::to_string(id);
+
+    if (!std::filesystem::exists(directory)) {
+        throw std::runtime_error(
+            "Generation non trovata: " +
+            std::to_string(id)
+        );
+    }
+
+    /*
+     * The generation metadata is removed only after the current
+     * pointer has been verified. Store entries are deliberately not
+     * touched here: they are immutable objects and are managed by
+     * the garbage collector.
+     */
+    std::filesystem::remove_all(directory);
+}
+
+/*
  * Load every persisted generation.
  *
  * Directory names that are not numeric generation identifiers are

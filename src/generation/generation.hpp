@@ -90,6 +90,17 @@ public:
     ) const;
 
     /*
+     * Discard a generation that is no longer needed.
+     *
+     * This operation is intended for generations created as part of
+     * a failed transaction. The currently active generation can
+     * never be discarded.
+     */
+    void discard(
+        std::uint64_t id
+    );
+
+    /*
      * Return every persisted generation in ascending ID order.
      *
      * The garbage collector uses all generations as roots so that
