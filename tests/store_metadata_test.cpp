@@ -58,6 +58,10 @@ int main()
                 athena::dependency::parse_dependency(
                     "openssl OR libressl"
                 )
+            },
+            {
+                {"cmake", "build-system"},
+                {"modern-cmake"}
             }
         };
 
@@ -128,6 +132,30 @@ int main()
         );
 
         /*
+         * Verify that semantic package capabilities and features are
+         * persisted in the optional [provides] TOML table.
+         */
+        require(
+            metadata.find("[provides]") != std::string::npos,
+            "La sezione provides manca dai metadata."
+        );
+
+        require(
+            metadata.find("cmake") != std::string::npos,
+            "La capability cmake non è stata serializzata."
+        );
+
+        require(
+            metadata.find("build-system") != std::string::npos,
+            "La capability build-system non è stata serializzata."
+        );
+
+        require(
+            metadata.find("modern-cmake") != std::string::npos,
+            "La feature modern-cmake non è stata serializzata."
+        );
+
+        /*
          * Read the metadata back through the public Store API.
          */
         const auto restored =
@@ -171,6 +199,31 @@ int main()
         require(
             restored.dependencies[1] == "openssl OR libressl",
             "Seconda dipendenza ripristinata in modo errato."
+        );
+
+        require(
+            restored.provides.capabilities.size() == 2,
+            "Numero di capability ripristinate errato."
+        );
+
+        require(
+            restored.provides.capabilities[0] == "cmake",
+            "Prima capability ripristinata in modo errato."
+        );
+
+        require(
+            restored.provides.capabilities[1] == "build-system",
+            "Seconda capability ripristinata in modo errato."
+        );
+
+        require(
+            restored.provides.features.size() == 1,
+            "Numero di feature ripristinate errato."
+        );
+
+        require(
+            restored.provides.features[0] == "modern-cmake",
+            "Feature ripristinata in modo errato."
         );
 
         /*

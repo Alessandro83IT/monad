@@ -184,7 +184,8 @@ std::filesystem::path install(
         package.source,
         package.sha256,
         package.build_system,
-        std::move(dependencies)
+        std::move(dependencies),
+        package.provides
     };
 
     write_metadata(

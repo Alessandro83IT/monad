@@ -14,6 +14,17 @@ int main()
     assert(package.name == "cmake-test");
     assert(package.version == "1.1");
 
+    /*
+     * Verify semantic capabilities and features declared by the
+     * package through the optional [provides] TOML section.
+     */
+    assert(package.provides.capabilities.size() == 2);
+    assert(package.provides.capabilities[0] == "cmake");
+    assert(package.provides.capabilities[1] == "build-system");
+
+    assert(package.provides.features.size() == 1);
+    assert(package.provides.features[0] == "modern-cmake");
+
     assert(package.dependencies.size() == 1);
 
     const auto& dependency =
@@ -83,6 +94,18 @@ int main()
         comparison->constraint->comparison_value.version ==
         "1.2"
     );
+
+    /*
+     * Verify backward compatibility with package definitions that
+     * do not contain a [provides] section.
+     */
+    const auto legacy_package =
+        athena::package::load_from_file(
+            "packages/hello/package.toml"
+        );
+
+    assert(legacy_package.provides.capabilities.empty());
+    assert(legacy_package.provides.features.empty());
 
     std::cout
         << "Package loader dependency test passed.\n";

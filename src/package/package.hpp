@@ -8,6 +8,23 @@
 namespace athena::package {
 
 /*
+ * Describes the semantic interfaces exposed by a package.
+ *
+ * Capabilities identify functionality provided by the package, while
+ * features identify optional or ecosystem-level features that the
+ * package exposes. Dependency resolution will consume these fields
+ * in a later phase.
+ */
+struct PackageProvides {
+
+    // Capabilities exposed by the package, for example "ssl" or "tls".
+    std::vector<std::string> capabilities{};
+
+    // Features exposed by the package, for example "openssl".
+    std::vector<std::string> features{};
+};
+
+/*
  * Represents the definition of a package.
  *
  * A Package is created by the package loader from a package.toml
@@ -55,6 +72,14 @@ struct Package {
      * independently of a specific package ecosystem.
      */
     std::vector<athena::dependency::Dependency> dependencies;
+
+    /*
+     * Semantic capabilities and features provided by this package.
+     *
+     * The field is intentionally placed after dependencies so existing
+     * aggregate initializers remain source-compatible.
+     */
+    PackageProvides provides{};
 };
 
 /*

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../package/package.hpp"
+
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -39,6 +41,13 @@ struct Metadata {
      * to validate package removal.
      */
     std::vector<std::string> dependencies{};
+
+    /*
+     * Semantic capabilities and features exposed by the installed
+     * package. The field is optional in the serialized metadata so
+     * older store entries remain readable.
+     */
+    athena::package::PackageProvides provides{};
 };
 
 /*

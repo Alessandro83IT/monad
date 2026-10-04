@@ -54,6 +54,47 @@ Package load_from_file(const std::filesystem::path& path)
             }
         }
 
+        /*
+         * Load semantic capabilities and features provided by the
+         * package. The entire [provides] table is optional so existing
+         * package definitions remain fully backward compatible.
+         */
+        PackageProvides provides;
+
+        if (const auto* provides_table =
+                table["provides"].as_table()) {
+
+            if (const auto* capabilities =
+                    (*provides_table)["capabilities"].as_array()) {
+
+                for (const auto& value : *capabilities) {
+
+                    if (const auto capability =
+                            value.value<std::string>()) {
+
+                        provides.capabilities.push_back(
+                            *capability
+                        );
+                    }
+                }
+            }
+
+            if (const auto* features =
+                    (*provides_table)["features"].as_array()) {
+
+                for (const auto& value : *features) {
+
+                    if (const auto feature =
+                            value.value<std::string>()) {
+
+                        provides.features.push_back(
+                            *feature
+                        );
+                    }
+                }
+            }
+        }
+
         return Package{
             table["name"].value_or(""),
             table["version"].value_or(""),
@@ -61,7 +102,8 @@ Package load_from_file(const std::filesystem::path& path)
             table["source"].value_or(""),
             table["sha256"].value_or(""),
             table["build_system"].value_or("autotools"),
-            dependencies
+            dependencies,
+            provides
         };
     }
     catch (const toml::parse_error& error) {

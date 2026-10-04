@@ -72,6 +72,50 @@ void write_metadata(
 
     table.insert("dependencies", std::move(dependencies));
 
+    /*
+     * Persist semantic capabilities and features in an optional
+     * [provides] table. Empty fields are omitted so the serialized
+     * format remains compact and older-style metadata stays simple.
+     */
+    if (!metadata.provides.capabilities.empty() ||
+        !metadata.provides.features.empty()) {
+
+        toml::table provides;
+
+        if (!metadata.provides.capabilities.empty()) {
+            toml::array capabilities;
+
+            for (const auto& capability :
+                 metadata.provides.capabilities) {
+                capabilities.push_back(capability);
+            }
+
+            provides.insert(
+                "capabilities",
+                std::move(capabilities)
+            );
+        }
+
+        if (!metadata.provides.features.empty()) {
+            toml::array features;
+
+            for (const auto& feature :
+                 metadata.provides.features) {
+                features.push_back(feature);
+            }
+
+            provides.insert(
+                "features",
+                std::move(features)
+            );
+        }
+
+        table.insert(
+            "provides",
+            std::move(provides)
+        );
+    }
+
     output << table;
 }
 
@@ -129,6 +173,53 @@ Metadata read_metadata(
         }
 
         /*
+         * Read semantic capabilities and features from the optional
+         * [provides] table. Missing fields remain empty for backward
+         * compatibility with existing store metadata.
+         */
+        athena::package::PackageProvides provides;
+
+        if (const auto* provides_table =
+                table["provides"].as_table()) {
+
+            if (const auto* capabilities =
+                    (*provides_table)["capabilities"].as_array()) {
+
+                for (const auto& capability : *capabilities) {
+                    if (const auto value =
+                            capability.value<std::string>()) {
+                        provides.capabilities.push_back(*value);
+                    }
+                    else {
+                        throw std::runtime_error(
+                            "Il campo 'provides.capabilities' contiene "
+                            "un valore non stringa nei metadati: " +
+                            metadata_file.string()
+                        );
+                    }
+                }
+            }
+
+            if (const auto* features =
+                    (*provides_table)["features"].as_array()) {
+
+                for (const auto& feature : *features) {
+                    if (const auto value =
+                            feature.value<std::string>()) {
+                        provides.features.push_back(*value);
+                    }
+                    else {
+                        throw std::runtime_error(
+                            "Il campo 'provides.features' contiene "
+                            "un valore non stringa nei metadati: " +
+                            metadata_file.string()
+                        );
+                    }
+                }
+            }
+        }
+
+        /*
          * Convert the TOML values into a Metadata object.
          */
         return Metadata{
@@ -137,7 +228,8 @@ Metadata read_metadata(
             table["source"].value_or(""),
             table["sha256"].value_or(""),
             table["build_system"].value_or(""),
-            std::move(dependencies)
+            std::move(dependencies),
+            std::move(provides)
         };
     }
     catch (const toml::parse_error& error) {

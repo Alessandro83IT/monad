@@ -7,3 +7,7 @@ build_system = "cmake"
 dependencies = [
     "test-dependency >= 1.2"
 ]
+
+[provides]
+capabilities = ["cmake", "build-system"]
+features = ["modern-cmake"]
