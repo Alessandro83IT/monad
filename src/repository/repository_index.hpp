@@ -66,6 +66,8 @@ public:
         const std::string& name
     ) const;
 
+    const std::vector<athena::package::Package>& packages() const noexcept { return packages_; }
+
 private:
 
     std::vector<athena::package::Package> packages_;

@@ -354,6 +354,10 @@ athena::package::Package package_from_desc(
     package.sha256 =
         first_field(fields, "SHA256SUM");
 
+    // Preserve the complete repository record for the public imported-binary
+    // adapter, including fields whose semantics Athena does not yet model.
+    package.arch_metadata = fields;
+
     /*
      * Arch binary packages are already built. The build backend is
      * therefore intentionally empty at this stage.
@@ -745,7 +749,7 @@ void ArchRepository::load()
             );
 
         if (package.name.empty()) {
-            throw std::runtime_error(
+            throw ArchPackageMetadataError(
                 "Voce Arch priva di %NAME% nel database '" +
                 database_.string() +
                 "'"
@@ -753,7 +757,7 @@ void ArchRepository::load()
         }
 
         if (package.version.empty()) {
-            throw std::runtime_error(
+            throw ArchPackageMetadataError(
                 "Pacchetto Arch '" +
                 package.name +
                 "' privo di %VERSION%"

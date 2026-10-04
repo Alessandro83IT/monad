@@ -20,6 +20,15 @@ GenerationManager::GenerationManager(
 {
 }
 
+GenerationManager::GenerationManager(
+    std::filesystem::path generation_directory,
+    GenerationDirectoryTag
+)
+    : state_directory_(generation_directory.parent_path()),
+      generations_directory_(std::move(generation_directory))
+{
+}
+
 /*
  * Ensure that the persistent generation directory exists.
  */

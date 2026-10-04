@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include "../../include/athena/core/path_layout.hpp"
 
 namespace athena::paths {
 
@@ -29,6 +30,9 @@ std::filesystem::path root();
  * This is process-local and is primarily used by isolated tests.
  */
 void set_root(const std::filesystem::path& path);
+
+/* Legacy adapter for pre-M0 modules. New core consumers pass PathLayout explicitly. */
+void set_layout(const athena::core::PathLayout& layout);
 
 /*
  * Restore the normal production filesystem root.

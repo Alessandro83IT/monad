@@ -76,10 +76,23 @@ void remove_packages(
     const std::filesystem::path& target_root
 )
 {
-    athena::paths::initialize();
+    remove_packages(package_names, target_root,
+        athena::core::PathLayout::from_root(athena::paths::root()));
+}
+
+void remove_packages(
+    const std::vector<std::string>& package_names,
+    const std::filesystem::path& target_root,
+    const athena::core::PathLayout& paths
+)
+{
+    paths.validate();
+    std::filesystem::create_directories(paths.store);
+    std::filesystem::create_directories(paths.generation_state);
 
     athena::generation::GenerationManager generations(
-        athena::paths::root()
+        paths.generation_state,
+        athena::generation::GenerationManager::GenerationDirectoryTag{}
     );
 
     generations.initialize();

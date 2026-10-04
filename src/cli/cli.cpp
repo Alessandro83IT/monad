@@ -6,17 +6,34 @@
 #include "../verify/verifier.hpp"
 #include "../install/installer.hpp"
 #include "../install/remover.hpp"
-#include "../paths/paths.hpp"
 #include "../archive/archive.hpp"
 #include "../store/store.hpp"
 #include "../store/metadata.hpp"
 #include "../activation/activation.hpp"
 #include "../generation/generation.hpp"
+#include "../../include/athena/core/config.hpp"
 
 #include <iostream>
 #include <filesystem>
+#include <stdexcept>
 
 namespace athena::cli {
+
+namespace {
+
+std::filesystem::path package_manifest(
+    const athena::core::Config& config,
+    const std::string& name
+)
+{
+    const std::filesystem::path component(name);
+    if (name.empty() || name == "." || name == ".." ||
+        component.has_parent_path() || component.filename() != component)
+        throw std::invalid_argument("Nome package non valido: " + name);
+    return config.paths.repository_state / "packages" / component / "package.toml";
+}
+
+} // namespace
 
 /*
  * Print the general command-line help for Athena.
@@ -36,9 +53,12 @@ void print_help()
         << "  list        List installed packages\n"
         << "  info        Show package information\n"
         << "  generation  Manage package generations\n\n"
+        << "  config check Validate configuration without creating state\n\n"
         << "Options:\n"
         << "  -h, --help      Show this help message\n"
-        << "  -V, --version   Show version information\n";
+        << "  -V, --version   Show version information\n"
+        << "      --config PATH  Load an explicit configuration file\n"
+        << "      --root PATH    Override the Athena root\n";
 }
 
 /*
@@ -53,17 +73,7 @@ void print_help()
  */
 int run(int argc, char* argv[])
 {
-    /*
-     * Convert the raw argc/argv input into Athena's internal
-     * CommandLine representation.
-     */
     const CommandLine command_line = parse(argc, argv);
-
-    /*
-     * Initialize Athena's filesystem hierarchy before any command
-     * attempts to access directories under /var/lib/athena.
-     */
-    athena::paths::initialize();
 
     /*
      * Handle the global version option.
@@ -87,6 +97,46 @@ int run(int argc, char* argv[])
         return 0;
     }
 
+    athena::core::ConfigLoadOptions config_options;
+    auto arguments = command_line.arguments;
+    std::vector<std::string> command_arguments;
+    try {
+        for (std::size_t i = 0; i < arguments.size(); ++i) {
+            if (arguments[i] == "--config" || arguments[i] == "--root") {
+                if (i + 1 >= arguments.size())
+                    throw std::runtime_error("Opzione globale senza valore: " + arguments[i]);
+                const std::filesystem::path value(arguments[++i]);
+                if (arguments[i - 1] == "--config") config_options.explicit_config = value;
+                else config_options.overrides.root = value;
+            } else {
+                command_arguments.push_back(arguments[i]);
+            }
+        }
+    } catch (const std::exception& error) {
+        std::cerr << "Errore: " << error.what() << '\n';
+        return 2;
+    }
+
+    athena::core::ConfigLoader config_loader;
+    const auto loaded_config = config_loader.load(config_options);
+    if (!loaded_config) {
+        std::cerr << "Configurazione non valida: " << loaded_config.error.message << '\n';
+        return 2;
+    }
+    const auto& config = *loaded_config.config;
+
+    if (command_line.command == "config") {
+        if (command_arguments.size() != 1 || command_arguments[0] != "check") {
+            std::cerr << "Usage: athena config check [--config PATH] [--root PATH]\n";
+            return 2;
+        }
+        std::cout << "Configurazione valida (schema "
+                  << config.schema_version.value << ").\n";
+        for (const auto& [key, source] : config.provenance)
+            std::cout << key << ": " << athena::core::config_source_name(source) << '\n';
+        return 0;
+    }
+
     /*
      * Display the filesystem hierarchy currently used by Athena.
      *
@@ -96,11 +146,14 @@ int run(int argc, char* argv[])
     if (command_line.command == "paths") {
 
         std::cout
-            << "Root: " << athena::paths::root() << '\n'
-            << "Downloads: " << athena::paths::downloads() << '\n'
-            << "Sources: " << athena::paths::sources() << '\n'
-            << "Build: " << athena::paths::build() << '\n'
-            << "Store: " << athena::paths::store() << '\n';
+            << "Root: " << config.paths.root << '\n'
+            << "Downloads: " << config.paths.cache / "downloads" << '\n'
+            << "Sources: " << config.paths.cache / "sources" << '\n'
+            << "Build: " << config.paths.build << '\n'
+            << "Store: " << config.paths.store << '\n'
+            << "State: " << config.paths.state << '\n'
+            << "Repository snapshots: " << config.paths.repository_snapshots << '\n'
+            << "Generation state: " << config.paths.generation_state << '\n';
 
         return 0;
     }
@@ -115,11 +168,11 @@ int run(int argc, char* argv[])
     if (command_line.command == "extract-test") {
 
         const std::filesystem::path archive =
-            athena::paths::downloads() /
+            (config.paths.cache / "downloads") /
             "athena-hello-2.12.tar.gz";
 
         const std::filesystem::path destination =
-            "/tmp/athena-extract-test";
+            config.paths.cache / "extract-test";
 
         try {
 
@@ -153,7 +206,7 @@ int run(int argc, char* argv[])
     if (command_line.command == "download-test") {
 
         const std::filesystem::path destination =
-            "/tmp/athena-hello-2.12.tar.gz";
+            config.paths.cache / "athena-hello-2.12.tar.gz";
 
         try {
 
@@ -184,20 +237,20 @@ int run(int argc, char* argv[])
      */
     if (command_line.command == "activate-test") {
 
-        if (command_line.arguments.empty()) {
+        if (command_arguments.empty()) {
             std::cout
                 << "Usage: athena activate-test <store-directory>\n";
             return 1;
         }
 
         const std::filesystem::path store_directory =
-            command_line.arguments[0];
+            command_arguments[0];
 
         try {
 
             athena::activation::activate(
                 store_directory,
-                "/tmp/athena-activation-test/usr"
+                config.paths.target_root / "usr"
             );         
 
             return 0;
@@ -219,20 +272,20 @@ int run(int argc, char* argv[])
      */
     if (command_line.command == "deactivate-test") {
 
-        if (command_line.arguments.empty()) {
+        if (command_arguments.empty()) {
             std::cout
                 << "Usage: athena deactivate-test <store-directory>\n";
             return 1;
         }
 
         const std::filesystem::path store_directory =
-            command_line.arguments[0];
+            command_arguments[0];
 
         try {
 
             athena::activation::deactivate(
                 store_directory,
-                "/tmp/athena-activation-test/usr"
+                config.paths.target_root / "usr"
             );
 
             return 0;
@@ -255,22 +308,21 @@ int run(int argc, char* argv[])
      */
     if (command_line.command == "install-test") {
 
-        if (command_line.arguments.empty()) {
+        if (command_arguments.empty()) {
             std::cout << "Usage: athena install-test <package>\n";
             return 1;
         }
 
-        const std::filesystem::path package_file =
-            "packages/" + command_line.arguments[0] + "/package.toml";
-
-        const std::filesystem::path target_root =
-            "/tmp/athena-install-test";
+        const std::filesystem::path target_root = config.paths.target_root;
 
         try {
 
+            const auto package_file = package_manifest(config, command_arguments[0]);
+
             athena::install::install_package(
                 package_file,
-                target_root
+                target_root,
+                config.paths
             );
 
             return 0;
@@ -288,19 +340,19 @@ int run(int argc, char* argv[])
 
     if (command_line.command == "install") {
 
-        if (command_line.arguments.empty()) {
+        if (command_arguments.empty()) {
             std::cout << "Usage: athena install <package>\n";
             return 1;
         }
 
-        const std::filesystem::path package_file =
-            "packages/" + command_line.arguments[0] + "/package.toml";
-
         try {
+
+            const auto package_file = package_manifest(config, command_arguments[0]);
 
             athena::install::install_package(
                 package_file,
-                "/tmp/athena-install-test"
+                config.paths.target_root,
+                config.paths
             );
 
             return 0;
@@ -321,7 +373,7 @@ int run(int argc, char* argv[])
      */
     if (command_line.command == "remove") {
 
-        if (command_line.arguments.empty()) {
+        if (command_arguments.empty()) {
             std::cout
                 << "Usage: athena remove <package> [package...]\n";
             return 1;
@@ -330,8 +382,9 @@ int run(int argc, char* argv[])
         try {
 
             athena::install::remove_packages(
-                command_line.arguments,
-                "/tmp/athena-install-test"
+                command_arguments,
+                config.paths.target_root,
+                config.paths
             );
 
             std::cout
@@ -359,7 +412,7 @@ int run(int argc, char* argv[])
      */
     if (command_line.command == "generation") {
 
-        if (command_line.arguments.empty()) {
+        if (command_arguments.empty()) {
             std::cout
                 << "Usage: athena generation "
                 << "<list|current|switch|rollback> [id]\n";
@@ -367,10 +420,11 @@ int run(int argc, char* argv[])
         }
 
         const std::string subcommand =
-            command_line.arguments[0];
+            command_arguments[0];
 
         athena::generation::GenerationManager generations(
-            athena::paths::root()
+            config.paths.generation_state,
+            athena::generation::GenerationManager::GenerationDirectoryTag{}
         );
 
         try {
@@ -380,18 +434,22 @@ int run(int argc, char* argv[])
              * generation. This is also how install/remove initialize
              * the generation subsystem.
              */
-            generations.initialize();
+            const bool mutating = subcommand == "switch" || subcommand == "rollback";
+            if (mutating) generations.initialize();
 
             if (subcommand == "list") {
 
-                if (command_line.arguments.size() != 1) {
+                if (command_arguments.size() != 1) {
                     std::cout
                         << "Usage: athena generation list\n";
                     return 1;
                 }
 
-                const auto current =
-                    generations.current();
+                if (!std::filesystem::exists(config.paths.generation_state)) {
+                    std::cout << "Nessuna generation disponibile.\n";
+                    return 0;
+                }
+                const auto current = generations.current();
 
                 for (const auto& generation :
                      generations.list()) {
@@ -411,14 +469,17 @@ int run(int argc, char* argv[])
 
             if (subcommand == "current") {
 
-                if (command_line.arguments.size() != 1) {
+                if (command_arguments.size() != 1) {
                     std::cout
                         << "Usage: athena generation current\n";
                     return 1;
                 }
 
-                const auto current =
-                    generations.current();
+                if (!std::filesystem::exists(config.paths.generation_state)) {
+                    std::cout << "Nessuna generation inizializzata.\n";
+                    return 0;
+                }
+                const auto current = generations.current();
 
                 std::cout
                     << "Current generation: "
@@ -441,7 +502,7 @@ int run(int argc, char* argv[])
 
             if (subcommand == "switch") {
 
-                if (command_line.arguments.size() != 2) {
+                if (command_arguments.size() != 2) {
                     std::cout
                         << "Usage: athena generation switch <id>\n";
                     return 1;
@@ -451,7 +512,7 @@ int run(int argc, char* argv[])
 
                 try {
                     id = std::stoull(
-                        command_line.arguments[1]
+                        command_arguments[1]
                     );
                 }
                 catch (const std::exception&) {
@@ -463,7 +524,7 @@ int run(int argc, char* argv[])
 
                 generations.switch_to(
                     id,
-                    "/tmp/athena-install-test"
+                    config.paths.target_root
                 );
 
                 std::cout
@@ -476,7 +537,7 @@ int run(int argc, char* argv[])
 
             if (subcommand == "rollback") {
 
-                if (command_line.arguments.size() != 1) {
+                if (command_arguments.size() != 1) {
                     std::cout
                         << "Usage: athena generation rollback\n";
                     return 1;
@@ -511,7 +572,7 @@ int run(int argc, char* argv[])
 
                 generations.switch_to(
                     previous_id,
-                    "/tmp/athena-install-test"
+                    config.paths.target_root
                 );
 
                 std::cout
@@ -549,7 +610,7 @@ int run(int argc, char* argv[])
     if (command_line.command == "list") {
 
         const auto packages =
-            athena::store::list();
+            athena::store::list(config.paths.store);
 
         for (const auto& package_path : packages) {
 
@@ -576,7 +637,7 @@ int run(int argc, char* argv[])
      */
     if (command_line.command == "info") {
 
-        if (command_line.arguments.empty()) {
+        if (command_arguments.empty()) {
             std::cout << "Usage: athena info <package>\n";
             return 1;
         }
@@ -584,10 +645,10 @@ int run(int argc, char* argv[])
         try {
 
             const std::string package_name =
-                command_line.arguments[0];
+                command_arguments[0];
 
             const auto packages =
-                athena::store::list();
+                athena::store::list(config.paths.store);
 
             bool found = false;
 

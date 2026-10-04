@@ -31,7 +31,8 @@ namespace athena::install {
  * new generation is activated.
  */
 std::filesystem::path install_one_package(
-    const athena::package::Package& package
+    const athena::package::Package& package,
+    const athena::core::PathLayout& paths
 )
 {
     std::cout
@@ -47,7 +48,8 @@ std::filesystem::path install_one_package(
     const auto existing =
         athena::store::find(
             package.name,
-            package.version
+            package.version,
+            paths.store
         );
 
     if (existing.has_value()) {
@@ -61,7 +63,7 @@ std::filesystem::path install_one_package(
     }
 
     const std::filesystem::path destination =
-        athena::paths::downloads() /
+        (paths.cache / "downloads") /
         ("athena-" + package.name + "-" + package.version + ".tar.gz");
 
     std::cout
@@ -95,7 +97,7 @@ std::filesystem::path install_one_package(
     std::cout << "SHA-256 verificato correttamente.\n";
 
     const std::filesystem::path source_directory =
-        athena::paths::sources();
+        paths.cache / "sources";
 
     std::cout
         << "Estrazione in: "
@@ -119,7 +121,7 @@ std::filesystem::path install_one_package(
      * such as CMake.
      */
     const std::filesystem::path build_directory =
-        athena::paths::build() /
+        paths.build /
         (package.name + "-" + package.version);
 
     /*
@@ -127,7 +129,7 @@ std::filesystem::path install_one_package(
      * that will be transferred into the immutable package store.
      */
     const std::filesystem::path staging =
-        athena::paths::build() /
+        paths.build /
         (package.name + "-" + package.version + "-install");
 
     std::cout
@@ -169,7 +171,8 @@ std::filesystem::path install_one_package(
     const auto installed =
         athena::store::install(
             staging,
-            package
+            package,
+            paths.store
         );
 
     std::cout
@@ -201,6 +204,16 @@ void install_package(
     const std::filesystem::path& target_root
 )
 {
+    install_package(package_file, target_root,
+        athena::core::PathLayout::from_root(athena::paths::root()));
+}
+
+void install_package(
+    const std::filesystem::path& package_file,
+    const std::filesystem::path& target_root,
+    const athena::core::PathLayout& paths
+)
+{
     /*
      * Preserve the existing single-package API by constructing a
      * one-package InstallPlan and delegating to the same transactional
@@ -214,13 +227,24 @@ void install_package(
 
     install_plan(
         plan,
-        target_root
+        target_root,
+        paths
     );
 }
 
 void install_plan(
     const InstallPlan& plan,
     const std::filesystem::path& target_root
+)
+{
+    install_plan(plan, target_root,
+        athena::core::PathLayout::from_root(athena::paths::root()));
+}
+
+void install_plan(
+    const InstallPlan& plan,
+    const std::filesystem::path& target_root,
+    const athena::core::PathLayout& paths
 )
 {
     /*
@@ -230,7 +254,12 @@ void install_plan(
      * This keeps the installer self-contained and also allows isolated
      * tests to redirect Athena's paths into a temporary filesystem root.
      */
-    athena::paths::initialize();
+    paths.validate();
+    std::filesystem::create_directories(paths.cache / "downloads");
+    std::filesystem::create_directories(paths.cache / "sources");
+    std::filesystem::create_directories(paths.build);
+    std::filesystem::create_directories(paths.store);
+    std::filesystem::create_directories(paths.state);
 
     /*
      * An empty plan represents no requested state transition.
@@ -247,7 +276,8 @@ void install_plan(
      * Generation 0.
      */
     athena::generation::GenerationManager generations(
-        athena::paths::root()
+        paths.generation_state,
+        athena::generation::GenerationManager::GenerationDirectoryTag{}
     );
 
     generations.initialize();
@@ -271,7 +301,7 @@ void install_plan(
     for (const auto& package : plan.packages()) {
         installed.emplace_back(
             package,
-            install_one_package(package)
+            install_one_package(package, paths)
         );
     }
 

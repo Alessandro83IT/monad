@@ -29,6 +29,15 @@ std::filesystem::path install(
     const athena::package::Package& package
 )
 {
+    return install(staging_directory, package, athena::paths::store());
+}
+
+std::filesystem::path install(
+    const std::filesystem::path& staging_directory,
+    const athena::package::Package& package,
+    const std::filesystem::path& store_directory
+)
+{
     /*
      * Construct the destination path for the package.
      *
@@ -37,7 +46,7 @@ std::filesystem::path install(
      *     /var/lib/athena/store/hello-2.12
      */
     const std::filesystem::path destination =
-        athena::paths::store() /
+        store_directory /
         (package.name + "-" + package.version);
 
     if (std::filesystem::exists(destination)) {
@@ -219,8 +228,17 @@ std::optional<std::filesystem::path> find(
     const std::string& package_version
 )
 {
+    return find(package_name, package_version, athena::paths::store());
+}
+
+std::optional<std::filesystem::path> find(
+    const std::string& package_name,
+    const std::string& package_version,
+    const std::filesystem::path& store_directory
+)
+{
     const std::filesystem::path destination =
-        athena::paths::store() /
+        store_directory /
         (package_name + "-" + package_version);
 
     /*
@@ -285,9 +303,14 @@ std::filesystem::path find(
     const std::string& package_name
 )
 {
-    const std::filesystem::path store_directory =
-        athena::paths::store();
+    return find(package_name, athena::paths::store());
+}
 
+std::filesystem::path find(
+    const std::string& package_name,
+    const std::filesystem::path& store_directory
+)
+{
     if (!std::filesystem::exists(store_directory)) {
         throw std::runtime_error(
             "Store non trovato: " +
@@ -362,9 +385,11 @@ std::filesystem::path find(
  */
 std::vector<std::filesystem::path> list()
 {
-    const std::filesystem::path store_directory =
-        athena::paths::store();
+    return list(athena::paths::store());
+}
 
+std::vector<std::filesystem::path> list(const std::filesystem::path& store_directory)
+{
     if (!std::filesystem::exists(store_directory)) {
         throw std::runtime_error(
             "Store non trovato: " +

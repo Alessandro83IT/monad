@@ -26,32 +26,15 @@ CommandLine parse(
      * The higher-level CLI layer is responsible for deciding how
      * an empty command should be presented to the user.
      */
-    if (argc < 2) {
-        return result;
-    }
-
-    /*
-     * argv[0] contains the executable name.
-     *
-     * argv[1] is the first actual argument and therefore represents
-     * the Athena command.
-     */
-    result.command = argv[1];
-
-    /*
-     * Every argument after the command belongs to the command itself.
-     *
-     * For example:
-     *
-     *     athena install hello
-     *
-     * produces:
-     *
-     *     command   = "install"
-     *     arguments = ["hello"]
-     */
-    for (int i = 2; i < argc; ++i) {
-        result.arguments.emplace_back(argv[i]);
+    for (int i = 1; i < argc; ++i) {
+        const std::string value = argv[i];
+        if (value == "--config" || value == "--root") {
+            result.arguments.push_back(value);
+            if (i + 1 < argc) result.arguments.emplace_back(argv[++i]);
+            continue;
+        }
+        if (result.command.empty()) result.command = value;
+        else result.arguments.push_back(value);
     }
 
     return result;

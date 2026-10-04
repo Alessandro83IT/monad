@@ -1,4 +1,5 @@
 #include "paths.hpp"
+#include <utility>
 
 namespace athena::paths {
 
@@ -9,7 +10,8 @@ namespace {
  * redirect the complete Athena filesystem hierarchy into a temporary
  * directory.
  */
-std::filesystem::path root_directory = "/var/lib/athena";
+athena::core::PathLayout current_layout =
+    athena::core::PathLayout::from_root("/var/lib/athena");
 
 }
 
@@ -21,7 +23,7 @@ std::filesystem::path root_directory = "/var/lib/athena";
  */
 std::filesystem::path root()
 {
-    return root_directory;
+    return current_layout.root;
 }
 
 /*
@@ -32,7 +34,13 @@ std::filesystem::path root()
  */
 void set_root(const std::filesystem::path& path)
 {
-    root_directory = path;
+    current_layout = athena::core::PathLayout::from_root(path);
+}
+
+void set_layout(const athena::core::PathLayout& layout)
+{
+    layout.validate();
+    current_layout = layout;
 }
 
 /*
@@ -40,7 +48,7 @@ void set_root(const std::filesystem::path& path)
  */
 void reset_root()
 {
-    root_directory = "/var/lib/athena";
+    current_layout = athena::core::PathLayout::from_root("/var/lib/athena");
 }
 
 /*
@@ -48,7 +56,7 @@ void reset_root()
  */
 std::filesystem::path downloads()
 {
-    return root() / "downloads";
+    return current_layout.cache / "downloads";
 }
 
 /*
@@ -56,7 +64,7 @@ std::filesystem::path downloads()
  */
 std::filesystem::path sources()
 {
-    return root() / "sources";
+    return current_layout.cache / "sources";
 }
 
 /*
@@ -64,7 +72,7 @@ std::filesystem::path sources()
  */
 std::filesystem::path build()
 {
-    return root() / "build";
+    return current_layout.build;
 }
 
 /*
@@ -75,7 +83,7 @@ std::filesystem::path build()
  */
 std::filesystem::path store()
 {
-    return root() / "store";
+    return current_layout.store;
 }
 
 /*
@@ -86,10 +94,15 @@ std::filesystem::path store()
  */
 void initialize()
 {
+    current_layout.validate();
     std::filesystem::create_directories(downloads());
     std::filesystem::create_directories(sources());
     std::filesystem::create_directories(build());
     std::filesystem::create_directories(store());
+    std::filesystem::create_directories(current_layout.state);
+    std::filesystem::create_directories(current_layout.repository_snapshots);
+    std::filesystem::create_directories(current_layout.repository_state);
+    std::filesystem::create_directories(current_layout.generation_state);
 }
 
 }

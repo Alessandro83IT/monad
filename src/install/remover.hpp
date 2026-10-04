@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include "../../include/athena/core/path_layout.hpp"
 
 namespace athena::install {
 
@@ -17,6 +18,11 @@ namespace athena::install {
 void remove_packages(
     const std::vector<std::string>& package_names,
     const std::filesystem::path& target_root
+);
+void remove_packages(
+    const std::vector<std::string>& package_names,
+    const std::filesystem::path& target_root,
+    const athena::core::PathLayout& paths
 );
 
 } // namespace athena::install

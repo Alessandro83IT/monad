@@ -1,6 +1,7 @@
 #pragma once
 
 #include "install_plan.hpp"
+#include "../../include/athena/core/path_layout.hpp"
 
 #include <filesystem>
 
@@ -17,6 +18,11 @@ void install_package(
     const std::filesystem::path& package_file,
     const std::filesystem::path& target_root
 );
+void install_package(
+    const std::filesystem::path& package_file,
+    const std::filesystem::path& target_root,
+    const athena::core::PathLayout& paths
+);
 
 /*
  * Execute an already-resolved InstallPlan.
@@ -32,6 +38,11 @@ void install_package(
 void install_plan(
     const InstallPlan& plan,
     const std::filesystem::path& target_root
+);
+void install_plan(
+    const InstallPlan& plan,
+    const std::filesystem::path& target_root,
+    const athena::core::PathLayout& paths
 );
 
 }

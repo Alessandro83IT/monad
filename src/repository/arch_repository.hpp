@@ -3,10 +3,16 @@
 #include "repository_index.hpp"
 
 #include <filesystem>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace athena::repository {
+
+class ArchPackageMetadataError : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
 
 /*
  * Adapter for Arch Linux repository databases.

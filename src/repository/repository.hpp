@@ -43,10 +43,7 @@ public:
 
     /*
      * Load every package.toml file directly contained in a directory.
-     *
-     * The first implementation intentionally does not recurse into
-     * subdirectories. This keeps repository layout semantics explicit
-     * until a formal repository structure is introduced.
+     * The initial implementation intentionally does not recurse.
      */
     void load_directory(
         const std::filesystem::path& path

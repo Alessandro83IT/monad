@@ -62,8 +62,14 @@ class GenerationManager {
 
 public:
 
+    struct GenerationDirectoryTag {};
+
     explicit GenerationManager(
         std::filesystem::path state_directory
+    );
+    GenerationManager(
+        std::filesystem::path generation_directory,
+        GenerationDirectoryTag
     );
 
     /*

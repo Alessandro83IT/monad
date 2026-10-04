@@ -1,8 +1,12 @@
 #include "package_loader.hpp"
 
+#include "../../include/athena/core/schema.hpp"
+
 #include "../dependency/parser.hpp"
 
 #include <toml++/toml.hpp>
+#include <cstdint>
+#include <limits>
 #include <stdexcept>
 
 namespace athena::package {
@@ -29,6 +33,23 @@ Package load_from_file(const std::filesystem::path& path)
          * to the values stored in the document.
          */
         const auto table = toml::parse_file(path.string());
+
+        // Legacy package definitions may omit schema_version. If present,
+        // however, it must be an explicitly supported package schema.
+        if (const auto* schema = table.get("schema_version")) {
+            const auto version = schema->value<std::int64_t>();
+            if (!version || *version < 1 || *version > std::numeric_limits<int>::max()) {
+                throw PackageSchemaError("Invalid package schema_version");
+            }
+            try {
+                athena::core::validate_schema_version(
+                    athena::core::SchemaKind::PackageMetadata,
+                    static_cast<int>(*version)
+                );
+            } catch (const std::exception& error) {
+                throw PackageSchemaError(error.what());
+            }
+        }
 
         /*
          * Convert the TOML values into our internal Package model.

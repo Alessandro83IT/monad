@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../package/package.hpp"
+#include "../../include/athena/core/path_layout.hpp"
 
 #include <filesystem>
 #include <optional>
@@ -28,6 +29,11 @@ std::filesystem::path install(
     const std::filesystem::path& staging_directory,
     const athena::package::Package& package
 );
+std::filesystem::path install(
+    const std::filesystem::path& staging_directory,
+    const athena::package::Package& package,
+    const std::filesystem::path& store_directory
+);
 
 /*
  * Find an installed package by name.
@@ -40,6 +46,10 @@ std::filesystem::path install(
 std::filesystem::path find(
     const std::string& package_name
 );
+std::filesystem::path find(
+    const std::string& package_name,
+    const std::filesystem::path& store_directory
+);
 
 /*
  * Find an exact package version in the immutable store.
@@ -51,6 +61,11 @@ std::optional<std::filesystem::path> find(
     const std::string& package_name,
     const std::string& package_version
 );
+std::optional<std::filesystem::path> find(
+    const std::string& package_name,
+    const std::string& package_version,
+    const std::filesystem::path& store_directory
+);
 
 /*
  * List all installed package store entries.
@@ -60,5 +75,6 @@ std::optional<std::filesystem::path> find(
  * included.
  */
 std::vector<std::filesystem::path> list();
+std::vector<std::filesystem::path> list(const std::filesystem::path& store_directory);
 
 }
