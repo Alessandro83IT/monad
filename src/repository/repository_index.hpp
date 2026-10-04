@@ -39,6 +39,27 @@ public:
     ) const;
 
     /*
+     * Return every package exposing the requested semantic capability.
+     *
+     * Multiple package versions and multiple providers are allowed.
+     * The result follows the same deterministic package ordering used
+     * by the repository index.
+     */
+    std::vector<athena::package::Package> find_capability(
+        const std::string& capability
+    ) const;
+
+    /*
+     * Return every package exposing the requested semantic feature.
+     *
+     * Features are package-provided semantic interfaces and are distinct
+     * from the package name itself.
+     */
+    std::vector<athena::package::Package> find_feature(
+        const std::string& feature
+    ) const;
+
+    /*
      * Check whether at least one version of a package is available.
      */
     bool contains(

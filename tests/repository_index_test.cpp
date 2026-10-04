@@ -6,6 +6,57 @@
 using athena::package::Package;
 using athena::repository::RepositoryIndex;
 
+
+void test_semantic_providers()
+{
+    RepositoryIndex index;
+
+    Package openssl{
+        "openssl",
+        "3.5",
+        "OpenSSL",
+        "",
+        "",
+        "",
+        {}
+    };
+
+    openssl.provides.capabilities = {"ssl", "tls"};
+    openssl.provides.features = {"openssl"};
+
+    Package libressl{
+        "libressl",
+        "3.9",
+        "LibreSSL",
+        "",
+        "",
+        "",
+        {}
+    };
+
+    libressl.provides.capabilities = {"ssl", "tls"};
+    libressl.provides.features = {"libressl"};
+
+    index.add(openssl);
+    index.add(libressl);
+
+    const auto ssl =
+        index.find_capability("ssl");
+
+    assert(ssl.size() == 2);
+    assert(ssl[0].name == "libressl");
+    assert(ssl[1].name == "openssl");
+
+    const auto openssl_feature =
+        index.find_feature("openssl");
+
+    assert(openssl_feature.size() == 1);
+    assert(openssl_feature[0].name == "openssl");
+
+    assert(index.find_capability("missing").empty());
+    assert(index.find_feature("missing").empty());
+}
+
 int main()
 {
     RepositoryIndex index;
@@ -73,6 +124,8 @@ int main()
 
     std::cout
         << "Repository index tests passed.\n";
+
+    test_semantic_providers();
 
     return 0;
 }

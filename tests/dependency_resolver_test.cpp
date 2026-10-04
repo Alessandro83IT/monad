@@ -26,6 +26,18 @@ Dependency package_dependency(
     };
 }
 
+Dependency context_dependency(
+    const std::string& name,
+    DependencyContext context
+)
+{
+    return Dependency{
+        std::make_shared<const PackageRef>(name),
+        DependencyKind::Runtime,
+        context
+    };
+}
+
 Dependency versioned_dependency(
     const std::string& name,
     VersionConstraint constraint
@@ -95,10 +107,220 @@ ExpressionPtr package_expression(
     return std::make_shared<const PackageRef>(name);
 }
 
+ExpressionPtr platform_expression(
+    const std::string& name
+)
+{
+    return std::make_shared<const PlatformRef>(name);
+}
+
+ExpressionPtr architecture_expression(
+    const std::string& name
+)
+{
+    return std::make_shared<const ArchitectureRef>(name);
+}
+
+ExpressionPtr abi_expression(
+    const std::string& name
+)
+{
+    return std::make_shared<const ABIRef>(name);
+}
+
+Dependency environment_dependency(
+    ExpressionPtr expression,
+    DependencyContext context
+)
+{
+    return Dependency{
+        std::move(expression),
+        DependencyKind::Runtime,
+        context
+    };
+}
+
+}
+
+
+void test_capability_reference()
+{
+    athena::repository::RepositoryIndex repository;
+
+    Package openssl{
+        "openssl",
+        "3.0",
+        "OpenSSL",
+        "",
+        "",
+        "",
+        {}
+    };
+
+    openssl.provides.capabilities = {"ssl"};
+
+    repository.add(openssl);
+
+    Package application{
+        "application",
+        "1.0",
+        "Application",
+        "",
+        "",
+        "",
+        {
+            Dependency{
+                std::make_shared<const CapabilityRef>("ssl"),
+                DependencyKind::Runtime,
+                DependencyContext::Target
+            }
+        }
+    };
+
+    const auto result =
+        resolve(
+            application,
+            repository
+        );
+
+    assert(result.size() == 2);
+    assert(result[0].name == "openssl");
+    assert(result[1].name == "application");
+}
+
+
+void test_capability_provider_backtracking()
+{
+    athena::repository::RepositoryIndex repository;
+
+    Package openssl{
+        "openssl",
+        "3.0",
+        "OpenSSL",
+        "",
+        "",
+        "autotools",
+        {}
+    };
+
+    openssl.provides.capabilities = {"ssl"};
+
+    Package libressl{
+        "libressl",
+        "3.9",
+        "LibreSSL",
+        "",
+        "",
+        "autotools",
+        {}
+    };
+
+    libressl.provides.capabilities = {"ssl"};
+
+    Package no_libressl{
+        "no-libressl",
+        "1.0",
+        "Package that rejects LibreSSL",
+        "",
+        "",
+        "autotools",
+        {
+            not_dependency(
+                package_expression("libressl")
+            )
+        }
+    };
+
+    Package application{
+        "provider-backtracking-app",
+        "1.0",
+        "Tests semantic provider backtracking",
+        "",
+        "",
+        "autotools",
+        {
+            Dependency{
+                std::make_shared<const CapabilityRef>("ssl"),
+                DependencyKind::Runtime,
+                DependencyContext::Target
+            },
+            package_dependency("no-libressl")
+        }
+    };
+
+    repository.add(openssl);
+    repository.add(libressl);
+    repository.add(no_libressl);
+
+    const auto result =
+        athena::dependency::resolve(
+            application,
+            repository
+        );
+
+    /*
+     * LibreSSL is initially preferred because version 3.9 is newer.
+     * no-libressl then makes that choice invalid. The resolver must
+     * globally backtrack and select OpenSSL 3.0 instead.
+     */
+    assert(result.size() == 3);
+    assert(result[0].name == "openssl");
+    assert(result[0].version == "3.0");
+    assert(result[1].name == "no-libressl");
+    assert(result[2].name == "provider-backtracking-app");
+}
+
+void test_feature_reference()
+{
+    athena::repository::RepositoryIndex repository;
+
+    Package cmake{
+        "cmake",
+        "4.0",
+        "CMake",
+        "",
+        "",
+        "",
+        {}
+    };
+
+    cmake.provides.features = {"modern-cmake"};
+
+    repository.add(cmake);
+
+    Package application{
+        "application",
+        "1.0",
+        "Application",
+        "",
+        "",
+        "",
+        {
+            Dependency{
+                std::make_shared<const FeatureRef>("modern-cmake"),
+                DependencyKind::Build,
+                DependencyContext::Build
+            }
+        }
+    };
+
+    const auto result =
+        resolve(
+            application,
+            repository
+        );
+
+    assert(result.size() == 2);
+    assert(result[0].name == "cmake");
+    assert(result[1].name == "application");
 }
 
 int main()
 {
+    test_capability_reference();
+    test_feature_reference();
+    test_capability_provider_backtracking();
+
     Package zlib_old{
         "zlib","1.0","Zlib","","","autotools",{}
     };
@@ -929,6 +1151,416 @@ int main()
     }
 
     assert(root_not_conflict_detected);
+
+    /*
+     * Dependency contexts.
+     *
+     * Host, Build and Target are semantic properties of the dependency
+     * edge and must survive resolution into the InstallPlan.
+     */
+    Package host_tool{
+        "host-tool","1.0","Host dependency","","","autotools",{}
+    };
+
+    Package build_tool{
+        "build-tool","1.0","Build dependency","","","autotools",{}
+    };
+
+    Package target_library{
+        "target-library","1.0","Target dependency","","","autotools",{}
+    };
+
+    Package contextual_app{
+        "contextual-app","1.0",
+        "Tests Host/Build/Target dependency contexts",
+        "","","autotools",
+        {
+            context_dependency(
+                "host-tool",
+                DependencyContext::Host
+            ),
+            context_dependency(
+                "build-tool",
+                DependencyContext::Build
+            ),
+            context_dependency(
+                "target-library",
+                DependencyContext::Target
+            )
+        }
+    };
+
+    athena::repository::Repository context_repository;
+
+    context_repository.add(host_tool);
+    context_repository.add(build_tool);
+    context_repository.add(target_library);
+    context_repository.add(contextual_app);
+
+    const auto contextual_plan =
+        athena::dependency::resolve_plan(
+            contextual_app,
+            context_repository
+        );
+
+    assert(contextual_plan.size() == 4);
+    assert(contextual_plan.contexts().size() == 4);
+
+    const auto& contextual_packages =
+        contextual_plan.packages();
+
+    const auto& contextual_contexts =
+        contextual_plan.contexts();
+
+    bool host_context_ok = false;
+    bool build_context_ok = false;
+    bool target_context_ok = false;
+    bool root_context_ok = false;
+
+    for (std::size_t i = 0;
+         i < contextual_packages.size();
+         ++i) {
+
+        const auto& package = contextual_packages[i];
+        const auto& contexts = contextual_contexts[i];
+
+        if (package.name == "host-tool") {
+            assert(contexts.size() == 1);
+            assert(contexts[0] == DependencyContext::Host);
+            host_context_ok = true;
+        }
+
+        if (package.name == "build-tool") {
+            assert(contexts.size() == 1);
+            assert(contexts[0] == DependencyContext::Build);
+            build_context_ok = true;
+        }
+
+        if (package.name == "target-library") {
+            assert(contexts.size() == 1);
+            assert(contexts[0] == DependencyContext::Target);
+            target_context_ok = true;
+        }
+
+        if (package.name == "contextual-app") {
+            assert(contexts.size() == 1);
+            assert(contexts[0] == DependencyContext::Target);
+            root_context_ok = true;
+        }
+    }
+
+    assert(host_context_ok);
+    assert(build_context_ok);
+    assert(target_context_ok);
+    assert(root_context_ok);
+
+    /*
+     * A single package can be required in more than one context.
+     *
+     * It must appear only once in the InstallPlan while retaining every
+     * context in which it is needed.
+     */
+    Package shared_tool{
+        "shared-tool","1.0",
+        "Shared Build/Target dependency","","","autotools",{}
+    };
+
+    Package multi_context_app{
+        "multi-context-app","1.0",
+        "Tests multiple contexts for one package",
+        "","","autotools",
+        {
+            context_dependency(
+                "shared-tool",
+                DependencyContext::Build
+            ),
+            context_dependency(
+                "shared-tool",
+                DependencyContext::Target
+            )
+        }
+    };
+
+    athena::repository::Repository multi_context_repository;
+
+    multi_context_repository.add(shared_tool);
+    multi_context_repository.add(multi_context_app);
+
+    const auto multi_context_plan =
+        athena::dependency::resolve_plan(
+            multi_context_app,
+            multi_context_repository
+        );
+
+    assert(multi_context_plan.size() == 2);
+    assert(multi_context_plan.contexts().size() == 2);
+
+    const auto& multi_context_packages =
+        multi_context_plan.packages();
+
+    const auto& multi_context_contexts =
+        multi_context_plan.contexts();
+
+    bool shared_tool_found = false;
+    bool shared_build_found = false;
+    bool shared_target_found = false;
+
+    for (std::size_t i = 0;
+         i < multi_context_packages.size();
+         ++i) {
+
+        const auto& package = multi_context_packages[i];
+        const auto& contexts = multi_context_contexts[i];
+
+        if (package.name == "shared-tool") {
+            shared_tool_found = true;
+
+            assert(contexts.size() == 2);
+
+            for (const auto context : contexts) {
+                if (context == DependencyContext::Build) {
+                    shared_build_found = true;
+                }
+
+                if (context == DependencyContext::Target) {
+                    shared_target_found = true;
+                }
+            }
+        }
+
+        if (package.name == "multi-context-app") {
+            assert(contexts.size() == 1);
+            assert(contexts[0] == DependencyContext::Target);
+        }
+    }
+
+    assert(shared_tool_found);
+    assert(shared_build_found);
+    assert(shared_target_found);
+
+    /*
+     * Verify that Platform / Architecture / ABI selectors are evaluated
+     * against the environment associated with DependencyContext.
+     *
+     * This deliberately uses different Host/Build/Target architectures:
+     *
+     *   Host   = linux / x86_64 / glibc
+     *   Build  = linux / x86_64 / glibc
+     *   Target = linux / aarch64 / glibc
+     *
+     * A selector must therefore never accidentally evaluate against the
+     * machine running Athena when its context is Build or Target.
+     */
+    athena::dependency::Environments cross_environment{
+        athena::dependency::Environment{
+            "linux",
+            "x86_64",
+            "glibc"
+        },
+        athena::dependency::Environment{
+            "linux",
+            "x86_64",
+            "glibc"
+        },
+        athena::dependency::Environment{
+            "linux",
+            "aarch64",
+            "glibc"
+        }
+    };
+
+    Package environment_test{
+        "environment-test",
+        "1.0",
+        "Tests platform architecture and ABI selectors",
+        "",
+        "",
+        "autotools",
+        {
+            environment_dependency(
+                platform_expression("linux"),
+                DependencyContext::Target
+            ),
+            environment_dependency(
+                architecture_expression("x86_64"),
+                DependencyContext::Host
+            ),
+            environment_dependency(
+                architecture_expression("x86_64"),
+                DependencyContext::Build
+            ),
+            environment_dependency(
+                architecture_expression("aarch64"),
+                DependencyContext::Target
+            ),
+            environment_dependency(
+                abi_expression("glibc"),
+                DependencyContext::Host
+            ),
+            environment_dependency(
+                abi_expression("glibc"),
+                DependencyContext::Build
+            ),
+            environment_dependency(
+                abi_expression("glibc"),
+                DependencyContext::Target
+            )
+        }
+    };
+
+    athena::repository::Repository environment_repository;
+    environment_repository.add(environment_test);
+
+    const auto environment_plan =
+        athena::dependency::resolve_plan(
+            environment_test,
+            environment_repository.index(),
+            cross_environment
+        );
+
+    assert(environment_plan.size() == 1);
+    assert(
+        environment_plan.packages()[0].name ==
+        "environment-test"
+    );
+
+    /*
+     * The target environment deliberately differs from Host/Build.
+     * This dependency must fail if Target is incorrectly evaluated as
+     * x86_64 instead of aarch64.
+     */
+    Package wrong_target_architecture{
+        "wrong-target-architecture",
+        "1.0",
+        "Must reject an architecture absent from Target",
+        "",
+        "",
+        "autotools",
+        {
+            environment_dependency(
+                architecture_expression("x86_64"),
+                DependencyContext::Target
+            )
+        }
+    };
+
+    athena::repository::Repository wrong_target_repository;
+    wrong_target_repository.add(wrong_target_architecture);
+
+    bool target_architecture_rejected = false;
+
+    try {
+        athena::dependency::resolve_plan(
+            wrong_target_architecture,
+            wrong_target_repository.index(),
+            cross_environment
+        );
+    }
+    catch (const std::runtime_error&) {
+        target_architecture_rejected = true;
+    }
+
+    assert(target_architecture_rejected);
+
+    /*
+     * The Build environment is x86_64 while Target is aarch64.
+     * This verifies that the same selector produces different results
+     * depending on DependencyContext.
+     */
+    Package build_architecture_test{
+        "build-architecture-test",
+        "1.0",
+        "Build architecture must use Build environment",
+        "",
+        "",
+        "autotools",
+        {
+            environment_dependency(
+                architecture_expression("x86_64"),
+                DependencyContext::Build
+            ),
+            environment_dependency(
+                architecture_expression("aarch64"),
+                DependencyContext::Target
+            )
+        }
+    };
+
+    athena::repository::Repository build_architecture_repository;
+    build_architecture_repository.add(build_architecture_test);
+
+    const auto build_architecture_plan =
+        athena::dependency::resolve_plan(
+            build_architecture_test,
+            build_architecture_repository.index(),
+            cross_environment
+        );
+
+    assert(build_architecture_plan.size() == 1);
+
+    /*
+     * ABI is currently represented as a string selector. Verify that it
+     * is evaluated independently for each environment.
+     */
+    Package abi_test{
+        "abi-test",
+        "1.0",
+        "Tests ABI environment selector",
+        "",
+        "",
+        "autotools",
+        {
+            environment_dependency(
+                abi_expression("glibc"),
+                DependencyContext::Target
+            )
+        }
+    };
+
+    athena::repository::Repository abi_repository;
+    abi_repository.add(abi_test);
+
+    const auto abi_plan =
+        athena::dependency::resolve_plan(
+            abi_test,
+            abi_repository.index(),
+            cross_environment
+        );
+
+    assert(abi_plan.size() == 1);
+
+    Package wrong_abi{
+        "wrong-abi",
+        "1.0",
+        "Must reject an ABI absent from Target",
+        "",
+        "",
+        "autotools",
+        {
+            environment_dependency(
+                abi_expression("musl"),
+                DependencyContext::Target
+            )
+        }
+    };
+
+    athena::repository::Repository wrong_abi_repository;
+    wrong_abi_repository.add(wrong_abi);
+
+    bool abi_rejected = false;
+
+    try {
+        athena::dependency::resolve_plan(
+            wrong_abi,
+            wrong_abi_repository.index(),
+            cross_environment
+        );
+    }
+    catch (const std::runtime_error&) {
+        abi_rejected = true;
+    }
+
+    assert(abi_rejected);
 
     std::cout << "Dependency resolver tests passed.\n";
 

@@ -1,5 +1,7 @@
 #include "install_plan.hpp"
 
+#include <algorithm>
+
 namespace athena::install {
 
 void InstallPlan::add(
@@ -7,19 +9,62 @@ void InstallPlan::add(
 )
 {
     /*
-     * Preserve the order produced by the dependency resolver.
-     *
-     * Duplicate detection is intentionally not performed here:
-     * dependency resolution is responsible for producing a coherent
-     * package set.
+     * Legacy callers have no explicit context. Target is the historical
+     * default because packages previously represented only final-system
+     * installation requirements.
      */
+    add(
+        package,
+        athena::dependency::DependencyContext::Target
+    );
+}
+
+void InstallPlan::add(
+    const athena::package::Package& package,
+    athena::dependency::DependencyContext context
+)
+{
+    /*
+     * A package can be selected by multiple semantic contexts. Merge the
+     * context instead of duplicating the package in the installation plan.
+     */
+    for (std::size_t i = 0; i < packages_.size(); ++i) {
+
+        if (packages_[i].name != package.name ||
+            packages_[i].version != package.version) {
+            continue;
+        }
+
+        auto& package_contexts = contexts_[i];
+
+        if (std::find(
+                package_contexts.begin(),
+                package_contexts.end(),
+                context
+            ) == package_contexts.end()) {
+
+            package_contexts.push_back(context);
+        }
+
+        return;
+    }
+
     packages_.push_back(package);
+    contexts_.push_back({context});
 }
 
 const std::vector<athena::package::Package>&
 InstallPlan::packages() const
 {
     return packages_;
+}
+
+const std::vector<
+    std::vector<athena::dependency::DependencyContext>
+>&
+InstallPlan::contexts() const
+{
+    return contexts_;
 }
 
 bool InstallPlan::empty() const

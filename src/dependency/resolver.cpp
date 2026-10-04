@@ -1,4 +1,5 @@
 #include "resolver.hpp"
+#include "environment.hpp"
 
 #include "constraint.hpp"
 #include "../repository/repository_index.hpp"
@@ -17,6 +18,57 @@
 namespace athena::dependency {
 
 namespace {
+
+Environment native_environment()
+{
+#if defined(__linux__)
+    constexpr const char* platform = "linux";
+#elif defined(__FreeBSD__)
+    constexpr const char* platform = "freebsd";
+#elif defined(__OpenBSD__)
+    constexpr const char* platform = "openbsd";
+#elif defined(__NetBSD__)
+    constexpr const char* platform = "netbsd";
+#else
+    constexpr const char* platform = "unknown";
+#endif
+
+#if defined(__x86_64__) || defined(_M_X64)
+    constexpr const char* architecture = "x86_64";
+#elif defined(__aarch64__) || defined(_M_ARM64)
+    constexpr const char* architecture = "aarch64";
+#elif defined(__i386__) || defined(_M_IX86)
+    constexpr const char* architecture = "x86";
+#elif defined(__arm__) || defined(_M_ARM)
+    constexpr const char* architecture = "arm";
+#else
+    constexpr const char* architecture = "unknown";
+#endif
+
+#if defined(__GLIBC__)
+    constexpr const char* abi = "glibc";
+#else
+    constexpr const char* abi = "";
+#endif
+
+    return Environment{
+        platform,
+        architecture,
+        abi
+    };
+}
+
+Environments native_environments()
+{
+    const auto environment = native_environment();
+
+    return Environments{
+        environment,
+        environment,
+        environment
+    };
+}
+
 
 using Package = athena::package::Package;
 
@@ -56,6 +108,18 @@ struct ResolutionSnapshot {
     std::unordered_set<std::string> resolved;
     std::unordered_set<std::string> resolving;
     std::vector<NegativeDependency> negative_dependencies;
+
+    /*
+     * Semantic contexts accumulated for each selected package.
+     *
+     * A package may be required simultaneously by different dependency
+     * contexts, so the value is a set-like vector rather than a single
+     * context.
+     */
+    std::unordered_map<
+        std::string,
+        std::vector<DependencyContext>
+    > contexts;
 };
 
 /*
@@ -88,6 +152,22 @@ struct ResolutionState {
     std::unordered_set<std::string> resolved;
     std::unordered_set<std::string> resolving;
     std::vector<NegativeDependency> negative_dependencies;
+
+    /*
+     * Semantic dependency contexts associated with selected packages.
+     */
+    std::unordered_map<
+        std::string,
+        std::vector<DependencyContext>
+    > contexts;
+
+    /*
+     * Host/Build/Target environments are fixed for the whole resolution.
+     * They are therefore intentionally not part of ResolutionSnapshot:
+     * backtracking changes the selected package graph, not the environment
+     * against which that graph is evaluated.
+     */
+    Environments environments;
 
     /*
      * Global candidate decisions, in dependency-resolution order.
@@ -141,29 +221,80 @@ std::optional<Package> find_package(
  * to backtrack when the newest candidate creates a conflict later
  * in the dependency graph.
  */
-std::vector<Package> find_package_candidates(
-    const std::string& name,
-    const VersionConstraint& constraint,
+struct DependencyTarget {
+    enum class Kind {
+        Package,
+        Capability,
+        Feature
+    };
+
+    Kind kind;
+    std::string name;
+    VersionConstraint constraint;
+};
+
+std::vector<Package> find_dependency_candidates(
+    const DependencyTarget& target,
     const athena::repository::RepositoryIndex& repository
 )
 {
     std::vector<Package> candidates;
 
-    for (const auto& package : repository.find(name)) {
+    switch (target.kind) {
 
-        if (satisfies(constraint, package.version)) {
-            candidates.push_back(package);
-        }
+        case DependencyTarget::Kind::Package:
+            candidates = repository.find(target.name);
+            break;
+
+        case DependencyTarget::Kind::Capability:
+            candidates = repository.find_capability(target.name);
+            break;
+
+        case DependencyTarget::Kind::Feature:
+            candidates = repository.find_feature(target.name);
+            break;
     }
 
+    /*
+     * Version constraints currently apply to concrete package
+     * references. Capability and feature references select a provider
+     * package and therefore do not impose a version constraint yet.
+     */
+    if (target.kind == DependencyTarget::Kind::Package) {
+
+        candidates.erase(
+            std::remove_if(
+                candidates.begin(),
+                candidates.end(),
+                [&target](const Package& package) {
+                    return !satisfies(
+                        target.constraint,
+                        package.version
+                    );
+                }
+            ),
+            candidates.end()
+        );
+    }
+
+    /*
+     * Semantic dependencies may have several providers. Select the
+     * newest provider first, while keeping package-name ordering
+     * deterministic when versions are equal.
+     */
     std::sort(
         candidates.begin(),
         candidates.end(),
         [](const Package& left, const Package& right) {
-            return athena::version::greater(
-                left.version,
-                right.version
-            );
+
+            if (left.version != right.version) {
+                return athena::version::greater(
+                    left.version,
+                    right.version
+                );
+            }
+
+            return left.name < right.name;
         }
     );
 
@@ -186,7 +317,8 @@ ResolutionSnapshot snapshot_resolution_state(
         state.assignments,
         state.resolved,
         {},
-        state.negative_dependencies
+        state.negative_dependencies,
+        state.contexts
     };
 }
 
@@ -204,6 +336,9 @@ void restore_resolution_state(
     state.resolving = snapshot.resolving;
     state.negative_dependencies =
         snapshot.negative_dependencies;
+
+    state.contexts =
+        snapshot.contexts;
 }
 
 /*
@@ -217,10 +352,6 @@ void restore_resolution_state(
  *
  * A plain PackageRef means Any version.
  */
-struct DependencyTarget {
-    std::string name;
-    VersionConstraint constraint;
-};
 
 DependencyTarget extract_dependency_target(
     const ExpressionPtr& expression
@@ -246,7 +377,48 @@ DependencyTarget extract_dependency_target(
         }
 
         return {
+            DependencyTarget::Kind::Package,
             package->name,
+            VersionConstraint::any()
+        };
+    }
+
+    if (expression->kind == Expression::Kind::Capability) {
+
+        const auto* capability =
+            dynamic_cast<const CapabilityRef*>(
+                expression.get()
+            );
+
+        if (capability == nullptr) {
+            throw std::runtime_error(
+                "Espressione Capability non valida"
+            );
+        }
+
+        return {
+            DependencyTarget::Kind::Capability,
+            capability->name,
+            VersionConstraint::any()
+        };
+    }
+
+    if (expression->kind == Expression::Kind::Feature) {
+
+        const auto* feature =
+            dynamic_cast<const FeatureRef*>(
+                expression.get()
+            );
+
+        if (feature == nullptr) {
+            throw std::runtime_error(
+                "Espressione Feature non valida"
+            );
+        }
+
+        return {
+            DependencyTarget::Kind::Feature,
+            feature->name,
             VersionConstraint::any()
         };
     }
@@ -289,6 +461,7 @@ DependencyTarget extract_dependency_target(
         }
 
         return {
+            DependencyTarget::Kind::Package,
             package->name,
             *comparison->constraint
         };
@@ -329,6 +502,15 @@ void validate_existing_assignment(
     const ResolutionState& state
 )
 {
+    /*
+     * Capability and feature names are selectors, not concrete package
+     * assignment keys. The selected provider is tracked by its package
+     * name, so there is no direct assignment to validate here.
+     */
+    if (target.kind != DependencyTarget::Kind::Package) {
+        return;
+    }
+
     const auto* assigned =
         find_assignment(
             target.name,
@@ -355,6 +537,25 @@ void validate_existing_assignment(
     }
 }
 
+void record_dependency_context(
+    ResolutionState& state,
+    const Package& package,
+    DependencyContext context
+)
+{
+    auto& contexts =
+        state.contexts[package.name];
+
+    if (std::find(
+            contexts.begin(),
+            contexts.end(),
+            context
+        ) == contexts.end()) {
+
+        contexts.push_back(context);
+    }
+}
+
 bool violates_negative_dependency(
     const Package& package,
     const std::vector<NegativeDependency>& constraints
@@ -374,9 +575,95 @@ bool violates_negative_dependency(
     return false;
 }
 
+
+const Environment& environment_for_context(
+    const ResolutionState& state,
+    DependencyContext context
+)
+{
+    switch (context) {
+        case DependencyContext::Host:
+            return state.environments.host;
+
+        case DependencyContext::Build:
+            return state.environments.build;
+
+        case DependencyContext::Target:
+            return state.environments.target;
+    }
+
+    throw std::runtime_error(
+        "Contesto di dipendenza non valido"
+    );
+}
+
+bool evaluate_environment_selector(
+    const ExpressionPtr& expression,
+    DependencyContext context,
+    const ResolutionState& state
+)
+{
+    const auto& environment =
+        environment_for_context(state, context);
+
+    switch (expression->kind) {
+
+        case Expression::Kind::Platform: {
+            const auto* selector =
+                dynamic_cast<const PlatformRef*>(
+                    expression.get()
+                );
+
+            if (selector == nullptr) {
+                throw std::runtime_error(
+                    "Espressione Platform non valida"
+                );
+            }
+
+            return environment.platform == selector->name;
+        }
+
+        case Expression::Kind::Architecture: {
+            const auto* selector =
+                dynamic_cast<const ArchitectureRef*>(
+                    expression.get()
+                );
+
+            if (selector == nullptr) {
+                throw std::runtime_error(
+                    "Espressione Architecture non valida"
+                );
+            }
+
+            return environment.architecture == selector->name;
+        }
+
+        case Expression::Kind::ABI: {
+            const auto* selector =
+                dynamic_cast<const ABIRef*>(
+                    expression.get()
+                );
+
+            if (selector == nullptr) {
+                throw std::runtime_error(
+                    "Espressione ABI non valida"
+                );
+            }
+
+            return environment.abi == selector->name;
+        }
+
+        default:
+            throw std::runtime_error(
+                "Selector ambientale non supportato"
+            );
+    }
+}
+
 void resolve_expression(
     const ExpressionPtr& expression,
     const Package& requiring_package,
+    DependencyContext context,
     const athena::repository::RepositoryIndex& repository,
     ResolutionState& state
 );
@@ -384,6 +671,7 @@ void resolve_expression(
 void resolve_package_target(
     const DependencyTarget& target,
     const Package& requiring_package,
+    DependencyContext context,
     const athena::repository::RepositoryIndex& repository,
     ResolutionState& state
 )
@@ -397,6 +685,22 @@ void resolve_package_target(
         requiring_package,
         state
     );
+
+    /*
+     * A semantic dependency can reuse an already selected package.
+     * Preserve every context in which that package is required.
+     */
+    if (target.kind == DependencyTarget::Kind::Package) {
+        if (const auto* assigned =
+                find_assignment(target.name, state)) {
+
+            record_dependency_context(
+                state,
+                *assigned,
+                context
+            );
+        }
+    }
 
     /*
      * An assigned package can still be actively resolving its own
@@ -442,6 +746,7 @@ void resolve_package_target(
                 resolve_expression(
                     dependency.expression,
                     *existing_assignment,
+                    dependency.context,
                     repository,
                     state
                 );
@@ -472,9 +777,8 @@ void resolve_package_target(
     }
 
     const auto candidates =
-        find_package_candidates(
-            target.name,
-            target.constraint,
+        find_dependency_candidates(
+            target,
             repository
         );
 
@@ -567,6 +871,12 @@ void resolve_package_target(
         dependency_package
     };
 
+    record_dependency_context(
+        state,
+        dependency_package,
+        context
+    );
+
     state.resolving.insert(
         dependency_package.name
     );
@@ -579,6 +889,7 @@ void resolve_package_target(
             resolve_expression(
                 dependency.expression,
                 dependency_package,
+                dependency.context,
                 repository,
                 state
             );
@@ -626,6 +937,7 @@ void resolve_package_target(
 void resolve_expression(
     const ExpressionPtr& expression,
     const Package& requiring_package,
+    DependencyContext context,
     const athena::repository::RepositoryIndex& repository,
     ResolutionState& state
 )
@@ -638,7 +950,27 @@ void resolve_expression(
 
     switch (expression->kind) {
 
+        case Expression::Kind::Platform:
+        case Expression::Kind::Architecture:
+        case Expression::Kind::ABI: {
+
+            if (!evaluate_environment_selector(
+                    expression,
+                    context,
+                    state)) {
+
+                throw std::runtime_error(
+                    "Vincolo ambientale non soddisfatto per " +
+                    requiring_package.name
+                );
+            }
+
+            return;
+        }
+
         case Expression::Kind::Package:
+        case Expression::Kind::Capability:
+        case Expression::Kind::Feature:
         case Expression::Kind::VersionComparison: {
 
             const auto target =
@@ -649,6 +981,7 @@ void resolve_expression(
             resolve_package_target(
                 target,
                 requiring_package,
+                context,
                 repository,
                 state
             );
@@ -675,6 +1008,7 @@ void resolve_expression(
                 resolve_expression(
                     child,
                     requiring_package,
+                    context,
                     repository,
                     state
                 );
@@ -720,6 +1054,7 @@ void resolve_expression(
                     resolve_expression(
                         child,
                         requiring_package,
+                        context,
                         repository,
                         state
                     );
@@ -774,6 +1109,15 @@ void resolve_expression(
                 extract_dependency_target(
                     not_expression->expression
                 );
+
+            if (target.kind !=
+                DependencyTarget::Kind::Package) {
+
+                throw std::runtime_error(
+                    "Il vincolo NOT supporta attualmente "
+                    "solo riferimenti a pacchetti"
+                );
+            }
 
             for (const auto& package : state.result) {
 
@@ -830,6 +1174,16 @@ void resolve_recursive(
 
     state.resolving.insert(package.name);
 
+    /*
+     * The root package represents the package being produced/installed,
+     * therefore its own semantic context is Target.
+     */
+    record_dependency_context(
+        state,
+        package,
+        DependencyContext::Target
+    );
+
     try {
 
         for (const auto& dependency : package.dependencies) {
@@ -837,6 +1191,7 @@ void resolve_recursive(
             resolve_expression(
                 dependency.expression,
                 package,
+                dependency.context,
                 repository,
                 state
             );
@@ -885,10 +1240,12 @@ std::vector<athena::package::Package> resolve(
 
 athena::install::InstallPlan resolve_plan(
     const athena::package::Package& root,
-    const athena::repository::RepositoryIndex& repository
+    const athena::repository::RepositoryIndex& repository,
+    const Environments& environments
 )
 {
     ResolutionState state;
+    state.environments = environments;
 
     /*
      * The solver repeatedly propagates the dependency graph from the
@@ -934,7 +1291,34 @@ athena::install::InstallPlan resolve_plan(
             athena::install::InstallPlan plan;
 
             for (const auto& package : state.result) {
-                plan.add(package);
+
+                const auto context_it =
+                    state.contexts.find(package.name);
+
+                if (context_it == state.contexts.end() ||
+                    context_it->second.empty()) {
+
+                    /*
+                     * This should only be possible for legacy/internal
+                     * resolution paths. Keep Target as the historical
+                     * default instead of creating an unannotated plan.
+                     */
+                    plan.add(
+                        package,
+                        DependencyContext::Target
+                    );
+
+                    continue;
+                }
+
+                for (const auto context :
+                     context_it->second) {
+
+                    plan.add(
+                        package,
+                        context
+                    );
+                }
             }
 
             return plan;
@@ -983,6 +1367,18 @@ athena::install::InstallPlan resolve_plan(
 
 athena::install::InstallPlan resolve_plan(
     const athena::package::Package& root,
+    const athena::repository::RepositoryIndex& repository
+)
+{
+    return resolve_plan(
+        root,
+        repository,
+        native_environments()
+    );
+}
+
+athena::install::InstallPlan resolve_plan(
+    const athena::package::Package& root,
     const athena::repository::Repository& repository
 )
 {
@@ -1002,6 +1398,21 @@ athena::install::InstallPlan resolve_plan(
  * Keep the existing vector-based API source-compatible while making
  * InstallPlan the canonical result of dependency resolution.
  */
+std::vector<athena::package::Package> resolve(
+    const athena::package::Package& root,
+    const athena::repository::RepositoryIndex& repository,
+    const Environments& environments
+)
+{
+    const auto plan = resolve_plan(
+        root,
+        repository,
+        environments
+    );
+
+    return plan.packages();
+}
+
 std::vector<athena::package::Package> resolve(
     const athena::package::Package& root,
     const athena::repository::RepositoryIndex& repository

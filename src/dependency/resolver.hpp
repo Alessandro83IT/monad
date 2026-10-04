@@ -4,6 +4,7 @@
 #include "../repository/repository.hpp"
 #include "../repository/repository_index.hpp"
 #include "../install/install_plan.hpp"
+#include "environment.hpp"
 
 #include <vector>
 
@@ -20,6 +21,18 @@ namespace athena::dependency {
 athena::install::InstallPlan resolve_plan(
     const athena::package::Package& root,
     const athena::repository::RepositoryIndex& repository
+);
+
+/*
+ * Resolve a package using explicit Host/Build/Target environments.
+ *
+ * Platform, architecture and ABI dependency selectors are evaluated
+ * against the environment associated with their DependencyContext.
+ */
+athena::install::InstallPlan resolve_plan(
+    const athena::package::Package& root,
+    const athena::repository::RepositoryIndex& repository,
+    const Environments& environments
 );
 
 /*
@@ -50,6 +63,15 @@ athena::install::InstallPlan resolve_plan(
 std::vector<athena::package::Package> resolve(
     const athena::package::Package& root,
     const athena::repository::RepositoryIndex& repository
+);
+
+/*
+ * Resolve dependencies using explicit Host/Build/Target environments.
+ */
+std::vector<athena::package::Package> resolve(
+    const athena::package::Package& root,
+    const athena::repository::RepositoryIndex& repository,
+    const Environments& environments
 );
 
 /*

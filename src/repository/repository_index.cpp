@@ -51,6 +51,56 @@ RepositoryIndex::find(
     return result;
 }
 
+std::vector<athena::package::Package>
+RepositoryIndex::find_capability(
+    const std::string& capability
+) const
+{
+    std::vector<athena::package::Package> result;
+
+    for (const auto& package : packages_) {
+
+        const auto& capabilities =
+            package.provides.capabilities;
+
+        if (std::find(
+                capabilities.begin(),
+                capabilities.end(),
+                capability
+            ) != capabilities.end()) {
+
+            result.push_back(package);
+        }
+    }
+
+    return result;
+}
+
+std::vector<athena::package::Package>
+RepositoryIndex::find_feature(
+    const std::string& feature
+) const
+{
+    std::vector<athena::package::Package> result;
+
+    for (const auto& package : packages_) {
+
+        const auto& features =
+            package.provides.features;
+
+        if (std::find(
+                features.begin(),
+                features.end(),
+                feature
+            ) != features.end()) {
+
+            result.push_back(package);
+        }
+    }
+
+    return result;
+}
+
 bool RepositoryIndex::contains(
     const std::string& name
 ) const
