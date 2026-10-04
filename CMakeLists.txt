@@ -234,6 +234,20 @@ target_include_directories(dependency_validator_test
 
 add_test(NAME dependency_validator_test COMMAND dependency_validator_test)
 
+# Test the removal plan abstraction independently from generation
+# mutation and filesystem operations.
+add_executable(remove_plan_test
+    tests/remove_plan_test.cpp
+    src/install/remove_plan.cpp
+)
+
+target_include_directories(remove_plan_test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/install
+)
+
+add_test(NAME remove_plan_test COMMAND remove_plan_test)
+
 # Standalone test for package activation and deactivation.
 add_executable(activation_test
     tests/activation_test.cpp
