@@ -214,6 +214,26 @@ target_include_directories(dependency_serializer_test
 
 add_test(NAME dependency_serializer_test COMMAND dependency_serializer_test)
 
+# Validate dependency expressions against an already installed
+# candidate environment, including removal-safety scenarios.
+add_executable(dependency_validator_test
+    tests/dependency_validator_test.cpp
+    src/dependency/installed_environment.cpp
+    src/dependency/validator.cpp
+    src/dependency/parser.cpp
+    src/dependency/constraint.cpp
+    src/version/version.cpp
+)
+
+target_include_directories(dependency_validator_test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/package
+        ${PROJECT_SOURCE_DIR}/src/dependency
+        ${PROJECT_SOURCE_DIR}/src/version
+)
+
+add_test(NAME dependency_validator_test COMMAND dependency_validator_test)
+
 # Standalone test for package activation and deactivation.
 add_executable(activation_test
     tests/activation_test.cpp
