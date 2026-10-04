@@ -4,10 +4,13 @@
 #include "../repository/repository_index.hpp"
 #include "../version/version.hpp"
 
+#include <algorithm>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -22,11 +25,76 @@ struct NegativeDependency {
     VersionConstraint constraint;
 };
 
-struct ResolutionState {
+/*
+ * Explicitly records which package version has been selected during
+ * dependency resolution.
+ *
+ * The resolver previously tracked only the package name through the
+ * `resolved` set. Keeping the selected Package value available allows
+ * later dependency constraints to validate the existing assignment
+ * instead of silently accepting it.
+ */
+struct PackageAssignment {
+    Package package;
+};
+
+/*
+ * Snapshot of the mutable resolution state.
+ *
+ * A global candidate decision owns one of these snapshots so the solver
+ * can return exactly to the point immediately before that decision was
+ * made.
+ */
+struct ResolutionSnapshot {
     std::vector<Package> result;
+
+    std::unordered_map<
+        std::string,
+        PackageAssignment
+    > assignments;
+
     std::unordered_set<std::string> resolved;
     std::unordered_set<std::string> resolving;
     std::vector<NegativeDependency> negative_dependencies;
+};
+
+/*
+ * A global search decision.
+ *
+ * Each decision represents one package for which multiple compatible
+ * candidates exist. The solver starts with candidate_index == 0 and
+ * advances it after a downstream conflict.
+ */
+struct ResolutionDecision {
+    std::string name;
+    std::vector<Package> candidates;
+    std::size_t candidate_index;
+    ResolutionSnapshot snapshot;
+};
+
+struct ResolutionState {
+    std::vector<Package> result;
+
+    /*
+     * Candidate assignments are keyed by package name. This is the
+     * foundation for global constraint validation and future candidate
+     * backtracking.
+     */
+    std::unordered_map<
+        std::string,
+        PackageAssignment
+    > assignments;
+
+    std::unordered_set<std::string> resolved;
+    std::unordered_set<std::string> resolving;
+    std::vector<NegativeDependency> negative_dependencies;
+
+    /*
+     * Global candidate decisions, in dependency-resolution order.
+     * Unlike the old candidate history, each decision owns the exact
+     * state required to retry that branch.
+     */
+    std::vector<ResolutionDecision> decisions;
 };
 
 /*
@@ -63,6 +131,79 @@ std::optional<Package> find_package(
     }
 
     return best_match;
+}
+
+/*
+ * Return every available candidate satisfying the requested
+ * constraint, ordered from newest to oldest.
+ *
+ * Keeping the complete candidate set is what allows the resolver
+ * to backtrack when the newest candidate creates a conflict later
+ * in the dependency graph.
+ */
+std::vector<Package> find_package_candidates(
+    const std::string& name,
+    const VersionConstraint& constraint,
+    const athena::repository::RepositoryIndex& repository
+)
+{
+    std::vector<Package> candidates;
+
+    for (const auto& package : repository.find(name)) {
+
+        if (satisfies(constraint, package.version)) {
+            candidates.push_back(package);
+        }
+    }
+
+    std::sort(
+        candidates.begin(),
+        candidates.end(),
+        [](const Package& left, const Package& right) {
+            return athena::version::greater(
+                left.version,
+                right.version
+            );
+        }
+    );
+
+    return candidates;
+}
+
+/*
+ * Capture the mutable part of the resolution state.
+ *
+ * Decision history is deliberately excluded: a snapshot represents the
+ * state before a decision, while the decision itself belongs to the
+ * solver's search stack.
+ */
+ResolutionSnapshot snapshot_resolution_state(
+    const ResolutionState& state
+)
+{
+    return {
+        state.result,
+        state.assignments,
+        state.resolved,
+        {},
+        state.negative_dependencies
+    };
+}
+
+/*
+ * Restore the mutable state associated with a global decision.
+ */
+void restore_resolution_state(
+    ResolutionState& state,
+    const ResolutionSnapshot& snapshot
+)
+{
+    state.result = snapshot.result;
+    state.assignments = snapshot.assignments;
+    state.resolved = snapshot.resolved;
+    state.resolving = snapshot.resolving;
+    state.negative_dependencies =
+        snapshot.negative_dependencies;
 }
 
 /*
@@ -159,6 +300,61 @@ DependencyTarget extract_dependency_target(
     );
 }
 
+const Package* find_assignment(
+    const std::string& name,
+    const ResolutionState& state
+)
+{
+    const auto it =
+        state.assignments.find(name);
+
+    if (it == state.assignments.end()) {
+        return nullptr;
+    }
+
+    return &it->second.package;
+}
+
+/*
+ * Validate a package already selected by the resolver against a new
+ * dependency constraint.
+ *
+ * A package name alone is not sufficient to determine compatibility:
+ * different dependency expressions may impose different version
+ * constraints on the same package.
+ */
+void validate_existing_assignment(
+    const DependencyTarget& target,
+    const Package& requiring_package,
+    const ResolutionState& state
+)
+{
+    const auto* assigned =
+        find_assignment(
+            target.name,
+            state
+        );
+
+    if (assigned == nullptr) {
+        return;
+    }
+
+    if (!satisfies(
+            target.constraint,
+            assigned->version
+        )) {
+
+        throw std::runtime_error(
+            "Conflitto di dipendenze: il pacchetto " +
+            requiring_package.name +
+            " richiede una versione incompatibile di " +
+            target.name +
+            ", ma è già stata assegnata la versione " +
+            assigned->version
+        );
+    }
+}
+
 bool violates_negative_dependency(
     const Package& package,
     const std::vector<NegativeDependency>& constraints
@@ -192,14 +388,97 @@ void resolve_package_target(
     ResolutionState& state
 )
 {
-    const auto dependency_package =
-        find_package(
+    /*
+     * If this package already has an assignment, every new constraint
+     * must be compatible with that exact version.
+     */
+    validate_existing_assignment(
+        target,
+        requiring_package,
+        state
+    );
+
+    /*
+     * An assigned package can still be actively resolving its own
+     * dependencies. Cycle detection therefore happens first.
+     */
+    if (state.resolving.contains(target.name)) {
+
+        throw std::runtime_error(
+            "Ciclo di dipendenze rilevato: " +
+            target.name
+        );
+    }
+
+    if (state.resolved.contains(target.name)) {
+        return;
+    }
+
+    const auto* existing_assignment =
+        find_assignment(
+            target.name,
+            state
+        );
+
+    if (existing_assignment != nullptr) {
+
+        /*
+         * The package is assigned but not yet resolved. This happens
+         * when global backtracking restores a snapshot taken while an
+         * ancestor package was still propagating its dependencies.
+         *
+         * Re-enter that package so the dependency graph can be replayed
+         * until the pending global decision is reached again.
+         */
+        state.resolving.insert(
+            existing_assignment->name
+        );
+
+        try {
+
+            for (const auto& dependency :
+                 existing_assignment->dependencies) {
+
+                resolve_expression(
+                    dependency.expression,
+                    *existing_assignment,
+                    repository,
+                    state
+                );
+            }
+
+            state.resolving.erase(
+                existing_assignment->name
+            );
+
+            state.resolved.insert(
+                existing_assignment->name
+            );
+
+            state.result.push_back(
+                *existing_assignment
+            );
+        }
+        catch (...) {
+
+            state.resolving.erase(
+                existing_assignment->name
+            );
+
+            throw;
+        }
+
+        return;
+    }
+
+    const auto candidates =
+        find_package_candidates(
             target.name,
             target.constraint,
             repository
         );
 
-    if (!dependency_package) {
+    if (candidates.empty()) {
 
         throw std::runtime_error(
             "Dipendenza non trovata o nessuna versione "
@@ -211,55 +490,137 @@ void resolve_package_target(
         );
     }
 
+    /*
+     * A package with multiple compatible versions creates a global
+     * decision point. The snapshot represents the exact state before
+     * this package was selected.
+     *
+     * For a single candidate there is no search branch to maintain,
+     * so we can resolve it directly.
+     */
+    std::size_t decision_index =
+        std::numeric_limits<std::size_t>::max();
+
+    /*
+     * During global backtracking the most recent decision can already
+     * belong to this package. In that case the solver has restored its
+     * snapshot and advanced candidate_index before restarting
+     * propagation. Reuse that decision instead of creating a duplicate.
+     */
+    if (!state.decisions.empty() &&
+        state.decisions.back().name == target.name &&
+        state.decisions.back().candidates.size() == candidates.size()) {
+
+        decision_index =
+            state.decisions.size() - 1;
+    }
+    else if (candidates.size() > 1) {
+
+        state.decisions.push_back({
+            target.name,
+            candidates,
+            0,
+            snapshot_resolution_state(state)
+        });
+
+        decision_index =
+            state.decisions.size() - 1;
+    }
+
+    /*
+     * Select the candidate represented by this decision, or the only
+     * candidate when no decision point was necessary.
+     */
+    const auto& dependency_package =
+        candidates[
+            decision_index ==
+                    std::numeric_limits<std::size_t>::max()
+                ? 0
+                : state.decisions[decision_index].candidate_index
+        ];
+
     if (violates_negative_dependency(
-            dependency_package.value(),
+            dependency_package,
             state.negative_dependencies
         )) {
 
+        if (decision_index !=
+            std::numeric_limits<std::size_t>::max()) {
+
+            state.decisions.pop_back();
+        }
+
         throw std::runtime_error(
             "Dipendenza vietata dal vincolo NOT: " +
-            dependency_package->name +
+            dependency_package.name +
             " (" +
-            dependency_package->version +
+            dependency_package.version +
             ")"
         );
     }
 
     /*
-     * Resolve the selected package recursively.
-     *
-     * The optional contains a complete Package value, so the resolver
-     * can safely keep using it while traversing the dependency graph.
+     * Record the concrete assignment before propagating dependencies.
+     * This allows sibling constraints to detect conflicts immediately.
      */
-    if (state.resolved.contains(dependency_package->name)) {
-        return;
-    }
+    state.assignments[dependency_package.name] = {
+        dependency_package
+    };
 
-    if (state.resolving.contains(dependency_package->name)) {
+    state.resolving.insert(
+        dependency_package.name
+    );
 
-        throw std::runtime_error(
-            "Ciclo di dipendenze rilevato: " +
-            dependency_package->name
+    try {
+
+        for (const auto& dependency :
+             dependency_package.dependencies) {
+
+            resolve_expression(
+                dependency.expression,
+                dependency_package,
+                repository,
+                state
+            );
+        }
+
+        state.resolving.erase(
+            dependency_package.name
+        );
+
+        state.resolved.insert(
+            dependency_package.name
+        );
+
+        state.result.push_back(
+            dependency_package
         );
     }
+    catch (...) {
 
-    state.resolving.insert(dependency_package->name);
-
-    for (const auto& dependency :
-         dependency_package->dependencies) {
-
-        resolve_expression(
-            dependency.expression,
-            *dependency_package,
-            repository,
-            state
+        state.resolving.erase(
+            dependency_package.name
         );
+
+        /*
+         * A local failure must not leave a half-applied assignment in
+         * the current state. The global solver will use the decision
+         * snapshot to retry this branch when appropriate.
+         */
+        if (decision_index !=
+            std::numeric_limits<std::size_t>::max()) {
+
+            const auto snapshot =
+                state.decisions[decision_index].snapshot;
+
+            restore_resolution_state(
+                state,
+                snapshot
+            );
+        }
+
+        throw;
     }
-
-    state.resolving.erase(dependency_package->name);
-    state.resolved.insert(dependency_package->name);
-
-    state.result.push_back(*dependency_package);
 }
 
 void resolve_expression(
@@ -348,6 +709,7 @@ void resolve_expression(
                  * next alternative.
                  */
                 const auto result_size = state.result.size();
+                const auto assignments_before = state.assignments;
                 const auto resolved_before = state.resolved;
                 const auto resolving_before = state.resolving;
                 const auto negative_dependencies_size =
@@ -372,6 +734,7 @@ void resolve_expression(
                      * resolution state, and negative NOT constraints.
                      */
                     state.result.resize(result_size);
+                    state.assignments = assignments_before;
                     state.resolved = resolved_before;
                     state.resolving = resolving_before;
                     state.negative_dependencies.resize(
@@ -467,20 +830,39 @@ void resolve_recursive(
 
     state.resolving.insert(package.name);
 
-    for (const auto& dependency : package.dependencies) {
+    try {
 
-        resolve_expression(
-            dependency.expression,
-            package,
-            repository,
-            state
-        );
+        for (const auto& dependency : package.dependencies) {
+
+            resolve_expression(
+                dependency.expression,
+                package,
+                repository,
+                state
+            );
+        }
+
+        /*
+         * The package has been completely propagated. It is no longer
+         * part of the active recursion chain and can be committed as
+         * resolved.
+         */
+        state.resolving.erase(package.name);
+        state.resolved.insert(package.name);
+
+        state.result.push_back(package);
     }
+    catch (...) {
 
-    state.resolving.erase(package.name);
-    state.resolved.insert(package.name);
+        /*
+         * An exception abandons this recursive branch. The package must
+         * therefore be removed from the active recursion chain before
+         * the global solver restores a decision snapshot and retries.
+         */
+        state.resolving.erase(package.name);
 
-    state.result.push_back(package);
+        throw;
+    }
 }
 
 }
@@ -508,44 +890,95 @@ athena::install::InstallPlan resolve_plan(
 {
     ResolutionState state;
 
-    resolve_recursive(
-        root,
-        repository,
-        state
-    );
-
     /*
-     * The root package is part of the final solution just like every
-     * resolved dependency. A NOT constraint introduced while resolving
-     * its dependency graph must therefore be checked against the root
-     * before the complete solution is accepted.
+     * The solver repeatedly propagates the dependency graph from the
+     * current state. A failure does not restart the search from scratch:
+     * the most recent decision restores its exact pre-selection snapshot
+     * and advances to the next candidate.
      */
-    if (violates_negative_dependency(
-            root,
-            state.negative_dependencies
-        )) {
+    for (;;) {
 
-        throw std::runtime_error(
-            "Pacchetto radice vietato dal vincolo NOT: " +
-            root.name +
-            " (" +
-            root.version +
-            ")"
-        );
+        try {
+
+            resolve_recursive(
+                root,
+                repository,
+                state
+            );
+
+            /*
+             * The root package is part of the final solution just like
+             * every resolved dependency. A NOT constraint introduced
+             * while resolving the graph must therefore be checked before
+             * accepting the solution.
+             */
+            if (violates_negative_dependency(
+                    root,
+                    state.negative_dependencies
+                )) {
+
+                throw std::runtime_error(
+                    "Pacchetto radice vietato dal vincolo NOT: " +
+                    root.name +
+                    " (" +
+                    root.version +
+                    ")"
+                );
+            }
+
+            /*
+             * ResolutionState already stores packages in dependency-
+             * before-dependent order, so InstallPlan can preserve that
+             * ordering directly.
+             */
+            athena::install::InstallPlan plan;
+
+            for (const auto& package : state.result) {
+                plan.add(package);
+            }
+
+            return plan;
+        }
+        catch (const std::runtime_error&) {
+
+            /*
+             * No decision means that the dependency graph has no
+             * remaining alternative branch.
+             */
+            if (state.decisions.empty()) {
+                throw;
+            }
+
+            /*
+             * The latest decision is the deepest unresolved search
+             * branch. Restore exactly the state that existed before its
+             * candidate was selected.
+             */
+            auto& decision =
+                state.decisions.back();
+
+            restore_resolution_state(
+                state,
+                decision.snapshot
+            );
+
+            /*
+             * Move to the next candidate for this decision.
+             */
+            ++decision.candidate_index;
+
+            /*
+             * All candidates for this branch have been exhausted.
+             * Remove the decision and continue backtracking towards the
+             * previous branch.
+             */
+            if (decision.candidate_index >=
+                decision.candidates.size()) {
+
+                state.decisions.pop_back();
+            }
+        }
     }
-
-    /*
-     * ResolutionState already stores packages in dependency-before-
-     * dependent order. InstallPlan deliberately preserves that order,
-     * so no additional topological sorting is required here.
-     */
-    athena::install::InstallPlan plan;
-
-    for (const auto& package : state.result) {
-        plan.add(package);
-    }
-
-    return plan;
 }
 
 athena::install::InstallPlan resolve_plan(

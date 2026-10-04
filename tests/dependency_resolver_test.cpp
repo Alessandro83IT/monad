@@ -684,6 +684,223 @@ int main()
     assert(versioned_not_conflict_detected);
 
     /*
+     * Global version conflict.
+     *
+     * strict-high selects the newest zlib version satisfying >= 2.0.
+     * strict-low then requires zlib < 2.0. The resolver must detect
+     * that the already selected zlib 2.0 cannot satisfy both
+     * dependency constraints.
+     */
+    Package strict_high{
+        "strict-high","1.0",
+        "Requires zlib >= 2.0","","","autotools",
+        {
+            versioned_dependency(
+                "zlib",
+                VersionConstraint::comparison(
+                    ComparisonOperator::GreaterEqual,
+                    "2.0"
+                )
+            )
+        }
+    };
+
+    Package strict_low{
+        "strict-low","1.0",
+        "Requires zlib < 2.0","","","autotools",
+        {
+            versioned_dependency(
+                "zlib",
+                VersionConstraint::comparison(
+                    ComparisonOperator::Less,
+                    "2.0"
+                )
+            )
+        }
+    };
+
+    Package global_conflict_app{
+        "global-conflict-app","1.0",
+        "Conflicting global zlib constraints","","","autotools",
+        {
+            package_dependency("strict-high"),
+            package_dependency("strict-low")
+        }
+    };
+
+    const std::vector<Package> global_conflict_available{
+        Package{
+            "zlib","1.8","zlib old","","","autotools",
+            {}
+        },
+        Package{
+            "zlib","2.0","zlib new","","","autotools",
+            {}
+        },
+        strict_high,
+        strict_low
+    };
+
+    bool global_version_conflict_detected = false;
+
+    try {
+        athena::dependency::resolve(
+            global_conflict_app,
+            global_conflict_available
+        );
+    }
+    catch (const std::runtime_error&) {
+        global_version_conflict_detected = true;
+    }
+
+    assert(global_version_conflict_detected);
+
+    /*
+     * Global candidate backtracking.
+     *
+     * The resolver initially prefers zlib 2.0 because it is the newest
+     * candidate. strict-high accepts it, but strict-low requires a
+     * version below 2.0. The solver must therefore backtrack globally
+     * and retry the earlier zlib decision with version 1.8.
+     */
+    Package global_backtracking_high{
+        "global-backtracking-high","1.0",
+        "Requires zlib >= 1.8","","","autotools",
+        {
+            versioned_dependency(
+                "zlib",
+                VersionConstraint::comparison(
+                    ComparisonOperator::GreaterEqual,
+                    "1.8"
+                )
+            )
+        }
+    };
+
+    Package global_backtracking_low{
+        "global-backtracking-low","1.0",
+        "Requires zlib < 2.0","","","autotools",
+        {
+            versioned_dependency(
+                "zlib",
+                VersionConstraint::comparison(
+                    ComparisonOperator::Less,
+                    "2.0"
+                )
+            )
+        }
+    };
+
+    Package global_backtracking_app{
+        "global-backtracking-app","1.0",
+        "Tests global candidate backtracking","","","autotools",
+        {
+            package_dependency("global-backtracking-high"),
+            package_dependency("global-backtracking-low")
+        }
+    };
+
+    const std::vector<Package> global_backtracking_available{
+        Package{
+            "zlib","1.8","zlib old","","","autotools",
+            {}
+        },
+        Package{
+            "zlib","2.0","zlib new","","","autotools",
+            {}
+        },
+        global_backtracking_high,
+        global_backtracking_low,
+        global_backtracking_app
+    };
+
+    const auto global_backtracking_result =
+        athena::dependency::resolve(
+            global_backtracking_app,
+            global_backtracking_available
+        );
+
+    bool zlib_old_selected = false;
+    bool zlib_new_selected = false;
+
+    for (const auto& package : global_backtracking_result) {
+        if (package.name == "zlib" &&
+            package.version == "1.8") {
+            zlib_old_selected = true;
+        }
+
+        if (package.name == "zlib" &&
+            package.version == "2.0") {
+            zlib_new_selected = true;
+        }
+    }
+
+    assert(zlib_old_selected);
+    assert(!zlib_new_selected);
+
+    /*
+     * Local candidate backtracking.
+     *
+     * foo 2.0 is preferred because it is the newest candidate, but
+     * its dependency is unavailable. The resolver must rollback the
+     * failed candidate and retry foo 1.0.
+     */
+    Package foo_old{
+        "foo","1.0",
+        "Working foo candidate","","","autotools",
+        {}
+    };
+
+    Package foo_new{
+        "foo","2.0",
+        "Broken foo candidate","","","autotools",
+        {
+            package_dependency("missing-package")
+        }
+    };
+
+    Package local_backtracking_app{
+        "local-backtracking-app","1.0",
+        "Tests local candidate backtracking","","","autotools",
+        {
+            package_dependency("foo")
+        }
+    };
+
+    const std::vector<Package> local_backtracking_available{
+        foo_old,
+        foo_new,
+        local_backtracking_app
+    };
+
+    const auto local_backtracking_result =
+        athena::dependency::resolve(
+            local_backtracking_app,
+            local_backtracking_available
+        );
+
+    bool foo_old_selected = false;
+    bool foo_new_selected = false;
+
+    for (const auto& package : local_backtracking_result) {
+
+        if (package.name == "foo" &&
+            package.version == "1.0") {
+
+            foo_old_selected = true;
+        }
+
+        if (package.name == "foo" &&
+            package.version == "2.0") {
+
+            foo_new_selected = true;
+        }
+    }
+
+    assert(foo_old_selected);
+    assert(!foo_new_selected);
+
+    /*
      * The root package is part of the final solution.
      * Therefore a NOT constraint introduced by one of its dependencies
      * must also be able to reject the root package.
