@@ -25,6 +25,7 @@ add_executable(athena
     src/install/installer.cpp
     src/install/install_plan.cpp
     src/install/generation_builder.cpp
+    src/install/remove_plan.cpp
     src/paths/paths.cpp
     src/archive/archive.cpp
     src/build/builder.cpp
@@ -115,6 +116,7 @@ add_executable(install_plan_test
 add_executable(generation_builder_test
     tests/generation_builder_test.cpp
     src/install/generation_builder.cpp
+    src/install/remove_plan.cpp
 )
 
 target_include_directories(generation_builder_test
@@ -318,6 +320,7 @@ add_executable(installer_e2e_test
     src/version/version.cpp
     src/install/install_plan.cpp
     src/install/generation_builder.cpp
+    src/install/remove_plan.cpp
     src/download/downloader.cpp
     src/verify/verifier.cpp
     src/paths/paths.cpp

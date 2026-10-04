@@ -55,6 +55,15 @@ int main()
         "/athena/store/package-b-2.0"
     };
 
+    /*
+     * Removal is applied to the current generation, before any upgrade
+     * represented by the separate installation plan above.
+     */
+    const athena::generation::GenerationEntry expected_current_b{
+        "package-b",
+        "/athena/store/package-b-1.0"
+    };
+
     const athena::generation::GenerationEntry expected_c{
         "package-c",
         "/athena/store/package-c-1.0"
@@ -69,6 +78,83 @@ int main()
     assert(result[1] == expected_b);
     assert(result[2] == expected_c);
     assert(result[3] == expected_d);
+
+
+
+    /*
+     * Removal builds another complete candidate generation from the
+     * current environment. Only the requested package entries disappear;
+     * all unrelated store references remain unchanged.
+     */
+    athena::install::RemovePlan remove_b;
+    remove_b.add("package-b");
+
+    const auto after_remove_b =
+        athena::install::remove_target_entries(
+            current,
+            remove_b
+        );
+
+    assert(after_remove_b.size() == 2);
+    assert(
+        after_remove_b[0] ==
+        expected_a
+    );
+    assert(
+        after_remove_b[1] ==
+        expected_c
+    );
+
+    /*
+     * Multiple removals are evaluated as one candidate generation.
+     */
+    athena::install::RemovePlan remove_a_and_c;
+    remove_a_and_c.add("package-a");
+    remove_a_and_c.add("package-c");
+
+    const auto after_remove_a_and_c =
+        athena::install::remove_target_entries(
+            current,
+            remove_a_and_c
+        );
+
+    assert(after_remove_a_and_c.size() == 1);
+    assert(
+        after_remove_a_and_c[0] ==
+        expected_current_b
+    );
+
+    /*
+     * Removing every current entry produces an empty generation.
+     */
+    athena::install::RemovePlan remove_all;
+    remove_all.add("package-a");
+    remove_all.add("package-b");
+    remove_all.add("package-c");
+
+    const auto after_remove_all =
+        athena::install::remove_target_entries(
+            current,
+            remove_all
+        );
+
+    assert(after_remove_all.empty());
+
+    /*
+     * A removal request for an entry not present in the generation is a
+     * no-op at this layer. RemovalPlanner is responsible for rejecting
+     * unknown installed packages before this builder is called.
+     */
+    athena::install::RemovePlan remove_unknown;
+    remove_unknown.add("package-x");
+
+    const auto after_remove_unknown =
+        athena::install::remove_target_entries(
+            current,
+            remove_unknown
+        );
+
+    assert(after_remove_unknown == current.entries);
 
     return 0;
 }

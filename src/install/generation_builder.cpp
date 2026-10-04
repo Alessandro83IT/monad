@@ -51,4 +51,33 @@ std::vector<athena::generation::GenerationEntry> build_target_entries(
     return entries;
 }
 
+
+/*
+ * Construct the candidate generation after a complete removal plan.
+ *
+ * This mirrors build_target_entries() but in the opposite direction:
+ * only entries explicitly named by the RemovePlan are removed. The
+ * immutable Store is intentionally untouched because historical
+ * generations may still reference the removed store objects.
+ */
+std::vector<athena::generation::GenerationEntry> remove_target_entries(
+    const athena::generation::Generation& current,
+    const athena::install::RemovePlan& removal
+)
+{
+    std::vector<athena::generation::GenerationEntry> entries;
+
+    entries.reserve(current.entries.size());
+
+    for (const auto& entry : current.entries) {
+
+        if (!removal.contains(entry.package)) {
+            entries.push_back(entry);
+        }
+    }
+
+    return entries;
+}
+
+
 }

@@ -2,6 +2,7 @@
 
 #include "../generation/generation.hpp"
 #include "../package/package.hpp"
+#include "remove_plan.hpp"
 
 #include <filesystem>
 #include <utility>
@@ -28,6 +29,19 @@ std::vector<athena::generation::GenerationEntry> build_target_entries(
             std::filesystem::path
         >
     >& installed
+);
+
+/*
+ * Apply a RemovePlan to the complete current generation.
+ *
+ * The operation is deliberately pure: it only constructs the entry list
+ * for the candidate generation. Store entries are never deleted here;
+ * unreferenced immutable store objects remain available for rollback
+ * until a later garbage-collection pass removes them safely.
+ */
+std::vector<athena::generation::GenerationEntry> remove_target_entries(
+    const athena::generation::Generation& current,
+    const athena::install::RemovePlan& removal
 );
 
 }
