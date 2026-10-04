@@ -138,14 +138,16 @@ std::filesystem::path install_one_package(
     std::cout
         << "Installazione nello staging completata.\n";
 
+    /*
+     * Store the package together with its complete metadata,
+     * including serialized dependency expressions. The store entry
+     * therefore contains enough information for future operations
+     * such as dependency-aware package removal.
+     */
     const auto installed =
         athena::store::install(
             staging,
-            package.name,
-            package.version,
-            package.source,
-            package.sha256,
-            package.build_system
+            package
         );
 
     std::cout

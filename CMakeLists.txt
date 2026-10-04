@@ -32,11 +32,13 @@ add_executable(athena
     src/build/cmake_backend.cpp
     src/store/store.cpp
     src/store/metadata.cpp
+    src/dependency/serializer.cpp
     src/store/manifest.cpp
     src/activation/activation.cpp
     src/generation/generation.cpp
     src/version/version.cpp
     src/dependency/constraint.cpp
+    src/dependency/serializer.cpp
 )
 
 target_include_directories(athena
@@ -194,6 +196,24 @@ target_include_directories(dependency_parser_test
 
 add_test(NAME dependency_parser_test COMMAND dependency_parser_test)
 
+# Standalone test for dependency expression serialization and
+# parser/serializer round-trip stability.
+add_executable(dependency_serializer_test
+    tests/dependency_serializer_test.cpp
+    src/dependency/serializer.cpp
+    src/dependency/parser.cpp
+    src/dependency/constraint.cpp
+    src/version/version.cpp
+)
+
+target_include_directories(dependency_serializer_test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/dependency
+        ${PROJECT_SOURCE_DIR}/src/version
+)
+
+add_test(NAME dependency_serializer_test COMMAND dependency_serializer_test)
+
 # Standalone test for package activation and deactivation.
 add_executable(activation_test
     tests/activation_test.cpp
@@ -248,6 +268,7 @@ add_executable(installer_e2e_test
     src/store/store.cpp
     src/store/metadata.cpp
     src/store/manifest.cpp
+    src/dependency/serializer.cpp
     src/activation/activation.cpp
     src/generation/generation.cpp
 )
@@ -265,6 +286,33 @@ target_include_directories(installer_e2e_test
 )
 
 add_test(NAME installer_e2e_test COMMAND installer_e2e_test)
+
+# Verify that package dependencies are persisted in Store metadata
+# and can be restored, while preserving compatibility with legacy
+# metadata files that do not contain the dependencies field.
+add_executable(store_metadata_test
+    tests/store_metadata_test.cpp
+    src/package/package.cpp
+    src/dependency/parser.cpp
+    src/dependency/constraint.cpp
+    src/dependency/serializer.cpp
+    src/version/version.cpp
+    src/paths/paths.cpp
+    src/store/store.cpp
+    src/store/metadata.cpp
+    src/store/manifest.cpp
+)
+
+target_include_directories(store_metadata_test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/package
+        ${PROJECT_SOURCE_DIR}/src/dependency
+        ${PROJECT_SOURCE_DIR}/src/paths
+        ${PROJECT_SOURCE_DIR}/src/store
+        ${PROJECT_SOURCE_DIR}/src/version
+)
+
+add_test(NAME store_metadata_test COMMAND store_metadata_test)
 
 # Standalone test for immutable store garbage collection.
 add_executable(gc_test

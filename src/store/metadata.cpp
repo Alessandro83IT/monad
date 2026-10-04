@@ -52,12 +52,27 @@ void write_metadata(
      * This information describes how the installed package was
      * obtained and built.
      */
-    output
-        << "name = \"" << metadata.name << "\"\n"
-        << "version = \"" << metadata.version << "\"\n"
-        << "source = \"" << metadata.source << "\"\n"
-        << "sha256 = \"" << metadata.sha256 << "\"\n"
-        << "build_system = \"" << metadata.build_system << "\"\n";
+    /*
+     * Build the TOML document through toml++ so dependency strings
+     * are escaped correctly instead of being interpolated manually.
+     */
+    toml::table table{
+        {"name", metadata.name},
+        {"version", metadata.version},
+        {"source", metadata.source},
+        {"sha256", metadata.sha256},
+        {"build_system", metadata.build_system}
+    };
+
+    toml::array dependencies;
+
+    for (const auto& dependency : metadata.dependencies) {
+        dependencies.push_back(dependency);
+    }
+
+    table.insert("dependencies", std::move(dependencies));
+
+    output << table;
 }
 
 /*
@@ -87,6 +102,33 @@ Metadata read_metadata(
             toml::parse_file(metadata_file.string());
 
         /*
+         * Read dependencies as an optional array.
+         *
+         * Older store entries may not contain this field, so the
+         * absence of the array intentionally results in an empty
+         * dependency list for backward compatibility.
+         */
+        std::vector<std::string> dependencies;
+
+        if (const auto* dependency_array =
+                table["dependencies"].as_array()) {
+
+            for (const auto& dependency : *dependency_array) {
+                if (const auto value =
+                        dependency.value<std::string>()) {
+                    dependencies.push_back(*value);
+                }
+                else {
+                    throw std::runtime_error(
+                        "Il campo 'dependencies' contiene un "
+                        "valore non stringa nei metadati: " +
+                        metadata_file.string()
+                    );
+                }
+            }
+        }
+
+        /*
          * Convert the TOML values into a Metadata object.
          */
         return Metadata{
@@ -94,7 +136,8 @@ Metadata read_metadata(
             table["version"].value_or(""),
             table["source"].value_or(""),
             table["sha256"].value_or(""),
-            table["build_system"].value_or("")
+            table["build_system"].value_or(""),
+            std::move(dependencies)
         };
     }
     catch (const toml::parse_error& error) {

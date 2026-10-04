@@ -1,4 +1,5 @@
 #include "store.hpp"
+#include "../dependency/serializer.hpp"
 
 #include "../paths/paths.hpp"
 #include "../version/version.hpp"
@@ -25,11 +26,7 @@ namespace athena::store {
  */
 std::filesystem::path install(
     const std::filesystem::path& staging_directory,
-    const std::string& package_name,
-    const std::string& package_version,
-    const std::string& source,
-    const std::string& sha256,
-    const std::string& build_system
+    const athena::package::Package& package
 )
 {
     /*
@@ -41,7 +38,7 @@ std::filesystem::path install(
      */
     const std::filesystem::path destination =
         athena::paths::store() /
-        (package_name + "-" + package_version);
+        (package.name + "-" + package.version);
 
     /*
      * Athena currently treats an existing store entry as a duplicate
@@ -150,12 +147,33 @@ std::filesystem::path install(
      * Metadata is stored separately from the package files under
      * the .athena directory.
      */
+    /*
+     * Persist the dependency expressions together with the package
+     * metadata. This makes the installed store entry self-contained:
+     * future operations such as remove can inspect the package's
+     * dependency requirements without consulting the repository.
+     */
+    std::vector<std::string> dependencies;
+
+    dependencies.reserve(
+        package.dependencies.size()
+    );
+
+    for (const auto& dependency : package.dependencies) {
+        dependencies.push_back(
+            athena::dependency::serialize_dependency(
+                dependency
+            )
+        );
+    }
+
     const Metadata metadata{
-        package_name,
-        package_version,
-        source,
-        sha256,
-        build_system
+        package.name,
+        package.version,
+        package.source,
+        package.sha256,
+        package.build_system,
+        std::move(dependencies)
     };
 
     write_metadata(

@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
 
 namespace athena::store {
 
@@ -28,6 +29,16 @@ struct Metadata {
 
     // Build system used to create the package.
     std::string build_system;
+
+    /*
+     * Serialized dependency expressions belonging to the package.
+     *
+     * Keeping the expressions in the same metadata document makes
+     * .athena/metadata.toml the authoritative description of the
+     * installed package, including the information required later
+     * to validate package removal.
+     */
+    std::vector<std::string> dependencies{};
 };
 
 /*
