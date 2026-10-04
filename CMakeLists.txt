@@ -248,6 +248,32 @@ target_include_directories(remove_plan_test
 
 add_test(NAME remove_plan_test COMMAND remove_plan_test)
 
+# Test removal planning against a candidate installed environment.
+#
+# RemovalPlanner validates the complete requested removal set through
+# DependencyValidator without touching Generation, Store or filesystem
+# state.
+add_executable(removal_planner_test
+    tests/removal_planner_test.cpp
+    src/install/removal_planner.cpp
+    src/install/remove_plan.cpp
+    src/dependency/installed_environment.cpp
+    src/dependency/validator.cpp
+    src/dependency/parser.cpp
+    src/dependency/constraint.cpp
+    src/version/version.cpp
+)
+
+target_include_directories(removal_planner_test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/package
+        ${PROJECT_SOURCE_DIR}/src/dependency
+        ${PROJECT_SOURCE_DIR}/src/install
+        ${PROJECT_SOURCE_DIR}/src/version
+)
+
+add_test(NAME removal_planner_test COMMAND removal_planner_test)
+
 # Standalone test for package activation and deactivation.
 add_executable(activation_test
     tests/activation_test.cpp
