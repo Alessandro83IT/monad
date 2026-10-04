@@ -23,6 +23,10 @@ add_executable(athena
     src/download/downloader.cpp
     src/verify/verifier.cpp
     src/install/installer.cpp
+    src/install/remover.cpp
+    src/install/removal_planner.cpp
+    src/dependency/installed_environment.cpp
+    src/dependency/validator.cpp
     src/install/install_plan.cpp
     src/install/generation_builder.cpp
     src/install/remove_plan.cpp
@@ -435,3 +439,38 @@ target_include_directories(repository_test
 )
 
 add_test(NAME repository_test COMMAND repository_test)
+
+
+add_executable(removal_e2e_test
+    tests/removal_e2e_test.cpp
+    src/install/remover.cpp
+    src/install/removal_planner.cpp
+    src/install/remove_plan.cpp
+    src/install/generation_builder.cpp
+    src/dependency/installed_environment.cpp
+    src/dependency/validator.cpp
+    src/dependency/parser.cpp
+    src/dependency/constraint.cpp
+    src/version/version.cpp
+    src/store/metadata.cpp
+    src/store/manifest.cpp
+    src/paths/paths.cpp
+    src/generation/generation.cpp
+    src/activation/activation.cpp
+)
+
+target_include_directories(removal_e2e_test PRIVATE
+    src
+    src/install
+    src/dependency
+    src/version
+    src/store
+    src/paths
+    src/generation
+    src/activation
+)
+
+add_test(
+    NAME removal_e2e_test
+    COMMAND removal_e2e_test
+)
