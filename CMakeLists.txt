@@ -67,6 +67,7 @@ set(ATHENA_TESTS
     generation_builder_test
     dependency_expression_test
     dependency_roles_test
+    dependency_scope_precedence_test
     dependency_expression_resolution_test
     dependency_constraint_test
     dependency_parser_test

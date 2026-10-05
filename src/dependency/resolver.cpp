@@ -6,7 +6,6 @@
 #include "../version/version.hpp"
 
 #include <algorithm>
-#include <functional>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -89,6 +88,7 @@ struct DeferredNegative {
     Package owner;
     DependencyContext context;
     bool conflict_expression = false;
+    DependencyKind role = DependencyKind::Runtime;
 };
 
 /*
@@ -647,7 +647,7 @@ void apply_package_conflicts(const Package& owner, ResolutionState& state, bool 
             state.negative_dependencies.push_back({target, provider_origin});
         } else {
             // Reuse the dependency AST for compound and conditional conflicts.
-            state.deferred_negatives.push_back({expression, owner, conflict.context, true});
+            state.deferred_negatives.push_back({expression, owner, conflict.context, true, conflict.kind});
         }
     }
 }
@@ -743,10 +743,57 @@ bool evaluate_environment_selector(
     }
 }
 
+// Check effective roles at leaves, after traversing structural nodes and
+// applying scopes. An inactive inherited role must not hide an active nested
+// scope. Active structural nodes retain their existing boolean semantics;
+// explicit disabling is sticky for the entire enclosing subtree.
+bool expression_role_active(const ExpressionPtr& expression, DependencyKind role,
+                            bool enabled, const DependencyResolutionContext& policy,
+                            bool gate_inherited_role = true)
+{
+    if (!expression || !enabled) return false;
+    switch (expression->kind) {
+        case Expression::Kind::Scoped: {
+            const auto* scoped = dynamic_cast<const ScopedExpression*>(expression.get());
+            return scoped && expression_role_active(scoped->body, scoped->kind_role,
+                                                     scoped->enabled, policy);
+        }
+        case Expression::Kind::And: {
+            const auto* e = dynamic_cast<const AndExpression*>(expression.get());
+            return e && ((!gate_inherited_role || policy.activates(role))
+                || std::any_of(e->expressions.begin(), e->expressions.end(),
+                [&](const auto& child) { return expression_role_active(child, role, enabled, policy, gate_inherited_role); }));
+        }
+        case Expression::Kind::Or: {
+            const auto* e = dynamic_cast<const OrExpression*>(expression.get());
+            return e && ((!gate_inherited_role || policy.activates(role))
+                || std::any_of(e->expressions.begin(), e->expressions.end(),
+                [&](const auto& child) { return expression_role_active(child, role, enabled, policy, gate_inherited_role); }));
+        }
+        case Expression::Kind::Not: {
+            const auto* e = dynamic_cast<const NotExpression*>(expression.get());
+            return e && ((!gate_inherited_role || policy.activates(role))
+                || expression_role_active(e->expression, role, enabled, policy, gate_inherited_role));
+        }
+        case Expression::Kind::Conditional: {
+            const auto* e = dynamic_cast<const ConditionalExpression*>(expression.get());
+            return e && ((!gate_inherited_role || policy.activates(role))
+                || expression_role_active(e->body, role, enabled, policy, gate_inherited_role));
+        }
+        default: return !gate_inherited_role || policy.activates(role);
+    }
+}
+
 bool evaluate_boolean_condition(const ExpressionPtr& expression, const Package& owner,
-                                DependencyContext context, const ResolutionState& state)
+                                DependencyContext context, const ResolutionState& state,
+                                DependencyKind role = DependencyKind::Runtime, bool scoped_role = false)
 {
     if (!expression) throw std::runtime_error("Condizione booleana nulla");
+    // Unscoped guards still control their bodies independently of role
+    // activation. Within an explicit scope, inactive condition branches keep
+    // the existing false result used by scoped boolean conditions.
+    if (state.use_policy && scoped_role && !expression_role_active(expression, role, true, state.policy))
+        return false;
     switch (expression->kind) {
         case Expression::Kind::True: return true;
         case Expression::Kind::False: return false;
@@ -764,40 +811,35 @@ bool evaluate_boolean_condition(const ExpressionPtr& expression, const Package& 
         }
         case Expression::Kind::And: {
             const auto* e = dynamic_cast<const AndExpression*>(expression.get()); if (!e) throw std::runtime_error("AND condizionale non valido");
-            for (const auto& child : e->expressions) if (!evaluate_boolean_condition(child, owner, context, state)) return false; return true;
+            for (const auto& child : e->expressions) if (!evaluate_boolean_condition(child, owner, context, state, role, scoped_role)) return false; return true;
         }
         case Expression::Kind::Or: {
             const auto* e = dynamic_cast<const OrExpression*>(expression.get()); if (!e) throw std::runtime_error("OR condizionale non valido");
-            for (const auto& child : e->expressions) if (evaluate_boolean_condition(child, owner, context, state)) return true; return false;
+            for (const auto& child : e->expressions) if (evaluate_boolean_condition(child, owner, context, state, role, scoped_role)) return true; return false;
         }
         case Expression::Kind::Not: {
-            const auto* e = dynamic_cast<const NotExpression*>(expression.get()); if (!e || !e->expression) throw std::runtime_error("NOT condizionale non valido"); return !evaluate_boolean_condition(e->expression, owner, context, state);
+            const auto* e = dynamic_cast<const NotExpression*>(expression.get()); if (!e || !e->expression) throw std::runtime_error("NOT condizionale non valido"); return !evaluate_boolean_condition(e->expression, owner, context, state, role, scoped_role);
         }
         case Expression::Kind::Scoped: {
             const auto* e = dynamic_cast<const ScopedExpression*>(expression.get()); if (!e || !e->body) throw std::runtime_error("Scope condizionale non valido");
-            if (state.use_policy && (!e->enabled || !state.policy.activates(e->kind_role))) return false;
-            return evaluate_boolean_condition(e->body, owner, e->context, state);
+            if (state.use_policy && !expression_role_active(e->body, e->kind_role, e->enabled, state.policy)) return false;
+            return evaluate_boolean_condition(e->body, owner, e->context, state, e->kind_role, true);
         }
         default: throw std::runtime_error("La condizione supporta solo selector, feature e operatori booleani");
     }
 }
 
-bool expression_role_active(const ExpressionPtr& expression, DependencyKind role,
-                            bool enabled, const DependencyResolutionContext& policy)
-{
-    if (!expression || !enabled || !policy.activates(role)) return false;
-    if (expression->kind == Expression::Kind::Scoped) {
-        const auto* scoped = dynamic_cast<const ScopedExpression*>(expression.get());
-        return scoped && expression_role_active(scoped->body, scoped->kind_role, scoped->enabled, policy);
-    }
-    return true;
-}
-
 std::optional<bool> expression_present_in_solution(const ExpressionPtr& expression,
     const std::vector<Package>& packages, const Package& owner, DependencyContext context,
-    DependencyKind inherited_role, const ResolutionState& state, bool conflict_expression = false)
+    DependencyKind inherited_role, const ResolutionState& state, bool conflict_expression = false,
+    bool scoped_role = false)
 {
     if (!expression) throw std::runtime_error("Espressione negativa nulla");
+    // Ordinary package conflicts remain unconditional, as before. Only an
+    // explicit scope introduces role gating into a conflict subtree.
+    if (state.use_policy && !expression_role_active(expression, inherited_role, true, state.policy,
+                                                     !conflict_expression || scoped_role))
+        return std::nullopt;
     switch (expression->kind) {
         case Expression::Kind::True: return true;
         case Expression::Kind::False: return false;
@@ -813,27 +855,27 @@ std::optional<bool> expression_present_in_solution(const ExpressionPtr& expressi
         case Expression::Kind::ABI: return evaluate_environment_selector(expression, context, state);
         case Expression::Kind::And: {
             const auto* e = dynamic_cast<const AndExpression*>(expression.get()); if (!e) throw std::runtime_error("AND negative non valido");
-            for (const auto& child : e->expressions) { const auto value=expression_present_in_solution(child,packages,owner,context,inherited_role,state,conflict_expression); if (value && !*value) return false; }
+            for (const auto& child : e->expressions) { const auto value=expression_present_in_solution(child,packages,owner,context,inherited_role,state,conflict_expression,scoped_role); if (value && !*value) return false; }
             return true;
         }
         case Expression::Kind::Or: {
             const auto* e = dynamic_cast<const OrExpression*>(expression.get()); if (!e) throw std::runtime_error("OR negative non valido");
-            for (const auto& child : e->expressions) { const auto value=expression_present_in_solution(child,packages,owner,context,inherited_role,state,conflict_expression); if (value && *value) return true; }
+            for (const auto& child : e->expressions) { const auto value=expression_present_in_solution(child,packages,owner,context,inherited_role,state,conflict_expression,scoped_role); if (value && *value) return true; }
             return false;
         }
         case Expression::Kind::Not: {
             const auto* e = dynamic_cast<const NotExpression*>(expression.get()); if (!e || !e->expression) throw std::runtime_error("NOT negative non valido");
-            const auto value=expression_present_in_solution(e->expression,packages,owner,context,inherited_role,state,conflict_expression); return !value.value_or(false);
+            const auto value=expression_present_in_solution(e->expression,packages,owner,context,inherited_role,state,conflict_expression,scoped_role); return !value.value_or(false);
         }
         case Expression::Kind::Scoped: {
             const auto* e = dynamic_cast<const ScopedExpression*>(expression.get()); if (!e || !e->body) throw std::runtime_error("Scope negative non valido");
             if (state.use_policy && !expression_role_active(e->body,e->kind_role,e->enabled,state.policy)) return std::nullopt;
-            return expression_present_in_solution(e->body,packages,owner,e->context,e->kind_role,state,conflict_expression);
+            return expression_present_in_solution(e->body,packages,owner,e->context,e->kind_role,state,conflict_expression,true);
         }
         case Expression::Kind::Conditional: {
             const auto* e = dynamic_cast<const ConditionalExpression*>(expression.get()); if (!e || !e->condition || !e->body) throw std::runtime_error("Conditional negative non valido");
-            if (!evaluate_boolean_condition(e->condition,owner,context,state)) return !conflict_expression;
-            return expression_present_in_solution(e->body,packages,owner,context,inherited_role,state,conflict_expression);
+            if (!evaluate_boolean_condition(e->condition,owner,context,state,inherited_role)) return !conflict_expression;
+            return expression_present_in_solution(e->body,packages,owner,context,inherited_role,state,conflict_expression,scoped_role);
         }
     }
     return false;
@@ -848,7 +890,7 @@ bool violates_deferred_negatives(const Package& root, const ResolutionState& sta
     selected.push_back(root);
     for (const auto& negative : state.deferred_negatives) {
         const auto value=expression_present_in_solution(negative.expression,selected,negative.owner,
-            negative.context,DependencyKind::Runtime,state,negative.conflict_expression);
+            negative.context,negative.role,state,negative.conflict_expression);
         if (value && *value) return true;
     }
     return false;
@@ -1195,7 +1237,7 @@ void resolve_expression(
     }
 
     if (state.use_policy &&
-        (!enabled || !state.policy.activates(role))) return;
+        !expression_role_active(expression, role, enabled, state.policy)) return;
 
     switch (expression->kind) {
 
@@ -1388,7 +1430,7 @@ void resolve_expression(
             if (inner_kind == Expression::Kind::And || inner_kind == Expression::Kind::Or ||
                 inner_kind == Expression::Kind::Not || inner_kind == Expression::Kind::Conditional ||
                 inner_kind == Expression::Kind::Scoped) {
-                state.deferred_negatives.push_back({not_expression->expression, requiring_package, context});
+                state.deferred_negatives.push_back({not_expression->expression, requiring_package, context, false, role});
                 return;
             }
             const auto target = extract_dependency_target(not_expression->expression);
@@ -1427,42 +1469,7 @@ void resolve_expression(
             const auto* conditional = dynamic_cast<const ConditionalExpression*>(expression.get());
             if (!conditional || !conditional->condition || !conditional->body)
                 throw std::runtime_error("Espressione conditional non valida");
-            std::function<bool(const ExpressionPtr&, DependencyContext)> test_condition;
-            test_condition = [&](const ExpressionPtr& node, DependencyContext node_context) -> bool {
-                if (!node) throw std::runtime_error("Condizione nulla");
-                switch (node->kind) {
-                    case Expression::Kind::True: return true;
-                    case Expression::Kind::False: return false;
-                    case Expression::Kind::Platform:
-                    case Expression::Kind::Architecture:
-                    case Expression::Kind::ABI: return evaluate_environment_selector(node, node_context, state);
-                    case Expression::Kind::Feature: {
-                        const auto* feature = dynamic_cast<const FeatureRef*>(node.get());
-                        if (!feature) throw std::runtime_error("Feature condizionale non valido");
-                        const auto configured = state.policy.feature_states.find(feature->name);
-                        if (configured != state.policy.feature_states.end()) return configured->second;
-                        return std::find(requiring_package.provides.features.begin(), requiring_package.provides.features.end(), feature->name) != requiring_package.provides.features.end();
-                    }
-                    case Expression::Kind::And: {
-                        const auto* e = dynamic_cast<const AndExpression*>(node.get()); if (!e) throw std::runtime_error("AND condizionale non valido");
-                        for (const auto& child : e->expressions) if (!test_condition(child, node_context)) return false; return true;
-                    }
-                    case Expression::Kind::Or: {
-                        const auto* e = dynamic_cast<const OrExpression*>(node.get()); if (!e) throw std::runtime_error("OR condizionale non valido");
-                        for (const auto& child : e->expressions) if (test_condition(child, node_context)) return true; return false;
-                    }
-                    case Expression::Kind::Not: {
-                        const auto* e = dynamic_cast<const NotExpression*>(node.get()); if (!e || !e->expression) throw std::runtime_error("NOT condizionale non valido"); return !test_condition(e->expression, node_context);
-                    }
-                    case Expression::Kind::Scoped: {
-                        const auto* e = dynamic_cast<const ScopedExpression*>(node.get()); if (!e || !e->body) throw std::runtime_error("Scope condizionale non valido");
-                        if (state.use_policy && (!e->enabled || !state.policy.activates(e->kind_role))) return false;
-                        return test_condition(e->body, e->context);
-                    }
-                    default: throw std::runtime_error("La condizione può contenere solo selector, feature e operatori booleani");
-                }
-            };
-            if (test_condition(conditional->condition, context))
+            if (evaluate_boolean_condition(conditional->condition, requiring_package, context, state, role))
                 resolve_expression(conditional->body, requiring_package, context, role, enabled, repository, state);
             return;
         }
@@ -1515,9 +1522,6 @@ void resolve_recursive(
     try {
 
         for (const auto& dependency : package.dependencies) {
-
-            if (state.use_policy &&
-                (!dependency.enabled || !state.policy.activates(dependency.kind))) continue;
 
             resolve_expression(
                 dependency.expression,
