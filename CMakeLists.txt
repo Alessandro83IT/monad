@@ -88,6 +88,7 @@ set(ATHENA_TESTS
     local_repository_test
     removal_e2e_test
     core_foundation_test
+    public_install_plan_test
 )
 
 foreach(test_name IN LISTS ATHENA_TESTS)

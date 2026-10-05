@@ -2,6 +2,7 @@
 
 #include "types.hpp"
 #include "repository.hpp"
+#include "install_plan.hpp"
 #include <optional>
 #include <string>
 #include <vector>

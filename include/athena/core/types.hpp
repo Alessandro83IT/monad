@@ -27,13 +27,14 @@ private:
     std::string value_;
 };
 
-struct PackageIdTag; struct RepositoryIdTag; struct ArtifactIdTag; struct SnapshotIdTag;
+struct PackageIdTag; struct RepositoryIdTag; struct ArtifactIdTag; struct SnapshotIdTag; struct SystemPolicyIdTag;
 struct BuildInputIdTag; struct DigestTag;
 using PackageId = Identifier<PackageIdTag>;
 using RepositoryId = Identifier<RepositoryIdTag>;
 using ArtifactId = Identifier<ArtifactIdTag>;
 // Digest-shaped value with a distinct type from artifacts and build inputs.
 using SnapshotId = Identifier<SnapshotIdTag>;
+using SystemPolicyId = Identifier<SystemPolicyIdTag>;
 using BuildInputId = Identifier<BuildInputIdTag>;
 using ContentDigest = Identifier<DigestTag>;
 using ManifestDigest = Identifier<struct ManifestDigestTag>;

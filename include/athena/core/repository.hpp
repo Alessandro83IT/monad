@@ -2,6 +2,7 @@
 
 #include "schema.hpp"
 #include "types.hpp"
+#include "dependency.hpp"
 
 #include <optional>
 #include <map>
@@ -80,6 +81,9 @@ struct PackageMetadata {
     std::vector<std::string> platforms;
     std::vector<std::string> architectures;
     std::vector<std::string> abis;
+    // Canonical dependency expressions activated by configuring each feature.
+    // Appended to preserve existing aggregate initializers.
+    std::map<std::string, std::vector<DependencyMetadata>> feature_dependencies;
 
     void validate() const;
     bool operator==(const PackageMetadata&) const = default;

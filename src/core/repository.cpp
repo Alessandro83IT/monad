@@ -135,6 +135,92 @@ toml::array to_array(const std::vector<std::string>& values)
     return result;
 }
 
+std::string role_name(DependencyRole role)
+{
+    switch (role) {
+    case DependencyRole::Runtime: return "runtime";
+    case DependencyRole::Build: return "build";
+    case DependencyRole::Test: return "test";
+    case DependencyRole::Optional: return "optional";
+    case DependencyRole::Development: return "development";
+    case DependencyRole::Propagated: return "propagated";
+    }
+    throw TypeError("Invalid dependency role");
+}
+
+DependencyRole read_role(const std::string& value)
+{
+    if (value == "runtime") return DependencyRole::Runtime;
+    if (value == "build") return DependencyRole::Build;
+    if (value == "test") return DependencyRole::Test;
+    if (value == "optional") return DependencyRole::Optional;
+    if (value == "development") return DependencyRole::Development;
+    if (value == "propagated") return DependencyRole::Propagated;
+    throw TypeError("Unsupported dependency role");
+}
+
+std::string context_name(DependencyTargetContext context)
+{
+    switch (context) {
+    case DependencyTargetContext::Host: return "host";
+    case DependencyTargetContext::Build: return "build";
+    case DependencyTargetContext::Target: return "target";
+    }
+    throw TypeError("Invalid dependency target context");
+}
+
+DependencyTargetContext read_context(const std::string& value)
+{
+    if (value == "host") return DependencyTargetContext::Host;
+    if (value == "build") return DependencyTargetContext::Build;
+    if (value == "target") return DependencyTargetContext::Target;
+    throw TypeError("Unsupported dependency target context");
+}
+
+toml::table dependency_table(const DependencyMetadata& dependency)
+{
+    return toml::table{
+        {"expression", canonical_expression(dependency.expression.text)},
+        {"role", role_name(dependency.role)},
+        {"context", context_name(dependency.context)},
+        {"enabled", dependency.enabled}
+    };
+}
+
+toml::array feature_dependency_array(const std::vector<DependencyMetadata>& dependencies)
+{
+    toml::array result;
+    for (const auto& dependency : dependencies) result.push_back(dependency_table(dependency));
+    return result;
+}
+
+std::map<std::string, std::vector<DependencyMetadata>> read_feature_dependencies(const toml::table& table)
+{
+    std::map<std::string, std::vector<DependencyMetadata>> result;
+    const auto* features = table.get_as<toml::table>("feature_dependencies");
+    if (!features) return result;
+    for (const auto& [name_node, value] : *features) {
+        const std::string name(name_node.str());
+        if (name.empty()) throw TypeError("Empty feature dependency name");
+        const auto* array = value.as_array();
+        if (!array) throw TypeError("Feature dependencies must be arrays");
+        auto& dependencies = result[name];
+        for (const auto& node : *array) {
+            const auto* item = node.as_table();
+            if (!item) throw TypeError("Feature dependency entry must be a table");
+            reject_unknown_keys(*item, {"expression", "role", "context", "enabled"});
+            DependencyMetadata dependency;
+            dependency.expression.text = canonical_expression(required_string(*item, "expression"));
+            dependency.role = read_role(optional_string(*item, "role").value_or("runtime"));
+            dependency.context = read_context(optional_string(*item, "context").value_or("target"));
+            if (const auto enabled = (*item)["enabled"].value<bool>()) dependency.enabled = *enabled;
+            else if ((*item).get("enabled")) throw TypeError("Invalid feature dependency enabled field");
+            dependencies.push_back(std::move(dependency));
+        }
+    }
+    return result;
+}
+
 void add_package_fields(toml::table& table, const PackageMetadata& metadata)
 {
     table.insert("package_id", metadata.package_id.value());
@@ -143,6 +229,12 @@ void add_package_fields(toml::table& table, const PackageMetadata& metadata)
     if (!metadata.display_name.empty()) table.insert("display_name", metadata.display_name);
     if (!metadata.description.empty()) table.insert("description", metadata.description);
     table.insert("dependencies", to_array(canonical_expressions(metadata.dependencies)));
+    if (!metadata.feature_dependencies.empty()) {
+        toml::table features;
+        for (const auto& [name, dependencies] : metadata.feature_dependencies)
+            features.insert(name, feature_dependency_array(dependencies));
+        table.insert("feature_dependencies", std::move(features));
+    }
     table.insert("capabilities", to_array(metadata.capabilities));
     table.insert("features", to_array(metadata.features));
     table.insert("conflicts", to_array(canonical_expressions(metadata.conflicts)));
@@ -155,7 +247,7 @@ PackageMetadata read_package_fields(const toml::table& table)
 {
     reject_unknown_keys(table, {
         "package_id", "version", "schema_version", "display_name", "description",
-        "dependencies", "capabilities", "features", "conflicts", "platforms",
+        "dependencies", "feature_dependencies", "capabilities", "features", "conflicts", "platforms",
         "architectures", "abis"
     });
     PackageMetadata result{
@@ -166,6 +258,7 @@ PackageMetadata read_package_fields(const toml::table& table)
     result.display_name = optional_string(table, "display_name").value_or(std::string{});
     result.description = optional_string(table, "description").value_or(std::string{});
     result.dependencies = string_array(table, "dependencies", true);
+    result.feature_dependencies = read_feature_dependencies(table);
     result.capabilities = string_array(table, "capabilities", true);
     result.features = string_array(table, "features", true);
     result.conflicts = string_array(table, "conflicts", true);
@@ -360,6 +453,15 @@ void canonicalize_candidate(RepositoryCandidate& candidate)
     };
     canonicalize_expressions(candidate.package.dependencies);
     canonicalize_expressions(candidate.package.conflicts);
+    for (auto& [feature, dependencies] : candidate.package.feature_dependencies) {
+        (void)feature;
+        for (auto& dependency : dependencies)
+            dependency.expression.text = canonical_expression(dependency.expression.text);
+        std::sort(dependencies.begin(), dependencies.end(), [](const auto& a, const auto& b) {
+            return std::tie(a.expression.text, a.role, a.context, a.enabled) <
+                   std::tie(b.expression.text, b.role, b.context, b.enabled);
+        });
+    }
     sort_values(candidate.package.capabilities);
     sort_values(candidate.package.features);
     sort_values(candidate.package.platforms);
@@ -466,6 +568,12 @@ void PackageMetadata::validate() const
     validate_names(abis, "abis");
     (void)canonical_expressions(dependencies);
     (void)canonical_expressions(conflicts);
+    for (const auto& [feature, expressions] : feature_dependencies) {
+        if (feature.empty() || feature.find_first_of(" \t\n\r") != std::string::npos)
+            throw TypeError("Invalid feature dependency name");
+        for (const auto& expression : expressions)
+            (void)canonical_expression(expression.expression.text);
+    }
 }
 
 void SourceRecipe::validate() const
