@@ -5,9 +5,7 @@
 #include "../version/version.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cctype>
-#include <iomanip>
 #include <initializer_list>
 #include <limits>
 #include <set>
@@ -15,7 +13,7 @@
 #include <string_view>
 #include <tuple>
 #include <toml++/toml.hpp>
-#include <openssl/evp.h>
+#include "../hash/sha256.hpp"
 
 namespace athena::core {
 namespace {
@@ -395,19 +393,8 @@ toml::array candidate_array(const std::vector<RepositoryCandidate>& candidates)
 
 std::string sha256(std::string_view bytes)
 {
-    std::array<unsigned char, EVP_MAX_MD_SIZE> digest{};
-    unsigned int digest_size = 0;
-    if (EVP_Digest(
-            bytes.data(), bytes.size(), digest.data(), &digest_size,
-            EVP_sha256(), nullptr) != 1) {
-        throw TypeError("SHA-256 digest calculation failed");
-    }
-    std::ostringstream encoded;
-    encoded << "sha256:" << std::hex << std::setfill('0');
-    for (unsigned int i = 0; i < digest_size; ++i) {
-        encoded << std::setw(2) << static_cast<unsigned int>(digest[i]);
-    }
-    return encoded.str();
+    try { return hash::sha256(bytes); }
+    catch (const hash::Error& error) { throw TypeError(error.what()); }
 }
 
 std::string candidates_material(const std::vector<RepositoryCandidate>& candidates)

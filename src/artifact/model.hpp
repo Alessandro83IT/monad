@@ -12,7 +12,7 @@ namespace athena::artifact {
 enum class ErrorCode {
     InvalidRoot, InspectionFailure, InvalidPath, UnsupportedFileType,
     UnsupportedPermissions, HardLinkTopology, UnsupportedMetadata,
-    ReadFailure, InvalidModel, ChangedTree
+    ReadFailure, InvalidModel, ChangedTree, LengthOverflow, HashFailure
 };
 
 // Internal error, with a byte-preserving relative path (empty means root).

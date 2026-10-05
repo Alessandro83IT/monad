@@ -44,7 +44,7 @@ agree. This is not a kernel snapshot or a lock against hostile concurrent
 writers: callers must supply a private quiescent staging tree. Later
 publication must verify the published representation independently. Content
 is buffered in memory (twice during re-observation); no streaming encoder,
-ArtifactId, store object, manifest or execution integration exists here.
+store object, manifest or execution integration exists here.
 
 Tests use collision-free mkdtemp roots and checks active in Release as well
 as Debug. Success fixtures explicitly report unavailable trusted-namespace
@@ -52,3 +52,25 @@ inspection privilege; rejection fixtures still run against the real scanner.
 Optional metadata facilities are skipped only when their fixture creation
 reports that the host cannot provide them. Production inspection is never
 bypassed by tests.
+
+`encoding.hpp` produces exact binary canonical tree bytes after strict model
+validation. It never sorts or repairs input. Explicit big-endian primitives and
+checked U64 arithmetic cover field lengths and the complete framed length;
+local string limits fail explicitly. A length pass precedes emission so a later
+streaming sink can preserve the same framing without redesigning the model.
+
+`identity.hpp` derives the public opaque `core::ArtifactId` from canonical
+bytes using the distinct `athena-artifact\0` frame, schema version and U64
+canonical length. Shared internal `hash/sha256.hpp` uses the existing OpenSSL
+EVP infrastructure and fixed lowercase hexadecimal formatting. Identity errors
+retain model-validation context or report framing overflow/hash failure. Model
+identity alone does not prove faithful raw-tree inspection; scan first when
+that evidence is required. No BuildInputId, publication, store, generation or
+execution behavior is implemented. Content, canonical bytes and the identity
+preimage are currently buffered; streaming and immutable publication remain
+later work.
+
+Encoding/identity tests contain independent canonical byte and digest constants
+for ten v1 vectors, verified with Python hashlib and OpenSSL CLI independently
+of production code. Scanner composition tests use real inspection and explicitly
+skip if hidden trusted-namespace metadata cannot be inspected on the host.

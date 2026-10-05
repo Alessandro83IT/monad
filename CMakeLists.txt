@@ -56,6 +56,9 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    artifact_encoding_test
+    artifact_identity_test
+    artifact_identity_scanner_test
     artifact_model_test
     artifact_scanner_test
     artifact_contract_test
@@ -106,6 +109,7 @@ endforeach()
 set_tests_properties(package_loader_test PROPERTIES
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
 )
+set_tests_properties(artifact_identity_scanner_test PROPERTIES SKIP_RETURN_CODE 77)
 set_tests_properties(artifact_scanner_test PROPERTIES SKIP_RETURN_CODE 77)
 
 # Built for manual, opt-in integration checks; intentionally not registered
