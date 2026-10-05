@@ -85,6 +85,8 @@ set(ATHENA_TESTS
     metadata_schema_test
     repository_snapshot_test
     repository_selection_test
+    resolver_candidate_test
+    resolver_snapshot_adapter_test
     local_repository_test
     removal_e2e_test
     core_foundation_test

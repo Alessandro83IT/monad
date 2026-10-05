@@ -71,7 +71,7 @@ Environments native_environments()
 }
 
 
-using Package = athena::package::Package;
+using Package = athena::repository::ResolverCandidate;
 
 struct DependencyTarget {
     enum class Kind { Package, Capability, Feature };
@@ -100,9 +100,13 @@ struct DeferredNegative {
  * later dependency constraints to validate the existing assignment
  * instead of silently accepting it.
  */
-struct PackageAssignment {
-    Package package;
-};
+/*
+ * The map key is the logical package slot (PackageId/name), so compatible
+ * requirements converge on one installed package. The value is the exact
+ * identity-qualified alternative selected for that slot; repository and
+ * snapshot identity are never used to merge alternatives.
+ */
+struct PackageAssignment { Package package; };
 
 /*
  * Snapshot of the mutable resolution state.
@@ -135,7 +139,7 @@ struct ResolutionSnapshot {
         std::string,
         std::vector<DependencyContext>
     > contexts;
-    std::unordered_map<std::string, std::string> semantic_assignments;
+    std::unordered_map<std::string, Package> semantic_assignments;
     std::unordered_map<std::string, bool> feature_states;
 };
 
@@ -178,7 +182,7 @@ struct ResolutionState {
         std::string,
         std::vector<DependencyContext>
     > contexts;
-    std::unordered_map<std::string, std::string> semantic_assignments;
+    std::unordered_map<std::string, Package> semantic_assignments;
     std::unordered_map<std::string, bool> feature_states;
 
     /*
@@ -201,6 +205,21 @@ struct ResolutionState {
 
 bool package_satisfies_target(const Package&, const DependencyTarget&);
 
+bool identity_precedes(const Package& left, const Package& right)
+{
+    if (left.identity.has_value() != right.identity.has_value())
+        return !left.identity.has_value();
+    if (!left.identity) return false;
+    const auto& a = *left.identity;
+    const auto& b = *right.identity;
+    if (a.repository != b.repository) return a.repository < b.repository;
+    if (a.snapshot.metadata_digest != b.snapshot.metadata_digest)
+        return a.snapshot.metadata_digest < b.snapshot.metadata_digest;
+    if (a.snapshot.snapshot_id != b.snapshot.snapshot_id)
+        return a.snapshot.snapshot_id < b.snapshot.snapshot_id;
+    return a.provenance.metadata_reference < b.provenance.metadata_reference;
+}
+
 /*
  * Find the newest available package version satisfying
  * the specified version constraint.
@@ -218,7 +237,7 @@ std::optional<Package> find_package(
      * The resolver remains responsible for applying the version
      * constraint and selecting the newest compatible candidate.
      */
-    for (const auto& package : repository.find(name)) {
+    for (const auto& package : repository.find_candidates(name)) {
 
         if (!satisfies(constraint, package.version)) {
             continue;
@@ -255,15 +274,15 @@ std::vector<Package> find_dependency_candidates(
     switch (target.kind) {
 
         case DependencyTarget::Kind::Package:
-            candidates = repository.find(target.name);
+            candidates = repository.find_candidates(target.name);
             break;
 
         case DependencyTarget::Kind::Capability:
-            candidates = repository.find_capability(target.name);
+            candidates = repository.find_capability_candidates(target.name);
             break;
 
         case DependencyTarget::Kind::Feature:
-            candidates = repository.find_feature(target.name);
+            candidates = repository.find_feature_candidates(target.name);
             break;
     }
 
@@ -299,7 +318,8 @@ std::vector<Package> find_dependency_candidates(
                 );
             }
 
-            return left.name < right.name;
+            if (left.name != right.name) return left.name < right.name;
+            return identity_precedes(left, right);
         }
     );
 
@@ -501,6 +521,13 @@ const Package* find_assignment(
     }
 
     return &it->second.package;
+}
+
+bool same_candidate(const Package& left, const Package& right)
+{
+    if (left.identity && right.identity) return *left.identity == *right.identity;
+    if (left.identity || right.identity) return false;
+    return left.name == right.name && left.version == right.version;
 }
 
 /*
@@ -867,8 +894,8 @@ void resolve_package_target(
         const auto key = semantic_assignment_key(target);
         const auto selected = state.semantic_assignments.find(key);
         if (selected != state.semantic_assignments.end()) {
-            const auto* provider = find_assignment(selected->second, state);
-            if (!provider || !package_satisfies_target(*provider, target))
+            const auto* provider = find_assignment(selected->second.name, state);
+            if (!provider || !same_candidate(*provider, selected->second) || !package_satisfies_target(*provider, target))
                 throw std::runtime_error("Il provider già selezionato non soddisfa il vincolo semantico " + target.name);
             record_dependency_context(state, *provider, context);
             resolve_package_target({DependencyTarget::Kind::Package, provider->name, target.constraint},
@@ -1082,7 +1109,7 @@ void resolve_package_target(
     apply_package_conflicts(dependency_package, state, target.kind != DependencyTarget::Kind::Package);
 
     if (target.kind != DependencyTarget::Kind::Package)
-        state.semantic_assignments[semantic_assignment_key(target)] = dependency_package.name;
+        state.semantic_assignments[semantic_assignment_key(target)] = dependency_package;
 
     record_dependency_context(
         state,
@@ -1528,6 +1555,63 @@ void resolve_recursive(
     }
 }
 
+struct CandidateResolution {
+    std::vector<Package> packages;
+    std::unordered_map<std::string, std::vector<DependencyContext>> contexts;
+};
+
+CandidateResolution resolve_candidate_graph(
+    const Package& root,
+    const athena::repository::RepositoryIndex& repository,
+    const Environments& environments,
+    const DependencyResolutionContext* policy)
+{
+    ResolutionState state;
+    state.environments = environments;
+    if (policy) {
+        state.policy = *policy;
+        state.use_policy = true;
+        for (const auto& [feature, enabled] : policy->feature_states) {
+            if (enabled && !root.feature_dependencies.contains(feature))
+                throw ResolutionError(ResolutionErrorCode::FeatureUnsatisfied,
+                    "Feature configurata ma non dichiarata dal package radice: " + feature);
+            state.feature_states[feature] = enabled;
+        }
+    }
+
+    for (;;) {
+        try {
+            resolve_recursive(root, repository, state);
+            if (violates_negative_dependency(root, state.negative_dependencies))
+                throw ResolutionError(ResolutionErrorCode::Conflict,
+                    "Pacchetto radice vietato dal vincolo NOT: " + root.name);
+            if (violates_deferred_negatives(root, state))
+                throw ResolutionError(ResolutionErrorCode::Conflict,
+                    "Espressione NOT composta violata dal grafo selezionato");
+            return {state.result, state.contexts};
+        } catch (const std::runtime_error& error) {
+            if (!backtrack_resolution(state)) {
+                if (const auto* structured = dynamic_cast<const ResolutionError*>(&error)) throw *structured;
+                throw ResolutionError(ResolutionErrorCode::ResolutionFailure, error.what());
+            }
+        }
+    }
+}
+
+athena::install::InstallPlan legacy_plan(const CandidateResolution& solution)
+{
+    athena::install::InstallPlan plan;
+    for (const auto& candidate : solution.packages) {
+        const auto found = solution.contexts.find(candidate.name);
+        if (found == solution.contexts.end() || found->second.empty()) {
+            plan.add(candidate, DependencyContext::Target);
+            continue;
+        }
+        for (const auto context : found->second) plan.add(candidate, context);
+    }
+    return plan;
+}
+
 }
 
 std::vector<athena::package::Package> resolve(
@@ -1552,99 +1636,8 @@ athena::install::InstallPlan resolve_plan(
     const Environments& environments
 )
 {
-    ResolutionState state;
-    state.environments = environments;
-
-    /*
-     * The solver repeatedly propagates the dependency graph from the
-     * current state. A failure does not restart the search from scratch:
-     * the most recent decision restores its exact pre-selection snapshot
-     * and advances to the next candidate.
-     */
-    for (;;) {
-
-        try {
-
-            resolve_recursive(
-                root,
-                repository,
-                state
-            );
-
-            /*
-             * The root package is part of the final solution just like
-             * every resolved dependency. A NOT constraint introduced
-             * while resolving the graph must therefore be checked before
-             * accepting the solution.
-             */
-            if (violates_negative_dependency(
-                    root,
-                    state.negative_dependencies
-                )) {
-
-                throw ResolutionError(ResolutionErrorCode::Conflict,
-                    "Pacchetto radice vietato dal vincolo NOT: " +
-                    root.name +
-                    " (" +
-                    root.version +
-                    ")"
-                );
-            }
-            if (violates_deferred_negatives(root, state))
-                throw ResolutionError(ResolutionErrorCode::Conflict, "Espressione NOT composta violata dal grafo selezionato");
-
-            /*
-             * ResolutionState already stores packages in dependency-
-             * before-dependent order, so InstallPlan can preserve that
-             * ordering directly.
-             */
-            athena::install::InstallPlan plan;
-
-            for (const auto& package : state.result) {
-
-                const auto context_it =
-                    state.contexts.find(package.name);
-
-                if (context_it == state.contexts.end() ||
-                    context_it->second.empty()) {
-
-                    /*
-                     * This should only be possible for legacy/internal
-                     * resolution paths. Keep Target as the historical
-                     * default instead of creating an unannotated plan.
-                     */
-                    plan.add(
-                        package,
-                        DependencyContext::Target
-                    );
-
-                    continue;
-                }
-
-                for (const auto context :
-                     context_it->second) {
-
-                    plan.add(
-                        package,
-                        context
-                    );
-                }
-            }
-
-            return plan;
-        }
-        catch (const std::runtime_error& error) {
-
-            /*
-             * No decision means that the dependency graph has no
-             * remaining alternative branch.
-             */
-            if (!backtrack_resolution(state)) {
-                if (const auto* structured = dynamic_cast<const ResolutionError*>(&error)) throw *structured;
-                throw ResolutionError(ResolutionErrorCode::ResolutionFailure, error.what());
-            }
-        }
-    }
+    return legacy_plan(resolve_candidate_graph(
+        athena::repository::ResolverCandidate::legacy(root), repository, environments, nullptr));
 }
 
 athena::install::InstallPlan resolve_plan(
@@ -1654,37 +1647,18 @@ athena::install::InstallPlan resolve_plan(
     const DependencyResolutionContext& context
 )
 {
-    ResolutionState state;
-    state.environments = environments;
-    state.policy = context;
-    state.use_policy = true;
-    for (const auto& [feature, enabled] : context.feature_states) {
-        if (enabled && !root.feature_dependencies.contains(feature))
-            throw ResolutionError(ResolutionErrorCode::FeatureUnsatisfied,
-                "Feature configurata ma non dichiarata dal package radice: " + feature);
-        state.feature_states[feature] = enabled;
-    }
-    for (;;) {
-        try {
-            resolve_recursive(root, repository, state);
-            if (violates_negative_dependency(root, state.negative_dependencies))
-                throw ResolutionError(ResolutionErrorCode::Conflict, "Pacchetto radice vietato dal vincolo NOT: " + root.name);
-            if (violates_deferred_negatives(root, state))
-                throw ResolutionError(ResolutionErrorCode::Conflict, "Espressione NOT composta violata dal grafo selezionato");
-            athena::install::InstallPlan plan;
-            for (const auto& package : state.result) {
-                const auto it = state.contexts.find(package.name);
-                if (it == state.contexts.end() || it->second.empty()) plan.add(package, DependencyContext::Target);
-                else for (const auto ctx : it->second) plan.add(package, ctx);
-            }
-            return plan;
-        } catch (const std::runtime_error& error) {
-            if (!backtrack_resolution(state)) {
-                if (const auto* structured = dynamic_cast<const ResolutionError*>(&error)) throw *structured;
-                throw ResolutionError(ResolutionErrorCode::ResolutionFailure, error.what());
-            }
-        }
-    }
+    return legacy_plan(resolve_candidate_graph(
+        athena::repository::ResolverCandidate::legacy(root), repository, environments, &context));
+}
+
+std::vector<athena::repository::ResolverCandidate> resolve_candidates(
+    const athena::package::Package& root,
+    const athena::repository::RepositoryIndex& repository,
+    const Environments& environments,
+    const DependencyResolutionContext& context)
+{
+    return resolve_candidate_graph(athena::repository::ResolverCandidate::legacy(root),
+                                   repository, environments, &context).packages;
 }
 
 athena::install::InstallPlan resolve_plan(

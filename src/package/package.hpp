@@ -94,6 +94,12 @@ struct Package {
     // Raw fields from an Arch repository desc record. Kept opaque here so
     // importing Arch binaries does not reinterpret them as an Athena recipe.
     std::map<std::string, std::vector<std::string>> arch_metadata{};
+
+    // Repository target restrictions retained by the resolver-facing
+    // metadata adapter. Empty lists mean unrestricted, matching PackageMetadata.
+    std::vector<std::string> platforms;
+    std::vector<std::string> architectures;
+    std::vector<std::string> abis;
 };
 
 /*

@@ -5,12 +5,22 @@
 #include "../repository/repository_index.hpp"
 #include "../install/install_plan.hpp"
 #include "environment.hpp"
+#include "../repository/resolver_candidate.hpp"
 
 #include <vector>
 #include <stdexcept>
 #include <string>
 
 namespace athena::dependency {
+
+// Identity-preserving semantic solution used by repository-backed callers.
+// Package-only legacy entry points remain available below.
+std::vector<athena::repository::ResolverCandidate> resolve_candidates(
+    const athena::package::Package& root,
+    const athena::repository::RepositoryIndex& repository,
+    const Environments& environments,
+    const DependencyResolutionContext& context
+);
 
 enum class ResolutionErrorCode {
     CapabilityUnsatisfied,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../package/package.hpp"
+#include "resolver_candidate.hpp"
 
 #include <string>
 #include <vector>
@@ -27,6 +28,19 @@ public:
     void add(
         const athena::package::Package& package
     );
+
+    // Identity-aware resolver path. Unlike the package-only compatibility
+    // overload, this keeps the original candidate and snapshot attached.
+    void add_candidate(ResolverCandidate candidate);
+    void add_public_candidate(
+        const athena::core::RepositoryCandidate& candidate,
+        const athena::core::RepositorySnapshotRef& snapshot
+    );
+
+    std::vector<ResolverCandidate> find_candidates(const std::string& name) const;
+    std::vector<ResolverCandidate> find_capability_candidates(const std::string& capability) const;
+    std::vector<ResolverCandidate> find_feature_candidates(const std::string& feature) const;
+    const std::vector<ResolverCandidate>& resolver_candidates() const noexcept { return candidates_; }
 
     /*
      * Return every available version of a package.
@@ -66,11 +80,13 @@ public:
         const std::string& name
     ) const;
 
-    const std::vector<athena::package::Package>& packages() const noexcept { return packages_; }
+    // Compatibility projection for repository loaders that still consume
+    // semantic Package values. Resolver code must use resolver_candidates().
+    std::vector<athena::package::Package> packages() const;
 
 private:
 
-    std::vector<athena::package::Package> packages_;
+    std::vector<ResolverCandidate> candidates_;
 };
 
 }
