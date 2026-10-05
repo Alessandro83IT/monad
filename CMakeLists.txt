@@ -56,6 +56,8 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    object_store_test
+    object_store_scanner_test
     artifact_encoding_test
     artifact_identity_test
     artifact_identity_scanner_test
@@ -111,6 +113,8 @@ set_tests_properties(package_loader_test PROPERTIES
 )
 set_tests_properties(artifact_identity_scanner_test PROPERTIES SKIP_RETURN_CODE 77)
 set_tests_properties(artifact_scanner_test PROPERTIES SKIP_RETURN_CODE 77)
+set_tests_properties(object_store_scanner_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+set_tests_properties(object_store_test PROPERTIES TIMEOUT 90)
 
 # Built for manual, opt-in integration checks; intentionally not registered
 # with CTest because it requires network access and a live Arch mirror.

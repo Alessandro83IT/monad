@@ -44,7 +44,7 @@ agree. This is not a kernel snapshot or a lock against hostile concurrent
 writers: callers must supply a private quiescent staging tree. Later
 publication must verify the published representation independently. Content
 is buffered in memory (twice during re-observation); no streaming encoder,
-store object, manifest or execution integration exists here.
+store object, manifest or execution integration exists within the scanner.
 
 Tests use collision-free mkdtemp roots and checks active in Release as well
 as Debug. Success fixtures explicitly report unavailable trusted-namespace
@@ -66,9 +66,12 @@ EVP infrastructure and fixed lowercase hexadecimal formatting. Identity errors
 retain model-validation context or report framing overflow/hash failure. Model
 identity alone does not prove faithful raw-tree inspection; scan first when
 that evidence is required. No BuildInputId, publication, store, generation or
-execution behavior is implemented. Content, canonical bytes and the identity
-preimage are currently buffered; streaming and immutable publication remain
-later work.
+execution behavior is implemented within the identity module. Content, canonical
+bytes and the identity preimage are currently buffered; streaming remains later
+work. B.5 adds separate internal immutable publication in
+[`../store/object_store.hpp`](../store/object_store.hpp), documented in
+[`../store/README.md`](../store/README.md), composing the unchanged scanner and
+identity derivation and re-verifying the hardened authoritative payload.
 
 Encoding/identity tests contain independent canonical byte and digest constants
 for ten v1 vectors, verified with Python hashlib and OpenSSL CLI independently
