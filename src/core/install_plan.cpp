@@ -2,25 +2,23 @@
 #include "../dependency/parser.hpp"
 #include "../dependency/serializer.hpp"
 #include "resolution_order.hpp"
-#include <athena/core/install_plan.hpp>
+#include <athena/core/resolver.hpp>
 
 #include <algorithm>
 #include <set>
-#include <tuple>
 
 namespace athena::core
 {
 namespace
 {
-using Key = std::tuple<std::string, std::string, std::string, std::string>;
-Key key(const CandidateIdentity& id)
-{
-    return {id.package.value(), id.version.value(), id.repository.value(),
-            id.snapshot.snapshot_id ? id.snapshot.snapshot_id->value() : std::string{}};
-}
 bool matches(const std::vector<std::string>& allowed, const std::string& value)
 {
     return allowed.empty() || std::find(allowed.begin(), allowed.end(), value) != allowed.end();
+}
+bool valid_scope(DependencyRole role, DependencyTargetContext context)
+{
+    return static_cast<unsigned>(role) <= static_cast<unsigned>(DependencyRole::Propagated) &&
+           static_cast<unsigned>(context) <= static_cast<unsigned>(DependencyTargetContext::Target);
 }
 bool valid_constraint(const VersionConstraint& constraint)
 {
@@ -225,19 +223,26 @@ bool has_negative(const athena::dependency::ExpressionPtr& e, const std::string&
 
 } // namespace
 
-InstallPlan InstallPlanBuilder::build() const
+InstallPlan plan_install(const InstallRequest& request)
 {
-    auto result = result_;
-    detail::canonicalize(result);
-    InstallPlan plan(std::move(result));
+    return InstallPlanBuilder(resolve_request(request)).build();
+}
+
+InstallPlan InstallPlanBuilder::build() const& { return InstallPlanBuilder(result_).build(); }
+
+InstallPlan InstallPlanBuilder::build() &&
+{
+    detail::canonicalize(result_);
+    InstallPlan plan(std::move(result_));
     plan.validate();
     return plan;
 }
 
 void InstallPlan::validate() const
 {
-    std::set<Key> identities;
+    std::set<detail::StableKey> identities;
     std::set<std::string> package_ids;
+    std::map<SnapshotId, RepositorySnapshotRef> snapshots;
     for (const auto& selection : result_.selections)
     {
         const auto id = selection.identity();
@@ -245,6 +250,10 @@ void InstallPlan::validate() const
         {
             selection.candidate.validate();
             selection.snapshot.validate();
+            for (const auto& entry : selection.candidate.package.feature_dependencies)
+                for (const auto& dependency : entry.second)
+                    if (!valid_scope(dependency.role, dependency.context))
+                        throw std::invalid_argument("Invalid feature dependency scope");
         }
         catch (const std::exception& e)
         {
@@ -253,7 +262,7 @@ void InstallPlan::validate() const
         if (selection.candidate.package.package_id != id.package ||
             selection.candidate.package.version != id.version ||
             selection.candidate.provenance.repository_id != id.repository ||
-            selection.snapshot.repository_id != id.repository ||
+            selection.snapshot.repository_id != id.repository || !selection.snapshot.snapshot_id ||
             (selection.candidate.provenance.snapshot &&
              *selection.candidate.provenance.snapshot != selection.snapshot) ||
             (selection.candidate.provenance.revision &&
@@ -261,12 +270,18 @@ void InstallPlan::validate() const
             id.provenance != selection.candidate.provenance)
             throw InstallPlanError(InstallPlanErrorCode::RepositoryMismatch,
                                    "Candidate identity/provenance mismatch");
+        const auto [snapshot, inserted] =
+            snapshots.emplace(*selection.snapshot.snapshot_id, selection.snapshot);
+        if (!inserted && snapshot->second != selection.snapshot)
+            throw InstallPlanError(InstallPlanErrorCode::RepositoryMismatch,
+                                   "Contradictory references to one snapshot identity");
         if (!matches(selection.candidate.package.platforms, result_.target.platform) ||
             !matches(selection.candidate.package.architectures, result_.target.architecture) ||
             !matches(selection.candidate.package.abis, result_.target.abi))
             throw InstallPlanError(InstallPlanErrorCode::TargetMismatch,
                                    "Candidate does not match target environment");
-        if (!identities.insert(key(id)).second || !package_ids.insert(id.package.value()).second)
+        if (!identities.insert(detail::key(id)).second ||
+            !package_ids.insert(id.package.value()).second)
             throw InstallPlanError(InstallPlanErrorCode::DuplicatePackage,
                                    "PackageId selected more than once: " + id.package.value());
         for (const auto& reason : selection.reasons)
@@ -289,9 +304,48 @@ void InstallPlan::validate() const
         return std::any_of(result_.selections.begin(), result_.selections.end(),
                            [&](const auto& s) { return s.identity() == id; });
     };
+    const auto selected = [&](const CandidateIdentity& id) -> const PackageSelection*
+    {
+        const auto it = std::find_if(result_.selections.begin(), result_.selections.end(),
+                                     [&](const auto& s) { return s.identity() == id; });
+        return it == result_.selections.end() ? nullptr : &*it;
+    };
+    std::map<std::string, bool> configured;
+    for (const auto& f : result_.configured_features)
+    {
+        if (f.feature.empty() || f.profile != result_.profile ||
+            (configured.contains(f.feature) && configured.at(f.feature) != f.enabled))
+            throw InstallPlanError(InstallPlanErrorCode::InvalidFeature,
+                                   "Invalid configured feature");
+        configured[f.feature] = f.enabled;
+    }
     for (const auto& selection : result_.selections)
         for (const auto& reason : selection.reasons)
         {
+            const bool shape = [&]
+            {
+                switch (reason.kind)
+                {
+                case InstallReasonKind::ExplicitRequest:
+                    return reason.explicit_target && !reason.package && !reason.policy &&
+                           reason.feature.empty() && reason.profile.empty() &&
+                           selector_matches(reason.explicit_target->selector,
+                                            selection.candidate.package);
+                case InstallReasonKind::DependencyOf:
+                    return reason.package && !reason.explicit_target && !reason.policy &&
+                           reason.feature.empty() && reason.profile.empty();
+                case InstallReasonKind::EnabledByFeature:
+                    return reason.package && !reason.explicit_target && !reason.policy &&
+                           !reason.feature.empty() && reason.profile == result_.profile;
+                case InstallReasonKind::RequiredBySystemPolicy:
+                    return reason.policy && !reason.explicit_target && !reason.package &&
+                           reason.feature.empty() && reason.profile.empty();
+                }
+                return false;
+            }();
+            if (!shape)
+                throw InstallPlanError(InstallPlanErrorCode::InvalidReason,
+                                       "Incoherent install reason");
             if (reason.package && !contains(*reason.package))
                 throw InstallPlanError(
                     InstallPlanErrorCode::InvalidReason,
@@ -324,17 +378,25 @@ void InstallPlan::validate() const
         }
     for (const auto& binding : result_.capability_bindings)
         if (binding.selector.kind != SelectorKind::Capability ||
-            !valid_selector(binding.selector) || !contains(binding.provider))
+            !valid_selector(binding.selector) || !contains(binding.provider) ||
+            !selector_matches(binding.selector, selected(binding.provider)->candidate.package))
             throw InstallPlanError(InstallPlanErrorCode::InvalidBinding,
                                    "Invalid capability provider binding");
     for (const auto& edge : result_.edges)
     {
-        if (!contains(edge.source) || (edge.provider && !contains(*edge.provider)) ||
-            !valid_selector(edge.target))
-            throw InstallPlanError(
-                InstallPlanErrorCode::InvalidEdge,
-                "Dependency edge references an unselected candidate or invalid selector");
-        if (edge.reason && edge.reason->package && !contains(*edge.reason->package))
+        if (!contains(edge.source) || !edge.provider || !contains(*edge.provider) ||
+            !valid_selector(edge.target) || !valid_scope(edge.role, edge.context) ||
+            (edge.provider &&
+             !selector_matches(edge.target, selected(*edge.provider)->candidate.package)))
+            throw InstallPlanError(InstallPlanErrorCode::InvalidEdge,
+                                   "Dependency edge references an unselected "
+                                   "candidate or invalid selector");
+        if (edge.reason && (!edge.provider || edge.reason->package != edge.source ||
+                            (edge.reason->kind != InstallReasonKind::DependencyOf &&
+                             edge.reason->kind != InstallReasonKind::EnabledByFeature) ||
+                            std::find(selected(*edge.provider)->reasons.begin(),
+                                      selected(*edge.provider)->reasons.end(),
+                                      *edge.reason) == selected(*edge.provider)->reasons.end()))
             throw InstallPlanError(InstallPlanErrorCode::InvalidReason,
                                    "Dependency edge reason references an unselected package");
     }
@@ -359,7 +421,8 @@ void InstallPlan::validate() const
             result_.configured_features.begin(), result_.configured_features.end(),
             [&](const auto& f)
             { return f.profile == feature.profile && f.feature == feature.feature && f.enabled; });
-        if (owner == result_.selections.end() || !configured ||
+        if (feature.profile != result_.profile || feature.feature.empty() ||
+            owner == result_.selections.end() || !configured ||
             !owner->candidate.package.feature_dependencies.contains(feature.feature))
             throw InstallPlanError(InstallPlanErrorCode::InvalidFeature,
                                    "Feature activation is inconsistent");
@@ -389,7 +452,8 @@ void InstallPlan::validate() const
         bool declared = false;
         try
         {
-            if (owner != result_.selections.end() && !negative.expression.text.empty())
+            if (owner != result_.selections.end() && !negative.expression.text.empty() &&
+                valid_scope(negative.role, negative.context))
             {
                 const auto canonical = athena::dependency::serialize_expression(
                     athena::dependency::parse_dependency("(" + negative.expression.text + ")")
@@ -425,7 +489,15 @@ void InstallPlan::validate() const
                     const auto feature =
                         metadata.feature_dependencies.find(negative.source.feature);
                     if (!negative.source.feature.empty() &&
-                        feature != metadata.feature_dependencies.end())
+                        feature != metadata.feature_dependencies.end() &&
+                        std::any_of(result_.activated_features.begin(),
+                                    result_.activated_features.end(),
+                                    [&](const auto& f)
+                                    {
+                                        return f.owner == negative.declared_by &&
+                                               f.feature == negative.source.feature &&
+                                               f.profile == result_.profile;
+                                    }))
                         for (const auto& d : feature->second)
                         {
                             const auto e =

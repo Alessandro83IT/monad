@@ -1,3 +1,6 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <athena/core/api.hpp>
 
 #include <algorithm>
@@ -7,10 +10,11 @@ using namespace athena::core;
 
 static RepositorySnapshot snapshot(std::string repo) {
     PackageMetadata metadata{PackageId("app"), PackageVersion("1.0"), SchemaVersion(1)};
+    metadata.capabilities = {"tls"};
     metadata.features = {"offered"};
     metadata.architectures = {"x86_64"};
     metadata.conflicts = {"NOT pkg-a", "NOT (pkg-a AND pkg-b)", "NOT (pkg-a OR pkg-b)"};
-    metadata.feature_dependencies["gui"] = {{DependencyExpression{"libgui"}, DependencyRole::Runtime, DependencyTargetContext::Target, true}};
+    metadata.feature_dependencies["gui"] = {{DependencyExpression{"app"}, DependencyRole::Runtime, DependencyTargetContext::Target, true}};
     const RepositoryId id(repo);
     return RepositorySnapshot::create(id, RepositoryRevision("rev1"), {{metadata, RepositoryProvenance{id, RepositoryRevision("rev1")}}});
 }
@@ -27,7 +31,7 @@ int main() {
     auto a = snapshot("repo-a"), b = snapshot("repo-b");
     assert(selection(a).identity() != selection(b).identity());
     const auto restored = deserialize_repository_snapshot(serialize(a));
-    assert(restored.candidates().front().package.feature_dependencies.at("gui").front().expression.text == "libgui");
+    assert(restored.candidates().front().package.feature_dependencies.at("gui").front().expression.text == "app");
 
     InstallRequest request;
     request.targets.push_back({DependencySelector{SelectorKind::Package, "app", {}}});
@@ -48,11 +52,11 @@ int main() {
     InstallReason policy_reason; policy_reason.kind = InstallReasonKind::RequiredBySystemPolicy; policy_reason.policy = SystemPolicyId("base");
     result.selections.front().reasons.insert(result.selections.front().reasons.end(), {dependency_reason, feature_reason, policy_reason});
     result.system_policy_selections.push_back({SystemPolicyId("base"), DependencySelector{SelectorKind::Package, "app", {}}, id});
-    result.capability_bindings.push_back({DependencySelector{SelectorKind::Capability, "tls", {VersionConstraintKind::Comparison, VersionComparisonOperator::GreaterEqual, "1.2", {}}}, id});
+    result.capability_bindings.push_back({DependencySelector{SelectorKind::Capability, "tls", {VersionConstraintKind::Comparison, VersionComparisonOperator::GreaterEqual, "1.0", {}}}, id});
     result.configured_features.push_back({"gui", "desktop", true});
     result.offered_features.push_back({"offered", id});
     result.activated_features.push_back({"gui", "desktop", id});
-    result.edges.push_back({id, DependencySelector{SelectorKind::Package, "libgui", {}}, id, DependencyRole::Runtime, DependencyTargetContext::Target, feature_reason});
+    result.edges.push_back({id, DependencySelector{SelectorKind::Package, "app", {}}, id, DependencyRole::Runtime, DependencyTargetContext::Target, feature_reason});
     result.negative_constraints = {{{"NOT pkg-a"}, id}, {{"NOT (pkg-a AND pkg-b)"}, id}, {{"NOT (pkg-a OR pkg-b)"}, id}};
 
     // Sort the input to the builder so equality verifies complete retention.

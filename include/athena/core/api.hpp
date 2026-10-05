@@ -2,7 +2,7 @@
 
 #include "types.hpp"
 #include "repository.hpp"
-#include "install_plan.hpp"
+#include "install_plan.hpp" // core::plan_install(InstallRequest) returns the immutable public plan.
 #include "resolver.hpp"
 #include <optional>
 #include <string>

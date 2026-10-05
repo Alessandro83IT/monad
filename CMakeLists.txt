@@ -92,6 +92,7 @@ set(ATHENA_TESTS
     local_repository_test
     removal_e2e_test
     core_foundation_test
+    public_planning_test
     public_install_plan_test
     resolution_result_test
 )
@@ -108,3 +109,6 @@ set_tests_properties(package_loader_test PROPERTIES
 add_executable(arch_repository_live_test tests/arch_repository_live.cpp)
 target_link_libraries(arch_repository_live_test PRIVATE Athena::Core)
 target_include_directories(arch_repository_live_test PRIVATE "${PROJECT_SOURCE_DIR}/src")
+
+# The planning acceptance consumer sees only exported headers.
+set_property(TARGET public_planning_test PROPERTY INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/include")

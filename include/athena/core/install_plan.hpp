@@ -164,6 +164,7 @@ private:
 
 class InstallPlan {
 public:
+    const ResolutionResult& resolution() const noexcept { return result_; }
     const ResolutionResult& result() const noexcept { return result_; }
     const std::vector<PackageSelection>& selections() const noexcept { return result_.selections; }
     const std::vector<CapabilityBinding>& capability_bindings() const noexcept { return result_.capability_bindings; }
@@ -184,9 +185,14 @@ private:
 class InstallPlanBuilder {
 public:
     explicit InstallPlanBuilder(ResolutionResult result) : result_(std::move(result)) {}
-    InstallPlan build() const;
+    InstallPlan build() const &;
+    InstallPlan build() &&;
 private:
     ResolutionResult result_;
 };
+
+// Pure public planning: resolve once, then validate and finalize the accepted value.
+// ResolutionError and InstallPlanError retain their distinct structured codes.
+InstallPlan plan_install(const InstallRequest& request);
 
 } // namespace athena::core
