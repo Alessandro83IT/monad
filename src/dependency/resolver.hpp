@@ -35,6 +35,15 @@ athena::install::InstallPlan resolve_plan(
     const Environments& environments
 );
 
+/* Canonical role-aware entry point. Host, Build and Target environments
+ * are explicit and roles are selected by the operation policy. */
+athena::install::InstallPlan resolve_plan(
+    const athena::package::Package& root,
+    const athena::repository::RepositoryIndex& repository,
+    const Environments& environments,
+    const DependencyResolutionContext& context
+);
+
 /*
  * Resolve a package using a high-level Repository and produce an
  * InstallPlan.

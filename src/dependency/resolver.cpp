@@ -6,6 +6,7 @@
 #include "../version/version.hpp"
 
 #include <algorithm>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -72,9 +73,20 @@ Environments native_environments()
 
 using Package = athena::package::Package;
 
-struct NegativeDependency {
+struct DependencyTarget {
+    enum class Kind { Package, Capability, Feature };
+    Kind kind;
     std::string name;
     VersionConstraint constraint;
+};
+
+struct NegativeDependency {
+    DependencyTarget target;
+};
+struct DeferredNegative {
+    ExpressionPtr expression;
+    Package owner;
+    DependencyContext context;
 };
 
 /*
@@ -108,6 +120,7 @@ struct ResolutionSnapshot {
     std::unordered_set<std::string> resolved;
     std::unordered_set<std::string> resolving;
     std::vector<NegativeDependency> negative_dependencies;
+    std::vector<DeferredNegative> deferred_negatives;
 
     /*
      * Semantic contexts accumulated for each selected package.
@@ -120,6 +133,7 @@ struct ResolutionSnapshot {
         std::string,
         std::vector<DependencyContext>
     > contexts;
+    std::unordered_map<std::string, std::string> semantic_assignments;
 };
 
 /*
@@ -152,6 +166,7 @@ struct ResolutionState {
     std::unordered_set<std::string> resolved;
     std::unordered_set<std::string> resolving;
     std::vector<NegativeDependency> negative_dependencies;
+    std::vector<DeferredNegative> deferred_negatives;
 
     /*
      * Semantic dependency contexts associated with selected packages.
@@ -160,6 +175,7 @@ struct ResolutionState {
         std::string,
         std::vector<DependencyContext>
     > contexts;
+    std::unordered_map<std::string, std::string> semantic_assignments;
 
     /*
      * Host/Build/Target environments are fixed for the whole resolution.
@@ -168,6 +184,8 @@ struct ResolutionState {
      * against which that graph is evaluated.
      */
     Environments environments;
+    DependencyResolutionContext policy;
+    bool use_policy = false;
 
     /*
      * Global candidate decisions, in dependency-resolution order.
@@ -221,18 +239,6 @@ std::optional<Package> find_package(
  * to backtrack when the newest candidate creates a conflict later
  * in the dependency graph.
  */
-struct DependencyTarget {
-    enum class Kind {
-        Package,
-        Capability,
-        Feature
-    };
-
-    Kind kind;
-    std::string name;
-    VersionConstraint constraint;
-};
-
 std::vector<Package> find_dependency_candidates(
     const DependencyTarget& target,
     const athena::repository::RepositoryIndex& repository
@@ -255,27 +261,10 @@ std::vector<Package> find_dependency_candidates(
             break;
     }
 
-    /*
-     * Version constraints currently apply to concrete package
-     * references. Capability and feature references select a provider
-     * package and therefore do not impose a version constraint yet.
-     */
-    if (target.kind == DependencyTarget::Kind::Package) {
-
-        candidates.erase(
-            std::remove_if(
-                candidates.begin(),
-                candidates.end(),
-                [&target](const Package& package) {
-                    return !satisfies(
-                        target.constraint,
-                        package.version
-                    );
-                }
-            ),
-            candidates.end()
-        );
-    }
+    candidates.erase(
+        std::remove_if(candidates.begin(), candidates.end(), [&target](const Package& package) {
+            return !satisfies(target.constraint, package.version);
+        }), candidates.end());
 
     /*
      * Semantic dependencies may have several providers. Select the
@@ -318,7 +307,9 @@ ResolutionSnapshot snapshot_resolution_state(
         state.resolved,
         {},
         state.negative_dependencies,
-        state.contexts
+        state.deferred_negatives,
+        state.contexts,
+        state.semantic_assignments
     };
 }
 
@@ -336,9 +327,11 @@ void restore_resolution_state(
     state.resolving = snapshot.resolving;
     state.negative_dependencies =
         snapshot.negative_dependencies;
+    state.deferred_negatives = snapshot.deferred_negatives;
 
     state.contexts =
         snapshot.contexts;
+    state.semantic_assignments = snapshot.semantic_assignments;
 }
 
 /*
@@ -440,8 +433,9 @@ DependencyTarget extract_dependency_target(
             );
         }
 
-        if (comparison->target->kind !=
-            Expression::Kind::Package) {
+        if (comparison->target->kind != Expression::Kind::Package &&
+            comparison->target->kind != Expression::Kind::Capability &&
+            comparison->target->kind != Expression::Kind::Feature) {
 
             throw std::runtime_error(
                 "Il confronto di versione deve riferirsi "
@@ -449,22 +443,13 @@ DependencyTarget extract_dependency_target(
             );
         }
 
-        const auto* package =
-            dynamic_cast<const PackageRef*>(
-                comparison->target.get()
-            );
-
-        if (package == nullptr) {
-            throw std::runtime_error(
-                "Riferimento al pacchetto non valido"
-            );
-        }
-
-        return {
-            DependencyTarget::Kind::Package,
-            package->name,
-            *comparison->constraint
-        };
+        if (const auto* package = dynamic_cast<const PackageRef*>(comparison->target.get()))
+            return {DependencyTarget::Kind::Package, package->name, *comparison->constraint};
+        if (const auto* capability = dynamic_cast<const CapabilityRef*>(comparison->target.get()))
+            return {DependencyTarget::Kind::Capability, capability->name, *comparison->constraint};
+        if (const auto* feature = dynamic_cast<const FeatureRef*>(comparison->target.get()))
+            return {DependencyTarget::Kind::Feature, feature->name, *comparison->constraint};
+        throw std::runtime_error("Riferimento versionato non valido");
     }
 
     throw std::runtime_error(
@@ -556,6 +541,17 @@ void record_dependency_context(
     }
 }
 
+bool package_satisfies_target(const Package& package, const DependencyTarget& target)
+{
+    bool provides = false;
+    switch (target.kind) {
+        case DependencyTarget::Kind::Package: provides = package.name == target.name; break;
+        case DependencyTarget::Kind::Capability: provides = std::find(package.provides.capabilities.begin(), package.provides.capabilities.end(), target.name) != package.provides.capabilities.end(); break;
+        case DependencyTarget::Kind::Feature: provides = std::find(package.provides.features.begin(), package.provides.features.end(), target.name) != package.provides.features.end(); break;
+    }
+    return provides && satisfies(target.constraint, package.version);
+}
+
 bool violates_negative_dependency(
     const Package& package,
     const std::vector<NegativeDependency>& constraints
@@ -563,16 +559,18 @@ bool violates_negative_dependency(
 {
     for (const auto& constraint : constraints) {
 
-        if (package.name != constraint.name) {
-            continue;
-        }
-
-        if (satisfies(constraint.constraint, package.version)) {
+        if (package_satisfies_target(package, constraint.target)) {
             return true;
         }
     }
 
     return false;
+}
+
+std::string semantic_assignment_key(const DependencyTarget& target)
+{
+    const char* prefix = target.kind == DependencyTarget::Kind::Capability ? "capability:" : "feature:";
+    return std::string(prefix) + target.name;
 }
 
 
@@ -660,10 +658,119 @@ bool evaluate_environment_selector(
     }
 }
 
+bool evaluate_boolean_condition(const ExpressionPtr& expression, const Package& owner,
+                                DependencyContext context, const ResolutionState& state)
+{
+    if (!expression) throw std::runtime_error("Condizione booleana nulla");
+    switch (expression->kind) {
+        case Expression::Kind::True: return true;
+        case Expression::Kind::False: return false;
+        case Expression::Kind::Platform:
+        case Expression::Kind::Architecture:
+        case Expression::Kind::ABI: return evaluate_environment_selector(expression, context, state);
+        case Expression::Kind::Feature: {
+            const auto* feature = dynamic_cast<const FeatureRef*>(expression.get());
+            if (!feature) throw std::runtime_error("Feature condizionale non valida");
+            return std::find(owner.provides.features.begin(), owner.provides.features.end(), feature->name) != owner.provides.features.end();
+        }
+        case Expression::Kind::And: {
+            const auto* e = dynamic_cast<const AndExpression*>(expression.get()); if (!e) throw std::runtime_error("AND condizionale non valido");
+            for (const auto& child : e->expressions) if (!evaluate_boolean_condition(child, owner, context, state)) return false; return true;
+        }
+        case Expression::Kind::Or: {
+            const auto* e = dynamic_cast<const OrExpression*>(expression.get()); if (!e) throw std::runtime_error("OR condizionale non valido");
+            for (const auto& child : e->expressions) if (evaluate_boolean_condition(child, owner, context, state)) return true; return false;
+        }
+        case Expression::Kind::Not: {
+            const auto* e = dynamic_cast<const NotExpression*>(expression.get()); if (!e || !e->expression) throw std::runtime_error("NOT condizionale non valido"); return !evaluate_boolean_condition(e->expression, owner, context, state);
+        }
+        case Expression::Kind::Scoped: {
+            const auto* e = dynamic_cast<const ScopedExpression*>(expression.get()); if (!e || !e->body) throw std::runtime_error("Scope condizionale non valido");
+            if (state.use_policy && (!e->enabled || !state.policy.activates(e->kind_role))) return false;
+            return evaluate_boolean_condition(e->body, owner, e->context, state);
+        }
+        default: throw std::runtime_error("La condizione supporta solo selector, feature e operatori booleani");
+    }
+}
+
+bool expression_role_active(const ExpressionPtr& expression, DependencyKind role,
+                            bool enabled, const DependencyResolutionContext& policy)
+{
+    if (!expression || !enabled || !policy.activates(role)) return false;
+    if (expression->kind == Expression::Kind::Scoped) {
+        const auto* scoped = dynamic_cast<const ScopedExpression*>(expression.get());
+        return scoped && expression_role_active(scoped->body, scoped->kind_role, scoped->enabled, policy);
+    }
+    return true;
+}
+
+std::optional<bool> expression_present_in_solution(const ExpressionPtr& expression,
+    const std::vector<Package>& packages, const Package& owner, DependencyContext context,
+    DependencyKind inherited_role, const ResolutionState& state)
+{
+    if (!expression) throw std::runtime_error("Espressione negativa nulla");
+    switch (expression->kind) {
+        case Expression::Kind::True: return true;
+        case Expression::Kind::False: return false;
+        case Expression::Kind::Package:
+        case Expression::Kind::Capability:
+        case Expression::Kind::Feature:
+        case Expression::Kind::VersionComparison: {
+            const auto target = extract_dependency_target(expression);
+            return std::any_of(packages.begin(), packages.end(), [&](const Package& p){return package_satisfies_target(p,target);});
+        }
+        case Expression::Kind::Platform:
+        case Expression::Kind::Architecture:
+        case Expression::Kind::ABI: return evaluate_environment_selector(expression, context, state);
+        case Expression::Kind::And: {
+            const auto* e = dynamic_cast<const AndExpression*>(expression.get()); if (!e) throw std::runtime_error("AND negative non valido");
+            for (const auto& child : e->expressions) { const auto value=expression_present_in_solution(child,packages,owner,context,inherited_role,state); if (value && !*value) return false; }
+            return true;
+        }
+        case Expression::Kind::Or: {
+            const auto* e = dynamic_cast<const OrExpression*>(expression.get()); if (!e) throw std::runtime_error("OR negative non valido");
+            for (const auto& child : e->expressions) { const auto value=expression_present_in_solution(child,packages,owner,context,inherited_role,state); if (value && *value) return true; }
+            return false;
+        }
+        case Expression::Kind::Not: {
+            const auto* e = dynamic_cast<const NotExpression*>(expression.get()); if (!e || !e->expression) throw std::runtime_error("NOT negative non valido");
+            const auto value=expression_present_in_solution(e->expression,packages,owner,context,inherited_role,state); return !value.value_or(false);
+        }
+        case Expression::Kind::Scoped: {
+            const auto* e = dynamic_cast<const ScopedExpression*>(expression.get()); if (!e || !e->body) throw std::runtime_error("Scope negative non valido");
+            if (state.use_policy && !expression_role_active(e->body,e->kind_role,e->enabled,state.policy)) return std::nullopt;
+            return expression_present_in_solution(e->body,packages,owner,e->context,e->kind_role,state);
+        }
+        case Expression::Kind::Conditional: {
+            const auto* e = dynamic_cast<const ConditionalExpression*>(expression.get()); if (!e || !e->condition || !e->body) throw std::runtime_error("Conditional negative non valido");
+            if (!evaluate_boolean_condition(e->condition,owner,context,state)) return true;
+            return expression_present_in_solution(e->body,packages,owner,context,inherited_role,state);
+        }
+    }
+    return false;
+}
+
+bool violates_deferred_negatives(const Package& root, const ResolutionState& state)
+{
+    if (state.deferred_negatives.empty()) return false;
+    std::vector<Package> selected;
+    selected.reserve(state.assignments.size()+1);
+    for (const auto& [name, assignment] : state.assignments) { (void)name; selected.push_back(assignment.package); }
+    selected.push_back(root);
+    for (const auto& negative : state.deferred_negatives) {
+        const auto value=expression_present_in_solution(negative.expression,selected,negative.owner,
+            negative.context,DependencyKind::Runtime,state);
+        if (value && *value) return true;
+    }
+    return false;
+}
+
 void resolve_expression(
     const ExpressionPtr& expression,
     const Package& requiring_package,
     DependencyContext context,
+    DependencyKind role,
+    bool enabled,
     const athena::repository::RepositoryIndex& repository,
     ResolutionState& state
 );
@@ -676,6 +783,20 @@ void resolve_package_target(
     ResolutionState& state
 )
 {
+    if (target.kind != DependencyTarget::Kind::Package) {
+        const auto key = semantic_assignment_key(target);
+        const auto selected = state.semantic_assignments.find(key);
+        if (selected != state.semantic_assignments.end()) {
+            const auto* provider = find_assignment(selected->second, state);
+            if (!provider || !package_satisfies_target(*provider, target))
+                throw std::runtime_error("Il provider già selezionato non soddisfa il vincolo semantico " + target.name);
+            record_dependency_context(state, *provider, context);
+            resolve_package_target({DependencyTarget::Kind::Package, provider->name, target.constraint},
+                                   requiring_package, context, repository, state);
+            return;
+        }
+    }
+
     /*
      * If this package already has an assignment, every new constraint
      * must be compatible with that exact version.
@@ -747,6 +868,8 @@ void resolve_package_target(
                     dependency.expression,
                     *existing_assignment,
                     dependency.context,
+                    dependency.kind,
+                    dependency.enabled,
                     repository,
                     state
                 );
@@ -811,8 +934,10 @@ void resolve_package_target(
      * snapshot and advanced candidate_index before restarting
      * propagation. Reuse that decision instead of creating a duplicate.
      */
+    const std::string decision_name = target.kind == DependencyTarget::Kind::Package
+        ? target.name : semantic_assignment_key(target);
     if (!state.decisions.empty() &&
-        state.decisions.back().name == target.name &&
+        state.decisions.back().name == decision_name &&
         state.decisions.back().candidates.size() == candidates.size()) {
 
         decision_index =
@@ -821,7 +946,7 @@ void resolve_package_target(
     else if (candidates.size() > 1) {
 
         state.decisions.push_back({
-            target.name,
+            decision_name,
             candidates,
             0,
             snapshot_resolution_state(state)
@@ -869,7 +994,10 @@ void resolve_package_target(
      */
     state.assignments[dependency_package.name] = {
         dependency_package
-    };
+        };
+
+    if (target.kind != DependencyTarget::Kind::Package)
+        state.semantic_assignments[semantic_assignment_key(target)] = dependency_package.name;
 
     record_dependency_context(
         state,
@@ -890,6 +1018,8 @@ void resolve_package_target(
                 dependency.expression,
                 dependency_package,
                 dependency.context,
+                dependency.kind,
+                dependency.enabled,
                 repository,
                 state
             );
@@ -938,6 +1068,8 @@ void resolve_expression(
     const ExpressionPtr& expression,
     const Package& requiring_package,
     DependencyContext context,
+    DependencyKind role,
+    bool enabled,
     const athena::repository::RepositoryIndex& repository,
     ResolutionState& state
 )
@@ -947,6 +1079,9 @@ void resolve_expression(
             "Espressione di dipendenza nulla"
         );
     }
+
+    if (state.use_policy &&
+        (!enabled || !state.policy.activates(role))) return;
 
     switch (expression->kind) {
 
@@ -1002,16 +1137,15 @@ void resolve_expression(
                 );
             }
 
-            for (const auto& child :
-                 and_expression->expressions) {
-
-                resolve_expression(
-                    child,
-                    requiring_package,
-                    context,
-                    repository,
-                    state
-                );
+            const auto before = snapshot_resolution_state(state);
+            const auto decisions_before = state.decisions;
+            try {
+                for (const auto& child : and_expression->expressions)
+                    resolve_expression(child, requiring_package, context, role, enabled, repository, state);
+            } catch (...) {
+                restore_resolution_state(state, before);
+                state.decisions = decisions_before;
+                throw;
             }
 
             return;
@@ -1035,6 +1169,9 @@ void resolve_expression(
             for (const auto& child :
                  or_expression->expressions) {
 
+                if (state.use_policy && !expression_role_active(child, role, enabled, state.policy))
+                    continue;
+
                 /*
                  * Each OR alternative is attempted transactionally.
                  *
@@ -1042,12 +1179,8 @@ void resolve_expression(
                  * by that attempt are rolled back before trying the
                  * next alternative.
                  */
-                const auto result_size = state.result.size();
-                const auto assignments_before = state.assignments;
-                const auto resolved_before = state.resolved;
-                const auto resolving_before = state.resolving;
-                const auto negative_dependencies_size =
-                    state.negative_dependencies.size();
+                const auto before = snapshot_resolution_state(state);
+                const auto decisions_before = state.decisions;
 
                 try {
 
@@ -1055,6 +1188,8 @@ void resolve_expression(
                         child,
                         requiring_package,
                         context,
+                        role,
+                        enabled,
                         repository,
                         state
                     );
@@ -1068,13 +1203,8 @@ void resolve_expression(
                      * alternative, including packages already resolved,
                      * resolution state, and negative NOT constraints.
                      */
-                    state.result.resize(result_size);
-                    state.assignments = assignments_before;
-                    state.resolved = resolved_before;
-                    state.resolving = resolving_before;
-                    state.negative_dependencies.resize(
-                        negative_dependencies_size
-                    );
+                    restore_resolution_state(state, before);
+                    state.decisions = decisions_before;
 
                     last_error = error.what();
                 }
@@ -1105,27 +1235,48 @@ void resolve_expression(
                 );
             }
 
-            const auto target =
-                extract_dependency_target(
-                    not_expression->expression
-                );
-
-            if (target.kind !=
-                DependencyTarget::Kind::Package) {
-
-                throw std::runtime_error(
-                    "Il vincolo NOT supporta attualmente "
-                    "solo riferimenti a pacchetti"
-                );
+            const auto selector_only = [&](const auto& self, const ExpressionPtr& node) -> bool {
+                if (!node) return false;
+                switch (node->kind) {
+                    case Expression::Kind::True:
+                    case Expression::Kind::False:
+                    case Expression::Kind::Platform:
+                    case Expression::Kind::Architecture:
+                    case Expression::Kind::ABI: return true;
+                    case Expression::Kind::And: {
+                        const auto* e = dynamic_cast<const AndExpression*>(node.get()); if (!e) return false;
+                        return std::all_of(e->expressions.begin(), e->expressions.end(), [&](const auto& c){return self(self,c);});
+                    }
+                    case Expression::Kind::Or: {
+                        const auto* e = dynamic_cast<const OrExpression*>(node.get()); if (!e) return false;
+                        return std::all_of(e->expressions.begin(), e->expressions.end(), [&](const auto& c){return self(self,c);});
+                    }
+                    case Expression::Kind::Not: {
+                        const auto* e = dynamic_cast<const NotExpression*>(node.get()); return e && self(self,e->expression);
+                    }
+                    default: return false;
+                }
+            };
+            if (selector_only(selector_only, not_expression->expression)) {
+                if (evaluate_boolean_condition(not_expression->expression, requiring_package, context, state))
+                    throw std::runtime_error("Negazione di selector non soddisfatta");
+                return;
             }
+
+            const auto inner_kind = not_expression->expression->kind;
+            if (inner_kind == Expression::Kind::And || inner_kind == Expression::Kind::Or ||
+                inner_kind == Expression::Kind::Not || inner_kind == Expression::Kind::Conditional ||
+                inner_kind == Expression::Kind::Scoped) {
+                state.deferred_negatives.push_back({not_expression->expression, requiring_package, context});
+                return;
+            }
+            const auto target = extract_dependency_target(not_expression->expression);
+
+        // NOT accepts package, capability and feature references.
 
             for (const auto& package : state.result) {
 
-                if (package.name == target.name &&
-                    satisfies(
-                        target.constraint,
-                        package.version
-                    )) {
+                if (package_satisfies_target(package, target)) {
 
                     throw std::runtime_error(
                         "Vincolo NOT violato dal pacchetto già "
@@ -1138,13 +1289,66 @@ void resolve_expression(
                 }
             }
 
-            state.negative_dependencies.push_back({
-                target.name,
-                target.constraint
-            });
+            state.negative_dependencies.push_back({target});
 
             return;
         }
+
+        case Expression::Kind::Scoped: {
+            const auto* scoped = dynamic_cast<const ScopedExpression*>(expression.get());
+            if (!scoped || !scoped->body) throw std::runtime_error("Espressione scoped non valida");
+            resolve_expression(scoped->body, requiring_package, scoped->context, scoped->kind_role,
+                               scoped->enabled, repository, state);
+            return;
+        }
+
+        case Expression::Kind::Conditional: {
+            const auto* conditional = dynamic_cast<const ConditionalExpression*>(expression.get());
+            if (!conditional || !conditional->condition || !conditional->body)
+                throw std::runtime_error("Espressione conditional non valida");
+            std::function<bool(const ExpressionPtr&, DependencyContext)> test_condition;
+            test_condition = [&](const ExpressionPtr& node, DependencyContext node_context) -> bool {
+                if (!node) throw std::runtime_error("Condizione nulla");
+                switch (node->kind) {
+                    case Expression::Kind::True: return true;
+                    case Expression::Kind::False: return false;
+                    case Expression::Kind::Platform:
+                    case Expression::Kind::Architecture:
+                    case Expression::Kind::ABI: return evaluate_environment_selector(node, node_context, state);
+                    case Expression::Kind::Feature: {
+                        const auto* feature = dynamic_cast<const FeatureRef*>(node.get());
+                        if (!feature) throw std::runtime_error("Feature condizionale non valido");
+                        return std::find(requiring_package.provides.features.begin(), requiring_package.provides.features.end(), feature->name) != requiring_package.provides.features.end();
+                    }
+                    case Expression::Kind::And: {
+                        const auto* e = dynamic_cast<const AndExpression*>(node.get()); if (!e) throw std::runtime_error("AND condizionale non valido");
+                        for (const auto& child : e->expressions) if (!test_condition(child, node_context)) return false; return true;
+                    }
+                    case Expression::Kind::Or: {
+                        const auto* e = dynamic_cast<const OrExpression*>(node.get()); if (!e) throw std::runtime_error("OR condizionale non valido");
+                        for (const auto& child : e->expressions) if (test_condition(child, node_context)) return true; return false;
+                    }
+                    case Expression::Kind::Not: {
+                        const auto* e = dynamic_cast<const NotExpression*>(node.get()); if (!e || !e->expression) throw std::runtime_error("NOT condizionale non valido"); return !test_condition(e->expression, node_context);
+                    }
+                    case Expression::Kind::Scoped: {
+                        const auto* e = dynamic_cast<const ScopedExpression*>(node.get()); if (!e || !e->body) throw std::runtime_error("Scope condizionale non valido");
+                        if (state.use_policy && (!e->enabled || !state.policy.activates(e->kind_role))) return false;
+                        return test_condition(e->body, e->context);
+                    }
+                    default: throw std::runtime_error("La condizione può contenere solo selector, feature e operatori booleani");
+                }
+            };
+            if (test_condition(conditional->condition, context))
+                resolve_expression(conditional->body, requiring_package, context, role, enabled, repository, state);
+            return;
+        }
+
+        case Expression::Kind::True:
+            return;
+
+        case Expression::Kind::False:
+            throw std::runtime_error("L'espressione false non può essere soddisfatta");
 
         default:
             throw std::runtime_error(
@@ -1188,10 +1392,15 @@ void resolve_recursive(
 
         for (const auto& dependency : package.dependencies) {
 
+            if (state.use_policy &&
+                (!dependency.enabled || !state.policy.activates(dependency.kind))) continue;
+
             resolve_expression(
                 dependency.expression,
                 package,
                 dependency.context,
+                dependency.kind,
+                dependency.enabled,
                 repository,
                 state
             );
@@ -1282,6 +1491,8 @@ athena::install::InstallPlan resolve_plan(
                     ")"
                 );
             }
+            if (violates_deferred_negatives(root, state))
+                throw std::runtime_error("Espressione NOT composta violata dal grafo selezionato");
 
             /*
              * ResolutionState already stores packages in dependency-
@@ -1361,6 +1572,41 @@ athena::install::InstallPlan resolve_plan(
 
                 state.decisions.pop_back();
             }
+        }
+    }
+}
+
+athena::install::InstallPlan resolve_plan(
+    const athena::package::Package& root,
+    const athena::repository::RepositoryIndex& repository,
+    const Environments& environments,
+    const DependencyResolutionContext& context
+)
+{
+    ResolutionState state;
+    state.environments = environments;
+    state.policy = context;
+    state.use_policy = true;
+    for (;;) {
+        try {
+            resolve_recursive(root, repository, state);
+            if (violates_negative_dependency(root, state.negative_dependencies))
+                throw std::runtime_error("Pacchetto radice vietato dal vincolo NOT: " + root.name);
+            if (violates_deferred_negatives(root, state))
+                throw std::runtime_error("Espressione NOT composta violata dal grafo selezionato");
+            athena::install::InstallPlan plan;
+            for (const auto& package : state.result) {
+                const auto it = state.contexts.find(package.name);
+                if (it == state.contexts.end() || it->second.empty()) plan.add(package, DependencyContext::Target);
+                else for (const auto ctx : it->second) plan.add(package, ctx);
+            }
+            return plan;
+        } catch (const std::runtime_error&) {
+            if (state.decisions.empty()) throw;
+            auto& decision = state.decisions.back();
+            restore_resolution_state(state, decision.snapshot);
+            ++decision.candidate_index;
+            if (decision.candidate_index >= decision.candidates.size()) state.decisions.pop_back();
         }
     }
 }

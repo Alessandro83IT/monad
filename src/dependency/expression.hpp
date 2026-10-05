@@ -69,7 +69,8 @@ struct Expression {
         Or,
         Not,
 
-        Conditional
+        Conditional,
+        Scoped
     };
 
     virtual ~Expression() = default;
@@ -281,6 +282,19 @@ struct ConditionalExpression final : Expression {
     ExpressionPtr body;
 };
 
+/* A nested expression may override the role and target environment of
+ * its subtree, allowing AND/OR/NOT branches to carry distinct semantics. */
+struct ScopedExpression final : Expression {
+    ScopedExpression(DependencyKind dependency_kind, DependencyContext dependency_context,
+                     ExpressionPtr expression, bool is_enabled = true)
+        : Expression(Kind::Scoped), kind_role(dependency_kind), context(dependency_context),
+          body(std::move(expression)), enabled(is_enabled) {}
+    DependencyKind kind_role;
+    DependencyContext context;
+    ExpressionPtr body;
+    bool enabled;
+};
+
 /*
  * A dependency combines an expression with its semantic role
  * and dependency context.
@@ -292,6 +306,33 @@ struct Dependency {
     DependencyKind kind;
 
     DependencyContext context;
+    // Optional edges are opt-in; ordinary dependencies default enabled.
+    bool enabled = true;
+};
+
+/* Roles activated by one explicit resolution operation. */
+struct DependencyResolutionContext {
+    enum class Phase { RuntimeInstall, Build, Test, Development };
+    std::vector<DependencyKind> active_kinds;
+    bool optional_enabled = false;
+    bool propagated_enabled = true;
+
+    bool activates(DependencyKind kind) const {
+        if (kind == DependencyKind::Optional) return optional_enabled;
+        if (kind == DependencyKind::Propagated && !propagated_enabled) return false;
+        for (const auto active : active_kinds) if (active == kind) return true;
+        return false;
+    }
+    static DependencyResolutionContext for_phase(Phase phase) {
+        DependencyResolutionContext result;
+        switch (phase) {
+            case Phase::RuntimeInstall: result.active_kinds = {DependencyKind::Runtime, DependencyKind::Propagated}; break;
+            case Phase::Build: result.active_kinds = {DependencyKind::Runtime, DependencyKind::Build, DependencyKind::Propagated}; break;
+            case Phase::Test: result.active_kinds = {DependencyKind::Runtime, DependencyKind::Build, DependencyKind::Test, DependencyKind::Propagated}; break;
+            case Phase::Development: result.active_kinds = {DependencyKind::Runtime, DependencyKind::Development, DependencyKind::Propagated}; break;
+        }
+        return result;
+    }
 };
 
 } // namespace athena::dependency

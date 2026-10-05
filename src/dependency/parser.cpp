@@ -99,6 +99,9 @@ private:
     {
         skip_whitespace();
 
+        if (starts_with_keyword("when")) return parse_when();
+        if (starts_with_scope()) return parse_scope();
+
         if (consume_character('(')) {
 
             auto expression = parse_or();
@@ -131,16 +134,36 @@ private:
             );
         }
 
+        if (package == "true") return std::make_shared<const TrueExpression>();
+        if (package == "false") return std::make_shared<const FalseExpression>();
+        ExpressionPtr reference;
+        if (consume_character('(')) {
+            const auto value = parse_reference_argument();
+            if (package == "capability" || package == "cap") reference = std::make_shared<const CapabilityRef>(value);
+            else if (package == "feature") reference = std::make_shared<const FeatureRef>(value);
+            else if (package == "platform") reference = std::make_shared<const PlatformRef>(value);
+            else if (package == "architecture" || package == "arch") reference = std::make_shared<const ArchitectureRef>(value);
+            else if (package == "abi") reference = std::make_shared<const ABIRef>(value);
+            else throw std::runtime_error("Riferimento funzione non supportato: " + package);
+        }
+        else reference = std::make_shared<const PackageRef>(package);
+
         skip_whitespace();
+
+        if (consume_character('{')) {
+            auto constraint = parse_constraint_or();
+            if (!consume_character('}')) throw std::runtime_error("Chiusura vincolo versione mancante");
+            return std::make_shared<const VersionComparison>(reference,
+                std::make_shared<const VersionConstraint>(std::move(constraint)));
+        }
 
         if (position >= text.size() ||
             text[position] == ')' ||
+            text[position] == ',' ||
             starts_with_keyword("AND") ||
             starts_with_keyword("OR"))
         {
-            return std::make_shared<const PackageRef>(
-                package
-            );
+            return reference;
         }
 
         const auto op = parse_operator();
@@ -157,11 +180,6 @@ private:
             );
         }
 
-        auto package_reference =
-            std::make_shared<const PackageRef>(
-                package
-            );
-
         auto constraint =
             std::make_shared<const VersionConstraint>(
                 VersionConstraint::comparison(
@@ -171,9 +189,90 @@ private:
             );
 
         return std::make_shared<const VersionComparison>(
-            package_reference,
+            reference,
             constraint
         );
+    }
+
+    std::string parse_reference_argument() {
+        skip_whitespace();
+        const auto start = position;
+        while (position < text.size() && text[position] != ')') ++position;
+        const auto value = trim(text.substr(start, position - start));
+        if (!consume_character(')') || value.empty()) throw std::runtime_error("Riferimento vuoto o parentesi mancante");
+        return value;
+    }
+
+    VersionConstraint parse_constraint_or() {
+        std::vector<VersionConstraint> parts{parse_constraint_and()};
+        while (consume_keyword("OR")) parts.push_back(parse_constraint_and());
+        return parts.size() == 1 ? parts.front() : VersionConstraint::any_of(std::move(parts));
+    }
+    VersionConstraint parse_constraint_and() {
+        std::vector<VersionConstraint> parts{parse_constraint_unary()};
+        while (consume_keyword("AND")) parts.push_back(parse_constraint_unary());
+        return parts.size() == 1 ? parts.front() : VersionConstraint::all(std::move(parts));
+    }
+    VersionConstraint parse_constraint_unary() {
+        if (consume_keyword("NOT")) return VersionConstraint::not_(parse_constraint_unary());
+        if (consume_character('(')) {
+            auto nested = parse_constraint_or();
+            if (!consume_character(')')) throw std::runtime_error("Parentesi constraint mancante");
+            return nested;
+        }
+        const auto op = parse_operator();
+        skip_whitespace();
+        const auto value = parse_version();
+        if (value.empty()) throw std::runtime_error("Versione constraint vuota");
+        return VersionConstraint::comparison(op, value);
+    }
+
+    bool starts_with_scope() const {
+        static const char* roles[] = {"runtime", "build", "test", "optional", "development", "propagated", "optional-disabled"};
+        for (const auto* role : roles) {
+            const std::string prefix = std::string(role) + "(";
+            if (text.compare(position, prefix.size(), prefix) == 0) return true;
+        }
+        return false;
+    }
+
+    ExpressionPtr parse_scope() {
+        const auto start = position;
+        while (position < text.size() && text[position] != '(') ++position;
+        const auto role = text.substr(start, position - start);
+        ++position;
+        const auto context_start = position;
+        while (position < text.size() && text[position] != ')') ++position;
+        const auto context_name = text.substr(context_start, position - context_start);
+        if (!consume_character(')') || !consume_character(':') || !consume_character('(')) throw std::runtime_error("Scope ruolo/contesto non valida");
+        DependencyKind kind;
+        bool enabled = true;
+        if (role == "runtime") kind = DependencyKind::Runtime;
+        else if (role == "build") kind = DependencyKind::Build;
+        else if (role == "test") kind = DependencyKind::Test;
+        else if (role == "optional") kind = DependencyKind::Optional;
+        else if (role == "optional-disabled") { kind = DependencyKind::Optional; enabled = false; }
+        else if (role == "development") kind = DependencyKind::Development;
+        else if (role == "propagated") kind = DependencyKind::Propagated;
+        else throw std::runtime_error("Ruolo non supportato");
+        DependencyContext context;
+        if (context_name == "host") context = DependencyContext::Host;
+        else if (context_name == "build") context = DependencyContext::Build;
+        else if (context_name == "target") context = DependencyContext::Target;
+        else throw std::runtime_error("Contesto non supportato");
+        auto body = parse_or();
+        if (!consume_character(')')) throw std::runtime_error("Parentesi scope mancante");
+        return std::make_shared<const ScopedExpression>(kind, context, std::move(body), enabled);
+    }
+
+    ExpressionPtr parse_when() {
+        position += 4;
+        if (!consume_character('(')) throw std::runtime_error("when richiede '('");
+        auto condition = parse_or();
+        if (!consume_character(',')) throw std::runtime_error("when richiede separatore ','");
+        auto body = parse_or();
+        if (!consume_character(')')) throw std::runtime_error("when richiede ')'");
+        return std::make_shared<const ConditionalExpression>(std::move(condition), std::move(body));
     }
 
     std::string parse_identifier()
@@ -193,7 +292,7 @@ private:
                 character == '<' ||
                 character == '>' ||
                 character == '=' ||
-                character == '!')
+                character == '!' || character == ',' || character == ':')
             {
                 break;
             }
@@ -213,7 +312,7 @@ private:
 
         while (position < text.size()) {
 
-            if (text[position] == ')') {
+            if (text[position] == ')' || text[position] == '}') {
                 break;
             }
 
@@ -384,6 +483,38 @@ private:
 
 Dependency parse_dependency(const std::string& text)
 {
+    const auto colon = text.find(':');
+    const bool role_header = colon != std::string::npos &&
+        (text.rfind("runtime(", 0) == 0 || text.rfind("build(", 0) == 0 ||
+         text.rfind("test(", 0) == 0 || text.rfind("optional(", 0) == 0 ||
+         text.rfind("optional-disabled(", 0) == 0 || text.rfind("development(", 0) == 0 ||
+         text.rfind("propagated(", 0) == 0);
+    if (role_header) {
+        const auto header = text.substr(0, colon);
+        const auto open = header.find('(');
+        if (open == std::string::npos || header.back() != ')')
+            throw std::runtime_error("Intestazione ruolo/contesto non valida");
+        const auto role = header.substr(0, open);
+        const auto ctx = header.substr(open + 1, header.size() - open - 2);
+        DependencyKind kind;
+        bool enabled = true;
+        if (role == "optional-disabled") { kind = DependencyKind::Optional; enabled = false; }
+        else if (role == "runtime") kind = DependencyKind::Runtime;
+        else if (role == "build") kind = DependencyKind::Build;
+        else if (role == "test") kind = DependencyKind::Test;
+        else if (role == "optional") kind = DependencyKind::Optional;
+        else if (role == "development") kind = DependencyKind::Development;
+        else if (role == "propagated") kind = DependencyKind::Propagated;
+        else throw std::runtime_error("Ruolo dipendenza non supportato");
+        DependencyContext context;
+        if (ctx == "host") context = DependencyContext::Host;
+        else if (ctx == "build") context = DependencyContext::Build;
+        else if (ctx == "target") context = DependencyContext::Target;
+        else throw std::runtime_error("Contesto dipendenza non supportato");
+        const auto expression_text = text.substr(colon + 1);
+        Parser parser(expression_text);
+        return {parser.parse(), kind, context, enabled};
+    }
     Parser parser(text);
 
     return Dependency{

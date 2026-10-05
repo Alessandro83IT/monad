@@ -66,6 +66,8 @@ set(ATHENA_TESTS
     install_plan_test
     generation_builder_test
     dependency_expression_test
+    dependency_roles_test
+    dependency_expression_resolution_test
     dependency_constraint_test
     dependency_parser_test
     dependency_serializer_test
