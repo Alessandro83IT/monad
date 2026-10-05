@@ -82,11 +82,13 @@ struct DependencyTarget {
 
 struct NegativeDependency {
     DependencyTarget target;
+    bool provider_origin = false;
 };
 struct DeferredNegative {
     ExpressionPtr expression;
     Package owner;
     DependencyContext context;
+    bool conflict_expression = false;
 };
 
 /*
@@ -134,6 +136,7 @@ struct ResolutionSnapshot {
         std::vector<DependencyContext>
     > contexts;
     std::unordered_map<std::string, std::string> semantic_assignments;
+    std::unordered_map<std::string, bool> feature_states;
 };
 
 /*
@@ -176,6 +179,7 @@ struct ResolutionState {
         std::vector<DependencyContext>
     > contexts;
     std::unordered_map<std::string, std::string> semantic_assignments;
+    std::unordered_map<std::string, bool> feature_states;
 
     /*
      * Host/Build/Target environments are fixed for the whole resolution.
@@ -194,6 +198,8 @@ struct ResolutionState {
      */
     std::vector<ResolutionDecision> decisions;
 };
+
+bool package_satisfies_target(const Package&, const DependencyTarget&);
 
 /*
  * Find the newest available package version satisfying
@@ -263,7 +269,7 @@ std::vector<Package> find_dependency_candidates(
 
     candidates.erase(
         std::remove_if(candidates.begin(), candidates.end(), [&target](const Package& package) {
-            return !satisfies(target.constraint, package.version);
+            return !package_satisfies_target(package, target);
         }), candidates.end());
 
     /*
@@ -274,12 +280,22 @@ std::vector<Package> find_dependency_candidates(
     std::sort(
         candidates.begin(),
         candidates.end(),
-        [](const Package& left, const Package& right) {
+        [&target](const Package& left, const Package& right) {
 
-            if (left.version != right.version) {
+            const auto provided_version = [&target](const Package& package) -> const std::string& {
+                if (target.kind == DependencyTarget::Kind::Capability) {
+                    const auto found = package.provides.capability_versions.find(target.name);
+                    if (found != package.provides.capability_versions.end()) return found->second;
+                }
+                return package.version;
+            };
+            const auto& left_version = provided_version(left);
+            const auto& right_version = provided_version(right);
+
+            if (left_version != right_version) {
                 return athena::version::greater(
-                    left.version,
-                    right.version
+                    left_version,
+                    right_version
                 );
             }
 
@@ -305,11 +321,12 @@ ResolutionSnapshot snapshot_resolution_state(
         state.result,
         state.assignments,
         state.resolved,
-        {},
+        {}, // Restart propagation from its entry point after restoring this branch.
         state.negative_dependencies,
         state.deferred_negatives,
         state.contexts,
-        state.semantic_assignments
+        state.semantic_assignments,
+        state.feature_states
     };
 }
 
@@ -332,6 +349,19 @@ void restore_resolution_state(
     state.contexts =
         snapshot.contexts;
     state.semantic_assignments = snapshot.semantic_assignments;
+    state.feature_states = snapshot.feature_states;
+}
+
+bool backtrack_resolution(ResolutionState& state)
+{
+    while (!state.decisions.empty()) {
+        auto& decision = state.decisions.back();
+        restore_resolution_state(state, decision.snapshot);
+        ++decision.candidate_index;
+        if (decision.candidate_index < decision.candidates.size()) return true;
+        state.decisions.pop_back();
+    }
+    return false;
 }
 
 /*
@@ -549,7 +579,12 @@ bool package_satisfies_target(const Package& package, const DependencyTarget& ta
         case DependencyTarget::Kind::Capability: provides = std::find(package.provides.capabilities.begin(), package.provides.capabilities.end(), target.name) != package.provides.capabilities.end(); break;
         case DependencyTarget::Kind::Feature: provides = std::find(package.provides.features.begin(), package.provides.features.end(), target.name) != package.provides.features.end(); break;
     }
-    return provides && satisfies(target.constraint, package.version);
+    std::string_view version = package.version;
+    if (target.kind == DependencyTarget::Kind::Capability) {
+        const auto it = package.provides.capability_versions.find(target.name);
+        if (it != package.provides.capability_versions.end()) version = it->second;
+    }
+    return provides && satisfies(target.constraint, std::string(version));
 }
 
 bool violates_negative_dependency(
@@ -565,6 +600,29 @@ bool violates_negative_dependency(
     }
 
     return false;
+}
+
+void apply_package_conflicts(const Package& owner, ResolutionState& state, bool provider_origin = false)
+{
+    for (const auto& conflict : owner.conflicts) {
+        const auto& expression = conflict.expression;
+        if (!expression) continue;
+        if (expression->kind == Expression::Kind::Package ||
+            expression->kind == Expression::Kind::Capability ||
+            expression->kind == Expression::Kind::Feature ||
+            expression->kind == Expression::Kind::VersionComparison) {
+            const auto target = extract_dependency_target(expression);
+            for (const auto& selected : state.result) {
+                if (package_satisfies_target(selected, target))
+                    throw ResolutionError(ResolutionErrorCode::Conflict,
+                        "Conflitto: " + owner.name + " incompatibile con " + selected.name);
+            }
+            state.negative_dependencies.push_back({target, provider_origin});
+        } else {
+            // Reuse the dependency AST for compound and conditional conflicts.
+            state.deferred_negatives.push_back({expression, owner, conflict.context, true});
+        }
+    }
 }
 
 std::string semantic_assignment_key(const DependencyTarget& target)
@@ -671,6 +729,10 @@ bool evaluate_boolean_condition(const ExpressionPtr& expression, const Package& 
         case Expression::Kind::Feature: {
             const auto* feature = dynamic_cast<const FeatureRef*>(expression.get());
             if (!feature) throw std::runtime_error("Feature condizionale non valida");
+            if (state.use_policy) {
+                const auto configured = state.policy.feature_states.find(feature->name);
+                if (configured != state.policy.feature_states.end()) return configured->second;
+            }
             return std::find(owner.provides.features.begin(), owner.provides.features.end(), feature->name) != owner.provides.features.end();
         }
         case Expression::Kind::And: {
@@ -706,7 +768,7 @@ bool expression_role_active(const ExpressionPtr& expression, DependencyKind role
 
 std::optional<bool> expression_present_in_solution(const ExpressionPtr& expression,
     const std::vector<Package>& packages, const Package& owner, DependencyContext context,
-    DependencyKind inherited_role, const ResolutionState& state)
+    DependencyKind inherited_role, const ResolutionState& state, bool conflict_expression = false)
 {
     if (!expression) throw std::runtime_error("Espressione negativa nulla");
     switch (expression->kind) {
@@ -724,27 +786,27 @@ std::optional<bool> expression_present_in_solution(const ExpressionPtr& expressi
         case Expression::Kind::ABI: return evaluate_environment_selector(expression, context, state);
         case Expression::Kind::And: {
             const auto* e = dynamic_cast<const AndExpression*>(expression.get()); if (!e) throw std::runtime_error("AND negative non valido");
-            for (const auto& child : e->expressions) { const auto value=expression_present_in_solution(child,packages,owner,context,inherited_role,state); if (value && !*value) return false; }
+            for (const auto& child : e->expressions) { const auto value=expression_present_in_solution(child,packages,owner,context,inherited_role,state,conflict_expression); if (value && !*value) return false; }
             return true;
         }
         case Expression::Kind::Or: {
             const auto* e = dynamic_cast<const OrExpression*>(expression.get()); if (!e) throw std::runtime_error("OR negative non valido");
-            for (const auto& child : e->expressions) { const auto value=expression_present_in_solution(child,packages,owner,context,inherited_role,state); if (value && *value) return true; }
+            for (const auto& child : e->expressions) { const auto value=expression_present_in_solution(child,packages,owner,context,inherited_role,state,conflict_expression); if (value && *value) return true; }
             return false;
         }
         case Expression::Kind::Not: {
             const auto* e = dynamic_cast<const NotExpression*>(expression.get()); if (!e || !e->expression) throw std::runtime_error("NOT negative non valido");
-            const auto value=expression_present_in_solution(e->expression,packages,owner,context,inherited_role,state); return !value.value_or(false);
+            const auto value=expression_present_in_solution(e->expression,packages,owner,context,inherited_role,state,conflict_expression); return !value.value_or(false);
         }
         case Expression::Kind::Scoped: {
             const auto* e = dynamic_cast<const ScopedExpression*>(expression.get()); if (!e || !e->body) throw std::runtime_error("Scope negative non valido");
             if (state.use_policy && !expression_role_active(e->body,e->kind_role,e->enabled,state.policy)) return std::nullopt;
-            return expression_present_in_solution(e->body,packages,owner,e->context,e->kind_role,state);
+            return expression_present_in_solution(e->body,packages,owner,e->context,e->kind_role,state,conflict_expression);
         }
         case Expression::Kind::Conditional: {
             const auto* e = dynamic_cast<const ConditionalExpression*>(expression.get()); if (!e || !e->condition || !e->body) throw std::runtime_error("Conditional negative non valido");
-            if (!evaluate_boolean_condition(e->condition,owner,context,state)) return true;
-            return expression_present_in_solution(e->body,packages,owner,context,inherited_role,state);
+            if (!evaluate_boolean_condition(e->condition,owner,context,state)) return !conflict_expression;
+            return expression_present_in_solution(e->body,packages,owner,context,inherited_role,state,conflict_expression);
         }
     }
     return false;
@@ -759,7 +821,7 @@ bool violates_deferred_negatives(const Package& root, const ResolutionState& sta
     selected.push_back(root);
     for (const auto& negative : state.deferred_negatives) {
         const auto value=expression_present_in_solution(negative.expression,selected,negative.owner,
-            negative.context,DependencyKind::Runtime,state);
+            negative.context,DependencyKind::Runtime,state,negative.conflict_expression);
         if (value && *value) return true;
     }
     return false;
@@ -774,6 +836,24 @@ void resolve_expression(
     const athena::repository::RepositoryIndex& repository,
     ResolutionState& state
 );
+
+void resolve_configured_feature_dependencies(
+    const Package& package,
+    const athena::repository::RepositoryIndex& repository,
+    ResolutionState& state)
+{
+    if (!state.use_policy) return;
+    for (const auto& [feature, enabled] : state.policy.feature_states) {
+        if (!enabled) continue;
+        const auto declared = package.feature_dependencies.find(feature);
+        if (declared == package.feature_dependencies.end()) continue;
+        state.feature_states[feature] = true;
+        for (const auto& dependency : declared->second) {
+            resolve_expression(dependency.expression, package, dependency.context,
+                               dependency.kind, dependency.enabled, repository, state);
+        }
+    }
+}
 
 void resolve_package_target(
     const DependencyTarget& target,
@@ -875,6 +955,8 @@ void resolve_package_target(
                 );
             }
 
+            resolve_configured_feature_dependencies(*existing_assignment, repository, state);
+
             state.resolving.erase(
                 existing_assignment->name
             );
@@ -906,8 +988,12 @@ void resolve_package_target(
         );
 
     if (candidates.empty()) {
-
-        throw std::runtime_error(
+        const auto code = target.kind == DependencyTarget::Kind::Capability
+            ? ResolutionErrorCode::CapabilityUnsatisfied
+            : target.kind == DependencyTarget::Kind::Feature
+                ? ResolutionErrorCode::FeatureUnsatisfied
+                : ResolutionErrorCode::NoProvider;
+        throw ResolutionError(code,
             "Dipendenza non trovata o nessuna versione "
             "compatibile disponibile: " +
             target.name +
@@ -972,14 +1058,11 @@ void resolve_package_target(
             dependency_package,
             state.negative_dependencies
         )) {
-
-        if (decision_index !=
-            std::numeric_limits<std::size_t>::max()) {
-
-            state.decisions.pop_back();
-        }
-
-        throw std::runtime_error(
+        const auto provider_conflict = std::any_of(state.negative_dependencies.begin(), state.negative_dependencies.end(),
+            [&dependency_package](const NegativeDependency& negative) {
+                return negative.provider_origin && package_satisfies_target(dependency_package, negative.target);
+            });
+        throw ResolutionError(provider_conflict ? ResolutionErrorCode::ProviderConflict : ResolutionErrorCode::Conflict,
             "Dipendenza vietata dal vincolo NOT: " +
             dependency_package.name +
             " (" +
@@ -995,6 +1078,8 @@ void resolve_package_target(
     state.assignments[dependency_package.name] = {
         dependency_package
         };
+
+    apply_package_conflicts(dependency_package, state, target.kind != DependencyTarget::Kind::Package);
 
     if (target.kind != DependencyTarget::Kind::Package)
         state.semantic_assignments[semantic_assignment_key(target)] = dependency_package.name;
@@ -1024,6 +1109,8 @@ void resolve_package_target(
                 state
             );
         }
+
+        resolve_configured_feature_dependencies(dependency_package, repository, state);
 
         state.resolving.erase(
             dependency_package.name
@@ -1165,6 +1252,7 @@ void resolve_expression(
             }
 
             std::string last_error;
+            std::optional<ResolutionErrorCode> last_error_code;
 
             for (const auto& child :
                  or_expression->expressions) {
@@ -1207,9 +1295,15 @@ void resolve_expression(
                     state.decisions = decisions_before;
 
                     last_error = error.what();
+                    if (const auto* structured = dynamic_cast<const ResolutionError*>(&error))
+                        last_error_code = structured->code();
                 }
             }
 
+            if (last_error_code)
+                throw ResolutionError(*last_error_code,
+                    "Nessuna alternativa soddisfacibile per la dipendenza richiesta da " +
+                    requiring_package.name + (last_error.empty() ? "" : ": " + last_error));
             throw std::runtime_error(
                 "Nessuna alternativa soddisfacibile per "
                 "la dipendenza richiesta da " +
@@ -1278,7 +1372,7 @@ void resolve_expression(
 
                 if (package_satisfies_target(package, target)) {
 
-                    throw std::runtime_error(
+                    throw ResolutionError(ResolutionErrorCode::Conflict,
                         "Vincolo NOT violato dal pacchetto già "
                         "risolto: " +
                         package.name +
@@ -1318,6 +1412,8 @@ void resolve_expression(
                     case Expression::Kind::Feature: {
                         const auto* feature = dynamic_cast<const FeatureRef*>(node.get());
                         if (!feature) throw std::runtime_error("Feature condizionale non valido");
+                        const auto configured = state.policy.feature_states.find(feature->name);
+                        if (configured != state.policy.feature_states.end()) return configured->second;
                         return std::find(requiring_package.provides.features.begin(), requiring_package.provides.features.end(), feature->name) != requiring_package.provides.features.end();
                     }
                     case Expression::Kind::And: {
@@ -1377,6 +1473,7 @@ void resolve_recursive(
     }
 
     state.resolving.insert(package.name);
+    apply_package_conflicts(package, state);
 
     /*
      * The root package represents the package being produced/installed,
@@ -1405,6 +1502,8 @@ void resolve_recursive(
                 state
             );
         }
+
+        resolve_configured_feature_dependencies(package, repository, state);
 
         /*
          * The package has been completely propagated. It is no longer
@@ -1483,7 +1582,7 @@ athena::install::InstallPlan resolve_plan(
                     state.negative_dependencies
                 )) {
 
-                throw std::runtime_error(
+                throw ResolutionError(ResolutionErrorCode::Conflict,
                     "Pacchetto radice vietato dal vincolo NOT: " +
                     root.name +
                     " (" +
@@ -1492,7 +1591,7 @@ athena::install::InstallPlan resolve_plan(
                 );
             }
             if (violates_deferred_negatives(root, state))
-                throw std::runtime_error("Espressione NOT composta violata dal grafo selezionato");
+                throw ResolutionError(ResolutionErrorCode::Conflict, "Espressione NOT composta violata dal grafo selezionato");
 
             /*
              * ResolutionState already stores packages in dependency-
@@ -1534,43 +1633,15 @@ athena::install::InstallPlan resolve_plan(
 
             return plan;
         }
-        catch (const std::runtime_error&) {
+        catch (const std::runtime_error& error) {
 
             /*
              * No decision means that the dependency graph has no
              * remaining alternative branch.
              */
-            if (state.decisions.empty()) {
-                throw;
-            }
-
-            /*
-             * The latest decision is the deepest unresolved search
-             * branch. Restore exactly the state that existed before its
-             * candidate was selected.
-             */
-            auto& decision =
-                state.decisions.back();
-
-            restore_resolution_state(
-                state,
-                decision.snapshot
-            );
-
-            /*
-             * Move to the next candidate for this decision.
-             */
-            ++decision.candidate_index;
-
-            /*
-             * All candidates for this branch have been exhausted.
-             * Remove the decision and continue backtracking towards the
-             * previous branch.
-             */
-            if (decision.candidate_index >=
-                decision.candidates.size()) {
-
-                state.decisions.pop_back();
+            if (!backtrack_resolution(state)) {
+                if (const auto* structured = dynamic_cast<const ResolutionError*>(&error)) throw *structured;
+                throw ResolutionError(ResolutionErrorCode::ResolutionFailure, error.what());
             }
         }
     }
@@ -1587,13 +1658,19 @@ athena::install::InstallPlan resolve_plan(
     state.environments = environments;
     state.policy = context;
     state.use_policy = true;
+    for (const auto& [feature, enabled] : context.feature_states) {
+        if (enabled && !root.feature_dependencies.contains(feature))
+            throw ResolutionError(ResolutionErrorCode::FeatureUnsatisfied,
+                "Feature configurata ma non dichiarata dal package radice: " + feature);
+        state.feature_states[feature] = enabled;
+    }
     for (;;) {
         try {
             resolve_recursive(root, repository, state);
             if (violates_negative_dependency(root, state.negative_dependencies))
-                throw std::runtime_error("Pacchetto radice vietato dal vincolo NOT: " + root.name);
+                throw ResolutionError(ResolutionErrorCode::Conflict, "Pacchetto radice vietato dal vincolo NOT: " + root.name);
             if (violates_deferred_negatives(root, state))
-                throw std::runtime_error("Espressione NOT composta violata dal grafo selezionato");
+                throw ResolutionError(ResolutionErrorCode::Conflict, "Espressione NOT composta violata dal grafo selezionato");
             athena::install::InstallPlan plan;
             for (const auto& package : state.result) {
                 const auto it = state.contexts.find(package.name);
@@ -1601,12 +1678,11 @@ athena::install::InstallPlan resolve_plan(
                 else for (const auto ctx : it->second) plan.add(package, ctx);
             }
             return plan;
-        } catch (const std::runtime_error&) {
-            if (state.decisions.empty()) throw;
-            auto& decision = state.decisions.back();
-            restore_resolution_state(state, decision.snapshot);
-            ++decision.candidate_index;
-            if (decision.candidate_index >= decision.candidates.size()) state.decisions.pop_back();
+        } catch (const std::runtime_error& error) {
+            if (!backtrack_resolution(state)) {
+                if (const auto* structured = dynamic_cast<const ResolutionError*>(&error)) throw *structured;
+                throw ResolutionError(ResolutionErrorCode::ResolutionFailure, error.what());
+            }
         }
     }
 }

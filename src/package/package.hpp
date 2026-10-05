@@ -23,6 +23,8 @@ struct PackageProvides {
 
     // Features exposed by the package, for example "openssl".
     std::vector<std::string> features{};
+    // Optional capability-specific versions. Missing entries use the package version.
+    std::map<std::string, std::string> capability_versions{};
 };
 
 /*
@@ -81,6 +83,13 @@ struct Package {
      * aggregate initializers remain source-compatible.
      */
     PackageProvides provides{};
+
+    // Negative dependency expressions checked as soon as this package is selected.
+    std::vector<athena::dependency::Dependency> conflicts;
+
+    // Configurable features are distinct from provided features. Enabling a
+    // key activates only the dependencies declared in its value.
+    std::map<std::string, std::vector<athena::dependency::Dependency>> feature_dependencies;
 
     // Raw fields from an Arch repository desc record. Kept opaque here so
     // importing Arch binaries does not reinterpret them as an Athena recipe.

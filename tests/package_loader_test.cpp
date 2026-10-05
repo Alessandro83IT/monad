@@ -24,6 +24,10 @@ int main()
 
     assert(package.provides.features.size() == 1);
     assert(package.provides.features[0] == "modern-cmake");
+    assert(package.provides.capability_versions.at("cmake") == "3.28");
+    assert(package.feature_dependencies.contains("docs"));
+    assert(package.feature_dependencies.at("docs").size() == 1);
+    assert(package.conflicts.size() == 1);
 
     assert(package.dependencies.size() == 1);
 

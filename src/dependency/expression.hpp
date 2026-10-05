@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 
 namespace athena::dependency {
 
@@ -316,6 +317,8 @@ struct DependencyResolutionContext {
     std::vector<DependencyKind> active_kinds;
     bool optional_enabled = false;
     bool propagated_enabled = true;
+    // Explicit feature switches are semantic resolver input, keyed by feature name.
+    std::map<std::string, bool> feature_states;
 
     bool activates(DependencyKind kind) const {
         if (kind == DependencyKind::Optional) return optional_enabled;

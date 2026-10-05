@@ -7,8 +7,28 @@
 #include "environment.hpp"
 
 #include <vector>
+#include <stdexcept>
+#include <string>
 
 namespace athena::dependency {
+
+enum class ResolutionErrorCode {
+    CapabilityUnsatisfied,
+    NoProvider,
+    Conflict,
+    ProviderConflict,
+    FeatureUnsatisfied,
+    ResolutionFailure
+};
+
+class ResolutionError : public std::runtime_error {
+public:
+    ResolutionError(ResolutionErrorCode code, std::string message)
+        : std::runtime_error(std::move(message)), code_(code) {}
+    ResolutionErrorCode code() const noexcept { return code_; }
+private:
+    ResolutionErrorCode code_;
+};
 
 /*
  * Resolve a package and produce an InstallPlan.

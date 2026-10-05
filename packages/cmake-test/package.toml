@@ -4,6 +4,7 @@ description = "Test package for the Athena CMake backend"
 source = "file:///tmp/athena-cmake-test.tar.gz"
 sha256 = "41d4eb8e0df2da6d03646e3704b637a15d8212f950f7d77338179fb1d32c43a5"
 build_system = "cmake"
+conflicts = ["forbidden-package >= 2.0"]
 dependencies = [
     "test-dependency >= 1.2"
 ]
@@ -11,3 +12,9 @@ dependencies = [
 [provides]
 capabilities = ["cmake", "build-system"]
 features = ["modern-cmake"]
+
+[provides.capability_versions]
+cmake = "3.28"
+
+[feature_dependencies]
+docs = ["test-dependency >= 1.2"]

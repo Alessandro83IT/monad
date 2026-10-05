@@ -59,6 +59,8 @@ Package load_from_file(const std::filesystem::path& path)
          * compatible with the current implementation.
          */
         std::vector<athena::dependency::Dependency> dependencies;
+        std::vector<athena::dependency::Dependency> conflicts;
+        std::map<std::string, std::vector<athena::dependency::Dependency>> feature_dependencies;
 
         if (const auto* array = table["dependencies"].as_array()) {
 
@@ -71,6 +73,25 @@ Package load_from_file(const std::filesystem::path& path)
                             *dependency
                         )
                     );
+                }
+            }
+        }
+
+        if (const auto* array = table["conflicts"].as_array()) {
+            for (const auto& value : *array) {
+                if (const auto expression = value.value<std::string>())
+                    conflicts.push_back(athena::dependency::parse_dependency(*expression));
+            }
+        }
+
+        if (const auto* feature_table = table["feature_dependencies"].as_table()) {
+            for (const auto& [feature_name, node] : *feature_table) {
+                auto* array = node.as_array();
+                if (!array) continue;
+                auto& feature_deps = feature_dependencies[std::string(feature_name.str())];
+                for (const auto& value : *array) {
+                    if (const auto expression = value.value<std::string>())
+                        feature_deps.push_back(athena::dependency::parse_dependency(*expression));
                 }
             }
         }
@@ -114,9 +135,17 @@ Package load_from_file(const std::filesystem::path& path)
                     }
                 }
             }
+
+            if (const auto* versions =
+                    (*provides_table)["capability_versions"].as_table()) {
+                for (const auto& [capability, node] : *versions) {
+                    if (const auto version = node.value<std::string>())
+                        provides.capability_versions[std::string(capability.str())] = *version;
+                }
+            }
         }
 
-        return Package{
+        Package package{
             table["name"].value_or(""),
             table["version"].value_or(""),
             table["description"].value_or(""),
@@ -126,6 +155,9 @@ Package load_from_file(const std::filesystem::path& path)
             dependencies,
             provides
         };
+        package.conflicts = std::move(conflicts);
+        package.feature_dependencies = std::move(feature_dependencies);
+        return package;
     }
     catch (const toml::parse_error& error) {
 
