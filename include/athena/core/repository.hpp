@@ -118,6 +118,7 @@ struct ImportedBinaryMetadata {
     PackageMetadata package;
     MetadataReference archive_reference;
     ImportedBinaryFormat format = ImportedBinaryFormat::GenericArchive;
+    // Transport archive digest, never the normalized ArtifactId.
     std::optional<ContentDigest> original_digest;
     std::optional<std::uint64_t> size_bytes;
     std::optional<RepositoryProvenance> repository_origin;
@@ -135,6 +136,9 @@ struct ArtifactMetadata {
     ContentDigest output_digest;
     ManifestDigest manifest_digest;
     Provenance provenance;
+    // Required for BuiltFromAthenaIR; absent for AmbientSourceBuild and
+    // ImportedBinary. Producer attestations require a future contract.
+    // Identity values remain opaque here; validation is not local verification.
     std::optional<BuildInputId> build_input_id;
 
     void validate() const;

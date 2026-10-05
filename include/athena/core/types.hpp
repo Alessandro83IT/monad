@@ -59,7 +59,11 @@ struct TargetEnvironment {
     bool operator==(const TargetEnvironment&) const = default;
 };
 
-enum class ArtifactOrigin { BuiltFromAthenaIR, ImportedBinary };
+enum class ArtifactOrigin {
+    BuiltFromAthenaIR, // Controlled Athena IR build; requires BuildInputId.
+    ImportedBinary, // No producer build identity/attestation in this contract.
+    AmbientSourceBuild // Uncontrolled native source build; BuildInputId absent.
+};
 
 struct Provenance {
     ArtifactOrigin origin = ArtifactOrigin::BuiltFromAthenaIR;

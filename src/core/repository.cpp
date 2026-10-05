@@ -274,6 +274,7 @@ std::string origin_name(ArtifactOrigin origin)
     switch (origin) {
     case ArtifactOrigin::BuiltFromAthenaIR: return "built_from_athena_ir";
     case ArtifactOrigin::ImportedBinary: return "imported_binary";
+    case ArtifactOrigin::AmbientSourceBuild: return "ambient_source_build";
     }
     throw TypeError("Invalid ArtifactOrigin");
 }
@@ -282,6 +283,7 @@ ArtifactOrigin read_origin(const std::string& value)
 {
     if (value == "built_from_athena_ir") return ArtifactOrigin::BuiltFromAthenaIR;
     if (value == "imported_binary") return ArtifactOrigin::ImportedBinary;
+    if (value == "ambient_source_build") return ArtifactOrigin::AmbientSourceBuild;
     throw TypeError("Unsupported artifact origin");
 }
 
@@ -634,7 +636,8 @@ void ArtifactMetadata::validate() const
         throw TypeError("ArtifactMetadata BuildInputId cannot be empty");
     }
     if (provenance.origin != ArtifactOrigin::BuiltFromAthenaIR &&
-        provenance.origin != ArtifactOrigin::ImportedBinary) {
+        provenance.origin != ArtifactOrigin::ImportedBinary &&
+        provenance.origin != ArtifactOrigin::AmbientSourceBuild) {
         throw TypeError("Unsupported artifact origin");
     }
     if (provenance.origin == ArtifactOrigin::BuiltFromAthenaIR && !build_input_id) {
@@ -642,6 +645,9 @@ void ArtifactMetadata::validate() const
     }
     if (provenance.origin == ArtifactOrigin::ImportedBinary && build_input_id) {
         throw TypeError("Imported binary ArtifactMetadata cannot have a BuildInputId");
+    }
+    if (provenance.origin == ArtifactOrigin::AmbientSourceBuild && build_input_id) {
+        throw TypeError("Ambient source ArtifactMetadata cannot have a BuildInputId");
     }
 }
 
@@ -658,8 +664,9 @@ void RepositoryCandidate::validate() const
             source_recipe->version != package.version) {
             throw TypeError("RepositoryCandidate SourceRecipe identity does not match PackageMetadata");
         }
-        if (artifact && artifact->provenance.origin != ArtifactOrigin::BuiltFromAthenaIR) {
-            throw TypeError("SourceRecipe candidate references a non-Athena-built artifact");
+        if (artifact && artifact->provenance.origin != ArtifactOrigin::BuiltFromAthenaIR &&
+            artifact->provenance.origin != ArtifactOrigin::AmbientSourceBuild) {
+            throw TypeError("SourceRecipe candidate references a non-source-built artifact");
         }
     }
     if (imported_binary) {

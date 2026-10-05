@@ -56,6 +56,7 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    artifact_contract_test
     arch_repository_test
     arch_repository_adapter_test
     arch_version_test
