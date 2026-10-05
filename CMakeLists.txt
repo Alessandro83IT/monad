@@ -88,6 +88,7 @@ set(ATHENA_TESTS
     repository_selection_test
     resolver_candidate_test
     resolver_snapshot_adapter_test
+    install_request_resolution_test
     local_repository_test
     removal_e2e_test
     core_foundation_test

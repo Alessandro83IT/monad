@@ -45,6 +45,14 @@ struct RepositorySelectionResponse {
     bool operator==(const RepositorySelectionResponse&) const = default;
 };
 
+// Shared eligibility and deterministic ranking used by selection and resolution.
+bool candidate_matches_target(const RepositoryCandidate&, const TargetEnvironment&);
+bool candidate_precedes(const RepositoryCandidate&, const RepositorySnapshotRef&,
+                        const RepositorySelectionRule&,
+                        const RepositoryCandidate&, const RepositorySnapshotRef&,
+                        const RepositorySelectionRule&);
+void validate_repository_rule(const RepositorySelectionRule&);
+
 // Selects the highest version per requested PackageId; repository priority
 // breaks equivalent-version ties. No I/O or process state is consulted.
 RepositorySelectionResponse select_candidates(const RepositorySelectionRequest& request);

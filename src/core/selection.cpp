@@ -65,6 +65,36 @@ using Identity = std::tuple<std::string, std::string, std::string>;
 
 } // namespace
 
+void validate_repository_rule(const RepositorySelectionRule& rule)
+{
+    if (rule.version_scheme != VersionScheme::Athena && rule.version_scheme != VersionScheme::Arch)
+        throw SelectionError(SelectionErrorCode::UnsupportedVersionScheme, "Unsupported repository version scheme");
+}
+
+bool candidate_matches_target(const RepositoryCandidate& candidate, const TargetEnvironment& target)
+{
+    return matches(candidate.package.platforms, target.platform) &&
+           matches(candidate.package.architectures, target.architecture) &&
+           matches(candidate.package.abis, target.abi);
+}
+
+bool candidate_precedes(const RepositoryCandidate& a, const RepositorySnapshotRef& as,
+                        const RepositorySelectionRule& ar,
+                        const RepositoryCandidate& b, const RepositorySnapshotRef& bs,
+                        const RepositorySelectionRule& br)
+{
+    validate_repository_rule(ar);
+    validate_repository_rule(br);
+    if (ar.version_scheme != br.version_scheme) return ar.version_scheme < br.version_scheme;
+    const auto order = compare_version(ar.version_scheme, a.package.version, b.package.version);
+    if (order != 0) return order > 0;
+    if (ar.priority != br.priority) return ar.priority < br.priority;
+    if (a.provenance.repository_id != b.provenance.repository_id)
+        return a.provenance.repository_id < b.provenance.repository_id;
+    if (as.metadata_digest != bs.metadata_digest) return as.metadata_digest < bs.metadata_digest;
+    return as.snapshot_id < bs.snapshot_id;
+}
+
 RepositorySelectionResponse select_candidates(const RepositorySelectionRequest& request)
 {
     if (request.package_ids.empty() || request.snapshots.empty())
@@ -87,8 +117,7 @@ RepositorySelectionResponse select_candidates(const RepositorySelectionRequest& 
         const auto rule_it = request.repositories.find(snapshot.repository_id());
         if (rule_it == request.repositories.end())
             throw SelectionError(SelectionErrorCode::InvalidSnapshot, "Snapshot has no repository selection rule");
-        if (rule_it->second.version_scheme == VersionScheme::Unsupported)
-            throw SelectionError(SelectionErrorCode::UnsupportedVersionScheme, "Unsupported repository version scheme");
+        validate_repository_rule(rule_it->second);
         const auto prior_snapshot = seen_snapshots.find(snapshot.repository_id());
         if (prior_snapshot != seen_snapshots.end() && prior_snapshot->second->id() == snapshot.id()) continue;
         seen_snapshots[snapshot.repository_id()] = &snapshot;
@@ -101,9 +130,7 @@ RepositorySelectionResponse select_candidates(const RepositorySelectionRequest& 
                 (candidate.provenance.snapshot && *candidate.provenance.snapshot != snapshot.reference()))
                 throw SelectionError(SelectionErrorCode::InvalidCandidate, "Candidate provenance disagrees with source snapshot");
             if (!requested.contains(candidate.package.package_id.value())) continue;
-            if (!matches(candidate.package.platforms, request.target.platform) ||
-                !matches(candidate.package.architectures, request.target.architecture) ||
-                !matches(candidate.package.abis, request.target.abi)) {
+            if (!candidate_matches_target(candidate, request.target)) {
                 target_rejected.insert(candidate.package.package_id.value());
                 continue;
             }
@@ -130,18 +157,8 @@ RepositorySelectionResponse select_candidates(const RepositorySelectionRequest& 
         std::vector<const Entry*> entries;
         for (const auto& [identity, entry] : it->second) { (void)identity; entries.push_back(&entry); }
         std::sort(entries.begin(), entries.end(), [](const Entry* a, const Entry* b) {
-            // Versions from different ecosystems are not comparable. Give
-            // schemes a fixed enum order, then compare only within a scheme.
-            if (a->rule.version_scheme != b->rule.version_scheme)
-                return a->rule.version_scheme < b->rule.version_scheme;
-            const auto version_order = compare_version(a->rule.version_scheme, a->candidate.package.version, b->candidate.package.version);
-            if (version_order != 0) return version_order > 0;
-            if (a->rule.priority != b->rule.priority) return a->rule.priority < b->rule.priority;
-            if (a->candidate.provenance.repository_id != b->candidate.provenance.repository_id)
-                return a->candidate.provenance.repository_id < b->candidate.provenance.repository_id;
-            if (a->snapshot->metadata_digest() != b->snapshot->metadata_digest())
-                return a->snapshot->metadata_digest() < b->snapshot->metadata_digest();
-            return a->snapshot->id() < b->snapshot->id();
+            return candidate_precedes(a->candidate, a->snapshot->reference(), a->rule,
+                                      b->candidate, b->snapshot->reference(), b->rule);
         });
         response.selected.push_back(entries.front()->candidate);
     }

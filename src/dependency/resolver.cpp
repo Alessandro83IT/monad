@@ -1,5 +1,6 @@
 #include "resolver.hpp"
 #include "environment.hpp"
+#include "../repository/resolver_snapshot_adapter.hpp"
 
 #include "constraint.hpp"
 #include "../repository/repository_index.hpp"
@@ -117,6 +118,7 @@ struct PackageAssignment { Package package; };
  */
 struct ResolutionSnapshot {
     std::vector<Package> result;
+    std::vector<RequestOrigin> origins;
 
     std::unordered_map<
         std::string,
@@ -159,6 +161,7 @@ struct ResolutionDecision {
 
 struct ResolutionState {
     std::vector<Package> result;
+    std::vector<RequestOrigin> origins;
 
     /*
      * Candidate assignments are keyed by package name. This is the
@@ -194,6 +197,7 @@ struct ResolutionState {
     Environments environments;
     DependencyResolutionContext policy;
     bool use_policy = false;
+    const std::map<athena::core::RepositoryId, athena::core::RepositorySelectionRule>* repository_rules = nullptr;
 
     /*
      * Global candidate decisions, in dependency-resolution order.
@@ -266,7 +270,8 @@ std::optional<Package> find_package(
  */
 std::vector<Package> find_dependency_candidates(
     const DependencyTarget& target,
-    const athena::repository::RepositoryIndex& repository
+    const athena::repository::RepositoryIndex& repository,
+    const ResolutionState* state = nullptr
 )
 {
     std::vector<Package> candidates;
@@ -287,7 +292,12 @@ std::vector<Package> find_dependency_candidates(
     }
 
     candidates.erase(
-        std::remove_if(candidates.begin(), candidates.end(), [&target](const Package& package) {
+        std::remove_if(candidates.begin(), candidates.end(), [&target, state](const Package& package) {
+            if (state && state->repository_rules && target.kind != DependencyTarget::Kind::Package) {
+                const auto assigned = state->assignments.find(package.name);
+                if (assigned != state->assignments.end() && assigned->second.package.identity != package.identity)
+                    return true;
+            }
             return !package_satisfies_target(package, target);
         }), candidates.end());
 
@@ -299,7 +309,17 @@ std::vector<Package> find_dependency_candidates(
     std::sort(
         candidates.begin(),
         candidates.end(),
-        [&target](const Package& left, const Package& right) {
+        [&target, state](const Package& left, const Package& right) {
+            if (state && state->repository_rules) {
+                const auto& rules = *state->repository_rules;
+                const auto precedes = [&](const Package& a, const Package& b) {
+                    return athena::core::candidate_precedes(*a.public_candidate, *a.snapshot, rules.at(a.identity->repository),
+                                                           *b.public_candidate, *b.snapshot, rules.at(b.identity->repository));
+                };
+                if (precedes(left, right)) return true;
+                if (precedes(right, left)) return false;
+                return left.name < right.name;
+            }
 
             const auto provided_version = [&target](const Package& package) -> const std::string& {
                 if (target.kind == DependencyTarget::Kind::Capability) {
@@ -339,6 +359,7 @@ ResolutionSnapshot snapshot_resolution_state(
 {
     return {
         state.result,
+        state.origins,
         state.assignments,
         state.resolved,
         {}, // Restart propagation from its entry point after restoring this branch.
@@ -359,6 +380,7 @@ void restore_resolution_state(
 )
 {
     state.result = snapshot.result;
+    state.origins = snapshot.origins;
     state.assignments = snapshot.assignments;
     state.resolved = snapshot.resolved;
     state.resolving = snapshot.resolving;
@@ -940,7 +962,23 @@ void resolve_package_target(
             if (!provider || !same_candidate(*provider, selected->second) || !package_satisfies_target(*provider, target))
                 throw std::runtime_error("Il provider già selezionato non soddisfa il vincolo semantico " + target.name);
             record_dependency_context(state, *provider, context);
-            resolve_package_target({DependencyTarget::Kind::Package, provider->name, target.constraint},
+            resolve_package_target({DependencyTarget::Kind::Package, provider->name, state.repository_rules ? VersionConstraint::any() : target.constraint},
+                                   requiring_package, context, repository, state);
+            return;
+        }
+    }
+
+    if (state.repository_rules && target.kind != DependencyTarget::Kind::Package) {
+        const Package* reuse = nullptr;
+        for (const auto& [name, assignment] : state.assignments) {
+            (void)name;
+            if (package_satisfies_target(assignment.package, target) &&
+                (!reuse || assignment.package.name < reuse->name)) reuse = &assignment.package;
+        }
+        if (reuse) {
+            const auto provider = *reuse;
+            state.semantic_assignments[semantic_assignment_key(target)] = provider;
+            resolve_package_target({DependencyTarget::Kind::Package, provider.name, VersionConstraint::any()},
                                    requiring_package, context, repository, state);
             return;
         }
@@ -976,7 +1014,7 @@ void resolve_package_target(
      * An assigned package can still be actively resolving its own
      * dependencies. Cycle detection therefore happens first.
      */
-    if (state.resolving.contains(target.name)) {
+    if ((!state.repository_rules || target.kind == DependencyTarget::Kind::Package) && state.resolving.contains(target.name)) {
 
         throw std::runtime_error(
             "Ciclo di dipendenze rilevato: " +
@@ -984,15 +1022,13 @@ void resolve_package_target(
         );
     }
 
-    if (state.resolved.contains(target.name)) {
+    if ((!state.repository_rules || target.kind == DependencyTarget::Kind::Package) && state.resolved.contains(target.name)) {
         return;
     }
 
     const auto* existing_assignment =
-        find_assignment(
-            target.name,
-            state
-        );
+        (state.repository_rules && target.kind != DependencyTarget::Kind::Package)
+            ? nullptr : find_assignment(target.name, state);
 
     if (existing_assignment != nullptr) {
 
@@ -1053,7 +1089,8 @@ void resolve_package_target(
     const auto candidates =
         find_dependency_candidates(
             target,
-            repository
+            repository,
+            &state
         );
 
     if (candidates.empty()) {
@@ -1602,6 +1639,74 @@ CandidateResolution resolve_candidate_graph(
     }
 }
 
+VersionConstraint request_constraint(const athena::core::VersionConstraint& c)
+{
+    using K = athena::core::VersionConstraintKind;
+    auto invalid = []() -> VersionConstraint {
+        throw ResolutionError(ResolutionErrorCode::InvalidSelector, "Invalid root version constraint");
+    };
+    switch (c.kind) {
+    case K::Any:
+        if (!c.version.empty() || !c.operands.empty()) return invalid();
+        return VersionConstraint::any();
+    case K::Comparison: {
+        if (c.version.empty() || !c.operands.empty()) return invalid();
+        ComparisonOperator op;
+        using O = athena::core::VersionComparisonOperator;
+        switch (c.comparison) {
+        case O::Equal: op = ComparisonOperator::Equal; break;
+        case O::NotEqual: op = ComparisonOperator::NotEqual; break;
+        case O::Less: op = ComparisonOperator::Less; break;
+        case O::LessEqual: op = ComparisonOperator::LessEqual; break;
+        case O::Greater: op = ComparisonOperator::Greater; break;
+        case O::GreaterEqual: op = ComparisonOperator::GreaterEqual; break;
+        default: return invalid();
+        }
+        return VersionConstraint::comparison(op, c.version);
+    }
+    case K::And: case K::Or: {
+        if (!c.version.empty() || c.operands.empty()) return invalid();
+        std::vector<VersionConstraint> children;
+        for (const auto& child : c.operands) children.push_back(request_constraint(child));
+        return c.kind == K::And ? VersionConstraint::all(std::move(children)) : VersionConstraint::any_of(std::move(children));
+    }
+    case K::Not:
+        if (!c.version.empty() || c.operands.size() != 1) return invalid();
+        return VersionConstraint::not_(request_constraint(c.operands.front()));
+    }
+    return invalid();
+}
+
+DependencyTarget request_target(const athena::core::InstallTarget& target)
+{
+    const auto& selector = target.selector;
+    if (selector.name.empty() || selector.name.find_first_of(" \t\r\n") != std::string::npos)
+        throw ResolutionError(ResolutionErrorCode::InvalidSelector, "Empty or invalid root selector");
+    DependencyTarget::Kind kind;
+    using K = athena::core::SelectorKind;
+    switch (selector.kind) {
+    case K::Package: kind = DependencyTarget::Kind::Package; break;
+    case K::Capability: kind = DependencyTarget::Kind::Capability; break;
+    case K::Feature: kind = DependencyTarget::Kind::Feature; break;
+    default: throw ResolutionError(ResolutionErrorCode::InvalidSelector, "Unknown root selector kind");
+    }
+    return {kind, selector.name, request_constraint(selector.constraint)};
+}
+
+DependencyKind request_role(athena::core::DependencyRole role)
+{
+    using R = athena::core::DependencyRole;
+    switch (role) {
+    case R::Runtime: return DependencyKind::Runtime;
+    case R::Build: return DependencyKind::Build;
+    case R::Test: return DependencyKind::Test;
+    case R::Optional: return DependencyKind::Optional;
+    case R::Development: return DependencyKind::Development;
+    case R::Propagated: return DependencyKind::Propagated;
+    }
+    throw ResolutionError(ResolutionErrorCode::InvalidRequest, "Unknown active dependency role");
+}
+
 athena::install::InstallPlan legacy_plan(const CandidateResolution& solution)
 {
     athena::install::InstallPlan plan;
@@ -1616,6 +1721,97 @@ athena::install::InstallPlan legacy_plan(const CandidateResolution& solution)
     return plan;
 }
 
+}
+
+RequestResolution resolve_request(const athena::core::InstallRequest& request)
+{
+    if (request.targets.empty() && request.system_policies.empty())
+        throw ResolutionError(ResolutionErrorCode::InvalidRequest, "Request has no requirements");
+    // B.2 validation runs before eligibility filtering, including rejected inputs.
+    const auto adapted = athena::repository::adapt_snapshots(request.snapshots);
+    for (const auto& [id, rule] : request.repositories) {
+        try {
+            if (id.empty()) throw std::invalid_argument("Empty repository ID");
+            athena::core::validate_repository_rule(rule);
+        } catch (const std::exception& e) {
+            throw ResolutionError(ResolutionErrorCode::InvalidRepositoryRule, e.what());
+        }
+    }
+    for (const auto& snapshot : request.snapshots)
+        if (!request.repositories.contains(snapshot.repository_id()))
+            throw ResolutionError(ResolutionErrorCode::InvalidRepositoryRule, "Snapshot has no repository rule");
+    athena::repository::RepositoryIndex repository;
+    for (const auto& candidate : adapted.resolver_candidates())
+        if (athena::core::candidate_matches_target(*candidate.public_candidate, request.target))
+            repository.add_candidate(candidate);
+
+    ResolutionState state;
+    state.environments = athena::repository::adapt_environments(request.target, request.environments);
+    state.repository_rules = &request.repositories;
+    state.use_policy = true;
+    for (const auto role : request.active_roles) state.policy.active_kinds.push_back(request_role(role));
+    if (state.policy.active_kinds.empty()) state.policy.active_kinds = {DependencyKind::Runtime};
+    state.policy.optional_enabled = request.optional_enabled &&
+        std::find(state.policy.active_kinds.begin(), state.policy.active_kinds.end(), DependencyKind::Optional) != state.policy.active_kinds.end();
+    state.policy.propagated_enabled = request.propagated_enabled;
+    state.policy.feature_states = request.feature_states;
+    for (const auto& [feature, enabled] : request.feature_states) {
+        if (feature.empty()) throw ResolutionError(ResolutionErrorCode::InvalidRequest, "Empty configured feature");
+        state.feature_states[feature] = enabled;
+    }
+    struct Requirement {
+        std::optional<athena::core::SystemPolicyId> policy;
+        athena::core::InstallTarget original;
+        DependencyTarget target;
+    };
+    std::vector<Requirement> requirements;
+    auto add = [&](const athena::core::InstallTarget& original, std::optional<athena::core::SystemPolicyId> policy) {
+        auto target = request_target(original);
+        auto any = target;
+        any.constraint = VersionConstraint::any();
+        if (find_dependency_candidates(any, repository, &state).empty()) {
+            auto code = target.kind == DependencyTarget::Kind::Package ? ResolutionErrorCode::UnknownPackageRoot :
+                target.kind == DependencyTarget::Kind::Capability ? ResolutionErrorCode::NoCapabilityProvider : ResolutionErrorCode::NoFeatureProvider;
+            if (policy) code = ResolutionErrorCode::UnsatisfiedSystemPolicy;
+            throw ResolutionError(code, "No candidate for request selector: " + target.name);
+        }
+        if (find_dependency_candidates(target, repository, &state).empty())
+            throw ResolutionError(policy ? ResolutionErrorCode::UnsatisfiedSystemPolicy : ResolutionErrorCode::IncompatibleRootVersion,
+                                  "No compatible version for request selector: " + target.name);
+        requirements.push_back({std::move(policy), original, std::move(target)});
+    };
+    for (const auto& target : request.targets) add(target, std::nullopt);
+    for (const auto& policy : request.system_policies) {
+        if (policy.policy.empty() || policy.required.empty())
+            throw ResolutionError(ResolutionErrorCode::InvalidRequest, "Empty system policy requirement");
+        for (const auto& target : policy.required) add(target, policy.policy);
+    }
+    const auto owner = Package::legacy(athena::package::Package{});
+    std::optional<athena::core::SystemPolicyId> current_policy;
+    for (;;) {
+        try {
+            // Restored snapshots retain satisfied prefixes; replaying every
+            // requirement validates them and resumes incomplete propagation.
+            for (std::size_t i = 0; i < requirements.size(); ++i) {
+                const auto& requirement = requirements[i];
+                current_policy = requirement.policy;
+                resolve_package_target(requirement.target, owner, DependencyContext::Target, repository, state);
+                const auto& selected = requirement.target.kind == DependencyTarget::Kind::Package
+                    ? state.assignments.at(requirement.target.name).package
+                    : state.semantic_assignments.at(semantic_assignment_key(requirement.target));
+                if (i < state.origins.size()) state.origins[i] = {requirement.policy, requirement.original, selected};
+                else state.origins.push_back({requirement.policy, requirement.original, selected});
+            }
+            for (const auto& candidate : state.result)
+                if (violates_deferred_negatives(candidate, state))
+                    throw ResolutionError(ResolutionErrorCode::Conflict, "Selected graph violates composed NOT");
+            return {state.result, state.origins, request.profile};
+        } catch (const std::runtime_error& error) {
+            if (!backtrack_resolution(state))
+                throw ResolutionError(current_policy ? ResolutionErrorCode::UnsatisfiedSystemPolicy : ResolutionErrorCode::IncompatibleRoots,
+                                      error.what());
+        }
+    }
 }
 
 std::vector<athena::package::Package> resolve(

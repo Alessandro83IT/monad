@@ -6,6 +6,8 @@
 #include "../install/install_plan.hpp"
 #include "environment.hpp"
 #include "../repository/resolver_candidate.hpp"
+#include <athena/core/install_plan.hpp>
+#include <optional>
 
 #include <vector>
 #include <stdexcept>
@@ -28,6 +30,9 @@ enum class ResolutionErrorCode {
     Conflict,
     ProviderConflict,
     FeatureUnsatisfied,
+    InvalidRequest, InvalidSelector, UnknownPackageRoot, NoCapabilityProvider,
+    NoFeatureProvider, IncompatibleRootVersion, InvalidRepositoryRule,
+    UnsatisfiedSystemPolicy, IncompatibleRoots,
     ResolutionFailure
 };
 
@@ -39,6 +44,19 @@ public:
 private:
     ResolutionErrorCode code_;
 };
+
+// Internal B.3 solution, deliberately separate from public result materialization.
+struct RequestOrigin {
+    std::optional<athena::core::SystemPolicyId> policy;
+    athena::core::InstallTarget target;
+    athena::repository::ResolverCandidate candidate;
+};
+struct RequestResolution {
+    std::vector<athena::repository::ResolverCandidate> candidates;
+    std::vector<RequestOrigin> origins;
+    std::string profile;
+};
+RequestResolution resolve_request(const athena::core::InstallRequest& request);
 
 /*
  * Resolve a package and produce an InstallPlan.
