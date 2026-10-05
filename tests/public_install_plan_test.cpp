@@ -44,9 +44,10 @@ int main() {
     result.selections = {selection(a)};
     const auto id = result.selections.front().identity();
     InstallReason dependency_reason; dependency_reason.kind = InstallReasonKind::DependencyOf; dependency_reason.package = id;
-    InstallReason feature_reason; feature_reason.kind = InstallReasonKind::EnabledByFeature; feature_reason.profile = "desktop"; feature_reason.feature = "gui";
+    InstallReason feature_reason; feature_reason.kind = InstallReasonKind::EnabledByFeature; feature_reason.package = id; feature_reason.profile = "desktop"; feature_reason.feature = "gui";
     InstallReason policy_reason; policy_reason.kind = InstallReasonKind::RequiredBySystemPolicy; policy_reason.policy = SystemPolicyId("base");
     result.selections.front().reasons.insert(result.selections.front().reasons.end(), {dependency_reason, feature_reason, policy_reason});
+    result.system_policy_selections.push_back({SystemPolicyId("base"), DependencySelector{SelectorKind::Package, "app", {}}, id});
     result.capability_bindings.push_back({DependencySelector{SelectorKind::Capability, "tls", {VersionConstraintKind::Comparison, VersionComparisonOperator::GreaterEqual, "1.2", {}}}, id});
     result.configured_features.push_back({"gui", "desktop", true});
     result.offered_features.push_back({"offered", id});

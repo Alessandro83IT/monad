@@ -3,6 +3,7 @@
 #include "types.hpp"
 #include "repository.hpp"
 #include "install_plan.hpp"
+#include "resolver.hpp"
 #include <optional>
 #include <string>
 #include <vector>

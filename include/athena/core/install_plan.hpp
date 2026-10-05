@@ -46,6 +46,7 @@ struct InstallRequest {
     ResolutionEnvironments environments;
     std::vector<RepositorySnapshot> snapshots;
     std::map<RepositoryId, RepositorySelectionRule> repositories;
+    // Empty means the unnamed configuration; resolution preserves it exactly.
     std::string profile;
     std::map<std::string, bool> feature_states;
     std::vector<SystemPolicyRequest> system_policies;
@@ -58,6 +59,7 @@ enum class InstallReasonKind { ExplicitRequest, DependencyOf, EnabledByFeature, 
 struct InstallReason {
     InstallReasonKind kind = InstallReasonKind::ExplicitRequest;
     std::optional<InstallTarget> explicit_target;
+    // Selected declaring owner for DependencyOf and EnabledByFeature.
     std::optional<CandidateIdentity> package;
     std::string profile;
     std::string feature;
@@ -113,12 +115,27 @@ struct DependencyEdge {
 // `expression` is the canonical public dependency-language expression whose
 // negation is required. It can preserve atomic and composed NOT/AND/OR,
 // conditional, scoped, selector, and version-constraint semantics.
+enum class NegativeConstraintSourceKind { ConflictDeclaration, PackageDependency, FeatureDependency };
+struct NegativeConstraintSource {
+    NegativeConstraintSourceKind kind = NegativeConstraintSourceKind::ConflictDeclaration;
+    std::string feature;
+    bool operator==(const NegativeConstraintSource&) const = default;
+};
+
 struct NegativeConstraint {
     DependencyExpression expression;
     CandidateIdentity declared_by;
     DependencyRole role = DependencyRole::Runtime;
     DependencyTargetContext context = DependencyTargetContext::Target;
+    NegativeConstraintSource source;
     bool operator==(const NegativeConstraint&) const = default;
+};
+
+struct SystemPolicySelection {
+    SystemPolicyId policy;
+    DependencySelector selector;
+    CandidateIdentity candidate;
+    bool operator==(const SystemPolicySelection&) const = default;
 };
 
 struct ResolutionResult {
@@ -132,6 +149,7 @@ struct ResolutionResult {
     TargetEnvironment target;
     ResolutionEnvironments environments;
     std::string profile;
+    std::vector<SystemPolicySelection> system_policy_selections;
     bool operator==(const ResolutionResult&) const = default;
 };
 
@@ -154,6 +172,7 @@ public:
     const std::vector<ActivatedFeature>& activated_features() const noexcept { return result_.activated_features; }
     const std::vector<DependencyEdge>& edges() const noexcept { return result_.edges; }
     const std::vector<NegativeConstraint>& negative_constraints() const noexcept { return result_.negative_constraints; }
+    const std::vector<SystemPolicySelection>& system_policy_selections() const noexcept { return result_.system_policy_selections; }
     const TargetEnvironment& target() const noexcept { return result_.target; }
     void validate() const;
 private:

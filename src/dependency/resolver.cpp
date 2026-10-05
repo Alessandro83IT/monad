@@ -3,6 +3,8 @@
 #include "../repository/resolver_snapshot_adapter.hpp"
 
 #include "constraint.hpp"
+#include "serializer.hpp"
+#include "../core/resolution_order.hpp"
 #include "../repository/repository_index.hpp"
 #include "../version/version.hpp"
 
@@ -119,6 +121,7 @@ struct PackageAssignment { Package package; };
 struct ResolutionSnapshot {
     std::vector<Package> result;
     std::vector<RequestOrigin> origins;
+    athena::core::ResolutionResult public_result;
 
     std::unordered_map<
         std::string,
@@ -162,6 +165,7 @@ struct ResolutionDecision {
 struct ResolutionState {
     std::vector<Package> result;
     std::vector<RequestOrigin> origins;
+    athena::core::ResolutionResult public_result;
 
     /*
      * Candidate assignments are keyed by package name. This is the
@@ -360,6 +364,7 @@ ResolutionSnapshot snapshot_resolution_state(
     return {
         state.result,
         state.origins,
+        state.public_result,
         state.assignments,
         state.resolved,
         {}, // Restart propagation from its entry point after restoring this branch.
@@ -381,6 +386,7 @@ void restore_resolution_state(
 {
     state.result = snapshot.result;
     state.origins = snapshot.origins;
+    state.public_result = snapshot.public_result;
     state.assignments = snapshot.assignments;
     state.resolved = snapshot.resolved;
     state.resolving = snapshot.resolving;
@@ -651,35 +657,214 @@ bool violates_negative_dependency(
     return false;
 }
 
-void apply_package_conflicts(const Package& owner, ResolutionState& state, bool provider_origin = false)
+std::string semantic_assignment_key(const DependencyTarget &target);
+
+athena::core::DependencyRole public_role(DependencyKind r)
 {
-    for (const auto& conflict : owner.conflicts) {
-        const auto& expression = conflict.expression;
-        if (!expression) continue;
+    using R = athena::core::DependencyRole;
+    switch (r)
+    {
+    case DependencyKind::Runtime:
+        return R::Runtime;
+    case DependencyKind::Build:
+        return R::Build;
+    case DependencyKind::Test:
+        return R::Test;
+    case DependencyKind::Optional:
+        return R::Optional;
+    case DependencyKind::Development:
+        return R::Development;
+    case DependencyKind::Propagated:
+        return R::Propagated;
+    }
+    throw std::logic_error("Unknown dependency role");
+}
+athena::core::DependencyTargetContext public_context(DependencyContext c)
+{
+    using C = athena::core::DependencyTargetContext;
+    switch (c)
+    {
+    case DependencyContext::Host:
+        return C::Host;
+    case DependencyContext::Build:
+        return C::Build;
+    case DependencyContext::Target:
+        return C::Target;
+    }
+    throw std::logic_error("Unknown dependency context");
+}
+athena::core::VersionConstraint public_constraint(const VersionConstraint &c)
+{
+    athena::core::VersionConstraint result;
+    using K = athena::core::VersionConstraintKind;
+    using O = athena::core::VersionComparisonOperator;
+    switch (c.kind)
+    {
+    case VersionConstraint::Kind::Any:
+        result.kind = K::Any;
+        break;
+    case VersionConstraint::Kind::Comparison:
+        result.kind = K::Comparison;
+        result.version = c.comparison_value.version;
+        switch (c.comparison_value.op)
+        {
+        case ComparisonOperator::Equal:
+            result.comparison = O::Equal;
+            break;
+        case ComparisonOperator::NotEqual:
+            result.comparison = O::NotEqual;
+            break;
+        case ComparisonOperator::Less:
+            result.comparison = O::Less;
+            break;
+        case ComparisonOperator::LessEqual:
+            result.comparison = O::LessEqual;
+            break;
+        case ComparisonOperator::Greater:
+            result.comparison = O::Greater;
+            break;
+        case ComparisonOperator::GreaterEqual:
+            result.comparison = O::GreaterEqual;
+            break;
+        }
+        break;
+    case VersionConstraint::Kind::And:
+        result.kind = K::And;
+        break;
+    case VersionConstraint::Kind::Or:
+        result.kind = K::Or;
+        break;
+    case VersionConstraint::Kind::Not:
+        result.kind = K::Not;
+        result.operands.push_back(public_constraint(*c.constraint));
+        break;
+    }
+    for (const auto &child : c.constraints)
+        result.operands.push_back(public_constraint(child));
+    return result;
+}
+athena::core::DependencySelector public_selector(const DependencyTarget &t)
+{
+    using K = athena::core::SelectorKind;
+    K kind;
+    switch (t.kind)
+    {
+    case DependencyTarget::Kind::Package:
+        kind = K::Package;
+        break;
+    case DependencyTarget::Kind::Capability:
+        kind = K::Capability;
+        break;
+    case DependencyTarget::Kind::Feature:
+        kind = K::Feature;
+        break;
+    }
+    return {kind, t.name, public_constraint(t.constraint)};
+}
+// Selections and their reasons are accepted-branch facts, not a post-search log.
+void record_candidate(const Package &candidate, ResolutionState &state)
+{
+    if (!candidate.identity)
+        return;
+    auto &result = state.public_result;
+    if (std::any_of(result.selections.begin(), result.selections.end(),
+                    [&](const auto &s) { return s.identity() == *candidate.identity; }))
+        return;
+    result.selections.push_back({*candidate.public_candidate, *candidate.snapshot, {}});
+    for (const auto &feature : candidate.provides.features)
+        result.offered_features.push_back({feature, *candidate.identity});
+}
+void record_reason(const Package &candidate, athena::core::InstallReason reason,
+                   ResolutionState &state)
+{
+    if (!candidate.identity)
+        return;
+    const auto selected =
+        std::find_if(state.public_result.selections.begin(), state.public_result.selections.end(),
+                     [&](const auto &s) { return s.identity() == *candidate.identity; });
+    if (selected == state.public_result.selections.end())
+        throw std::logic_error("Missing selected candidate fact");
+    selected->reasons.push_back(std::move(reason));
+}
+void record_negative(const ExpressionPtr &prohibited, const Package &owner, DependencyKind role,
+                     DependencyContext context, athena::core::NegativeConstraintSource source,
+                     ResolutionState &state)
+{
+    if (owner.identity)
+        state.public_result.negative_constraints.push_back({{serialize_expression(prohibited)},
+                                                            *owner.identity,
+                                                            public_role(role),
+                                                            public_context(context),
+                                                            std::move(source)});
+}
+void record_binding(const DependencyTarget &target, const Package &selected, ResolutionState &state)
+{
+    if (target.kind == DependencyTarget::Kind::Capability && selected.identity)
+        state.public_result.capability_bindings.push_back(
+            {public_selector(target), *selected.identity});
+}
+void record_edge(const DependencyTarget &target, const Package &owner, DependencyKind role,
+                 DependencyContext context, const std::string &feature, ResolutionState &state)
+{
+    const auto &selected = target.kind == DependencyTarget::Kind::Package
+                               ? state.assignments.at(target.name).package
+                               : state.semantic_assignments.at(semantic_assignment_key(target));
+    record_binding(target, selected, state);
+    if (!owner.identity || !selected.identity)
+        return;
+    athena::core::InstallReason reason;
+    reason.kind = feature.empty() ? athena::core::InstallReasonKind::DependencyOf
+                                  : athena::core::InstallReasonKind::EnabledByFeature;
+    reason.package = *owner.identity;
+    if (!feature.empty())
+    {
+        reason.feature = feature;
+        reason.profile = state.public_result.profile;
+    }
+    record_reason(selected, reason, state);
+    state.public_result.edges.push_back({*owner.identity, public_selector(target),
+                                         *selected.identity, public_role(role),
+                                         public_context(context), reason});
+}
+
+void apply_package_conflicts(const Package &owner, ResolutionState &state,
+                             bool provider_origin = false)
+{
+    for (const auto &conflict : owner.conflicts)
+    {
+        const auto &expression = conflict.expression;
+        if (!expression)
+            continue;
+        record_negative(expression, owner, conflict.kind, conflict.context, {}, state);
         if (expression->kind == Expression::Kind::Package ||
             expression->kind == Expression::Kind::Capability ||
             expression->kind == Expression::Kind::Feature ||
-            expression->kind == Expression::Kind::VersionComparison) {
+            expression->kind == Expression::Kind::VersionComparison)
+        {
             const auto target = extract_dependency_target(expression);
-            for (const auto& selected : state.result) {
+            for (const auto &selected : state.result)
+            {
                 if (package_satisfies_target(selected, target))
                     throw ResolutionError(ResolutionErrorCode::Conflict,
-                        "Conflitto: " + owner.name + " incompatibile con " + selected.name);
+                                          "Conflitto: " + owner.name + " incompatibile con " +
+                                              selected.name);
             }
             state.negative_dependencies.push_back({target, provider_origin});
-        } else {
+        }
+        else
+        {
             // Reuse the dependency AST for compound and conditional conflicts.
-            state.deferred_negatives.push_back({expression, owner, conflict.context, true, conflict.kind});
+            state.deferred_negatives.push_back(
+                {expression, owner, conflict.context, true, conflict.kind});
         }
     }
 }
 
-std::string semantic_assignment_key(const DependencyTarget& target)
+std::string semantic_assignment_key(const DependencyTarget &target)
 {
     const char* prefix = target.kind == DependencyTarget::Kind::Capability ? "capability:" : "feature:";
     return std::string(prefix) + target.name;
 }
-
 
 const Environment& environment_for_context(
     const ResolutionState& state,
@@ -925,7 +1110,8 @@ void resolve_expression(
     DependencyKind role,
     bool enabled,
     const athena::repository::RepositoryIndex& repository,
-    ResolutionState& state
+    ResolutionState& state,
+    const std::string& feature = {}
 );
 
 void resolve_configured_feature_dependencies(
@@ -939,9 +1125,10 @@ void resolve_configured_feature_dependencies(
         const auto declared = package.feature_dependencies.find(feature);
         if (declared == package.feature_dependencies.end()) continue;
         state.feature_states[feature] = true;
+        if (package.identity) state.public_result.activated_features.push_back({feature, state.public_result.profile, *package.identity});
         for (const auto& dependency : declared->second) {
             resolve_expression(dependency.expression, package, dependency.context,
-                               dependency.kind, dependency.enabled, repository, state);
+                               dependency.kind, dependency.enabled, repository, state, feature);
         }
     }
 }
@@ -1031,6 +1218,10 @@ void resolve_package_target(
             ? nullptr : find_assignment(target.name, state);
 
     if (existing_assignment != nullptr) {
+        // Local AND/OR rollback replaces assignments. Own the immutable source
+        // candidate while replaying its declarations rather than borrowing a
+        // package from the map being restored.
+        const auto propagating_package = *existing_assignment;
 
         /*
          * The package is assigned but not yet resolved. This happens
@@ -1041,17 +1232,17 @@ void resolve_package_target(
          * until the pending global decision is reached again.
          */
         state.resolving.insert(
-            existing_assignment->name
+            propagating_package.name
         );
 
         try {
 
             for (const auto& dependency :
-                 existing_assignment->dependencies) {
+                 propagating_package.dependencies) {
 
                 resolve_expression(
                     dependency.expression,
-                    *existing_assignment,
+                    propagating_package,
                     dependency.context,
                     dependency.kind,
                     dependency.enabled,
@@ -1060,24 +1251,24 @@ void resolve_package_target(
                 );
             }
 
-            resolve_configured_feature_dependencies(*existing_assignment, repository, state);
+            resolve_configured_feature_dependencies(propagating_package, repository, state);
 
             state.resolving.erase(
-                existing_assignment->name
+                propagating_package.name
             );
 
             state.resolved.insert(
-                existing_assignment->name
+                propagating_package.name
             );
 
             state.result.push_back(
-                *existing_assignment
+                propagating_package
             );
         }
         catch (...) {
 
             state.resolving.erase(
-                existing_assignment->name
+                propagating_package.name
             );
 
             throw;
@@ -1185,6 +1376,7 @@ void resolve_package_target(
         dependency_package
         };
 
+    record_candidate(dependency_package, state);
     apply_package_conflicts(dependency_package, state, target.kind != DependencyTarget::Kind::Package);
 
     if (target.kind != DependencyTarget::Kind::Package)
@@ -1264,7 +1456,8 @@ void resolve_expression(
     DependencyKind role,
     bool enabled,
     const athena::repository::RepositoryIndex& repository,
-    ResolutionState& state
+    ResolutionState& state,
+    const std::string& feature
 )
 {
     if (!expression) {
@@ -1313,6 +1506,7 @@ void resolve_expression(
                 repository,
                 state
             );
+            record_edge(target, requiring_package, role, context, feature, state);
 
             return;
         }
@@ -1334,7 +1528,7 @@ void resolve_expression(
             const auto decisions_before = state.decisions;
             try {
                 for (const auto& child : and_expression->expressions)
-                    resolve_expression(child, requiring_package, context, role, enabled, repository, state);
+                    resolve_expression(child, requiring_package, context, role, enabled, repository, state, feature);
             } catch (...) {
                 restore_resolution_state(state, before);
                 state.decisions = decisions_before;
@@ -1385,7 +1579,8 @@ void resolve_expression(
                         role,
                         enabled,
                         repository,
-                        state
+                        state,
+                        feature
                     );
 
                     return;
@@ -1434,6 +1629,9 @@ void resolve_expression(
                     "Espressione NOT non valida"
                 );
             }
+
+            record_negative(not_expression->expression, requiring_package, role, context,
+                {feature.empty() ? athena::core::NegativeConstraintSourceKind::PackageDependency : athena::core::NegativeConstraintSourceKind::FeatureDependency, feature}, state);
 
             const auto selector_only = [&](const auto& self, const ExpressionPtr& node) -> bool {
                 if (!node) return false;
@@ -1498,7 +1696,7 @@ void resolve_expression(
             const auto* scoped = dynamic_cast<const ScopedExpression*>(expression.get());
             if (!scoped || !scoped->body) throw std::runtime_error("Espressione scoped non valida");
             resolve_expression(scoped->body, requiring_package, scoped->context, scoped->kind_role,
-                               scoped->enabled, repository, state);
+                               scoped->enabled, repository, state, feature);
             return;
         }
 
@@ -1507,7 +1705,7 @@ void resolve_expression(
             if (!conditional || !conditional->condition || !conditional->body)
                 throw std::runtime_error("Espressione conditional non valida");
             if (evaluate_boolean_condition(conditional->condition, requiring_package, context, state, role))
-                resolve_expression(conditional->body, requiring_package, context, role, enabled, repository, state);
+                resolve_expression(conditional->body, requiring_package, context, role, enabled, repository, state, feature);
             return;
         }
 
@@ -1748,6 +1946,11 @@ RequestResolution resolve_request(const athena::core::InstallRequest& request)
     ResolutionState state;
     state.environments = athena::repository::adapt_environments(request.target, request.environments);
     state.repository_rules = &request.repositories;
+    state.public_result.target = request.target;
+    state.public_result.environments = request.environments;
+    state.public_result.profile = request.profile;
+    for(const auto& [feature, enabled] : request.feature_states)
+        state.public_result.configured_features.push_back({feature, request.profile, enabled});
     state.use_policy = true;
     for (const auto role : request.active_roles) state.policy.active_kinds.push_back(request_role(role));
     if (state.policy.active_kinds.empty()) state.policy.active_kinds = {DependencyKind::Runtime};
@@ -1799,17 +2002,29 @@ RequestResolution resolve_request(const athena::core::InstallRequest& request)
                 const auto& selected = requirement.target.kind == DependencyTarget::Kind::Package
                     ? state.assignments.at(requirement.target.name).package
                     : state.semantic_assignments.at(semantic_assignment_key(requirement.target));
+                athena::core::InstallReason reason;
+                reason.kind = requirement.policy ? athena::core::InstallReasonKind::RequiredBySystemPolicy : athena::core::InstallReasonKind::ExplicitRequest;
+                if (requirement.policy) reason.policy = requirement.policy;
+                else reason.explicit_target = requirement.original;
+                record_reason(selected, std::move(reason), state);
+                if (requirement.original.selector.kind == athena::core::SelectorKind::Capability)
+                    state.public_result.capability_bindings.push_back({requirement.original.selector, *selected.identity});
+                if(requirement.policy) state.public_result.system_policy_selections.push_back({*requirement.policy, requirement.original.selector, *selected.identity});
                 if (i < state.origins.size()) state.origins[i] = {requirement.policy, requirement.original, selected};
                 else state.origins.push_back({requirement.policy, requirement.original, selected});
             }
             for (const auto& candidate : state.result)
                 if (violates_deferred_negatives(candidate, state))
                     throw ResolutionError(ResolutionErrorCode::Conflict, "Selected graph violates composed NOT");
-            return {state.result, state.origins, request.profile};
+            auto& result = state.public_result;
+            athena::core::detail::canonicalize(result);
+            return {state.result, state.origins, request.profile, std::move(result)};
         } catch (const std::runtime_error& error) {
-            if (!backtrack_resolution(state))
+            if (!backtrack_resolution(state)) {
+                if(!current_policy) if(const auto* precise=dynamic_cast<const ResolutionError*>(&error)) throw *precise;
                 throw ResolutionError(current_policy ? ResolutionErrorCode::UnsatisfiedSystemPolicy : ResolutionErrorCode::IncompatibleRoots,
                                       error.what());
+            }
         }
     }
 }
@@ -1945,4 +2160,23 @@ std::vector<athena::package::Package> resolve(
     );
 }
 
+}
+
+namespace athena::core {
+ResolutionResult resolve_request(const InstallRequest& request)
+{
+    try {
+        return athena::dependency::resolve_request(request).result;
+    } catch (const athena::repository::ResolverSnapshotAdapterError& error) {
+        using E = athena::repository::ResolverSnapshotAdapterErrorCode;
+        ResolutionErrorCode code;
+        switch (error.code()) {
+        case E::InvalidSnapshot: code = ResolutionErrorCode::InvalidSnapshot; break;
+        case E::InvalidCandidate: code = ResolutionErrorCode::InvalidCandidate; break;
+        case E::InvalidMetadata: code = ResolutionErrorCode::InvalidDependencyMetadata; break;
+        case E::SnapshotMismatch: code = ResolutionErrorCode::CandidateSnapshotMismatch; break;
+        }
+        throw ResolutionError(code, error.what());
+    }
+}
 }

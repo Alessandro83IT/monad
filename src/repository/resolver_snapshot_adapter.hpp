@@ -12,7 +12,9 @@ namespace athena::repository {
 
 enum class ResolverSnapshotAdapterErrorCode {
     InvalidSnapshot,
-    InvalidCandidate
+    InvalidCandidate,
+    InvalidMetadata,
+    SnapshotMismatch
 };
 
 class ResolverSnapshotAdapterError : public std::invalid_argument {

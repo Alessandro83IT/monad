@@ -6,7 +6,7 @@
 #include "../install/install_plan.hpp"
 #include "environment.hpp"
 #include "../repository/resolver_candidate.hpp"
-#include <athena/core/install_plan.hpp>
+#include <athena/core/resolver.hpp>
 #include <optional>
 
 #include <vector>
@@ -24,28 +24,11 @@ std::vector<athena::repository::ResolverCandidate> resolve_candidates(
     const DependencyResolutionContext& context
 );
 
-enum class ResolutionErrorCode {
-    CapabilityUnsatisfied,
-    NoProvider,
-    Conflict,
-    ProviderConflict,
-    FeatureUnsatisfied,
-    InvalidRequest, InvalidSelector, UnknownPackageRoot, NoCapabilityProvider,
-    NoFeatureProvider, IncompatibleRootVersion, InvalidRepositoryRule,
-    UnsatisfiedSystemPolicy, IncompatibleRoots,
-    ResolutionFailure
-};
+using ResolutionErrorCode = athena::core::ResolutionErrorCode;
+using ResolutionError = athena::core::ResolutionError;
 
-class ResolutionError : public std::runtime_error {
-public:
-    ResolutionError(ResolutionErrorCode code, std::string message)
-        : std::runtime_error(std::move(message)), code_(code) {}
-    ResolutionErrorCode code() const noexcept { return code_; }
-private:
-    ResolutionErrorCode code_;
-};
-
-// Internal B.3 solution, deliberately separate from public result materialization.
+// Internal compatibility projection of the same accepted global solution.
+// Public callers obtain only ResolutionResult through core::resolve_request.
 struct RequestOrigin {
     std::optional<athena::core::SystemPolicyId> policy;
     athena::core::InstallTarget target;
@@ -55,6 +38,7 @@ struct RequestResolution {
     std::vector<athena::repository::ResolverCandidate> candidates;
     std::vector<RequestOrigin> origins;
     std::string profile;
+    athena::core::ResolutionResult result;
 };
 RequestResolution resolve_request(const athena::core::InstallRequest& request);
 
