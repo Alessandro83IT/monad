@@ -82,6 +82,7 @@ set(ATHENA_TESTS
     repository_api_types_test
     metadata_schema_test
     repository_snapshot_test
+    repository_selection_test
     local_repository_test
     removal_e2e_test
     core_foundation_test

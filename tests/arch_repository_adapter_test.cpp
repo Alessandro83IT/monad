@@ -63,7 +63,8 @@ std::filesystem::path make_db(const std::filesystem::path& root,
     std::string command = "tar -cf '" + db.string() + "' -C '" + root.string() + "'";
     for (const auto& member : members) command += " '" + member + "'";
     if (members.empty()) command = "tar -cf '" + db.string() + "' --files-from /dev/null";
-    assert(std::system(command.c_str()) == 0);
+    const int tar_status = std::system(command.c_str());
+    assert(tar_status == 0);
     return db;
 }
 

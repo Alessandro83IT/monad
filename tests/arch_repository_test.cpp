@@ -126,7 +126,8 @@ int main()
         " " +
         package_b.filename().string();
 
-    assert(run_command(command) == 0);
+    const int tar_status = run_command(command);
+    assert(tar_status == 0);
 
     athena::repository::ArchRepository repository(
         database,
