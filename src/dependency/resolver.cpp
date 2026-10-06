@@ -20,8 +20,6 @@
 
 namespace athena::dependency {
 
-namespace {
-
 Environment native_environment()
 {
 #if defined(__linux__)
@@ -72,6 +70,7 @@ Environments native_environments()
     };
 }
 
+namespace {
 
 using Package = athena::repository::ResolverCandidate;
 

@@ -46,4 +46,7 @@ struct Environments {
     Environment target;
 };
 
+// Native ambient execution context, shared by legacy and CLI request adapters.
+Environments native_environments();
+
 } // namespace athena::dependency

@@ -57,6 +57,8 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    cli_install_test
+    cli_install_integration_test
     install_transaction_test
     install_transaction_integration_test
     activation_projection_test
@@ -139,3 +141,4 @@ set_tests_properties(generation_activation_test PROPERTIES SKIP_RETURN_CODE 77 T
 set_tests_properties(realization_executor_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
 
 set_tests_properties(install_transaction_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+set_tests_properties(cli_install_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)

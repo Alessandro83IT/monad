@@ -12,6 +12,9 @@
 #include "../activation/activation.hpp"
 #include "../generation/generation.hpp"
 #include "../../include/athena/core/config.hpp"
+#include <athena/core/resolver.hpp>
+#include "../install/transaction.hpp"
+#include "../dependency/environment.hpp"
 
 #include <iostream>
 #include <filesystem>
@@ -340,20 +343,44 @@ int run(int argc, char* argv[])
 
     if (command_line.command == "install") {
 
-        if (command_arguments.empty()) {
+        if (command_arguments.size() != 1) {
             std::cout << "Usage: athena install <package>\n";
             return 1;
         }
 
         try {
 
-            const auto package_file = package_manifest(config, command_arguments[0]);
+            // Validate the existing package-name CLI contract before repository I/O.
+            (void)package_manifest(config, command_arguments[0]);
+            const athena::core::RepositoryId repository_id("local");
+            athena::core::LocalRepository repository({
+                repository_id, config.paths.repository_state / "packages"});
+            athena::core::InstallRequest request;
+            request.targets.push_back({{athena::core::SelectorKind::Package,
+                                       command_arguments[0], {}}});
+            request.snapshots.push_back(repository.load_snapshot());
+            request.repositories[repository_id] = {};
+            const auto native = athena::dependency::native_environments();
+            request.target = {native.target.platform, native.target.architecture,
+                              native.target.abi, ""};
+            request.environments = {
+                {native.host.platform, native.host.architecture, native.host.abi, ""},
+                {native.build.platform, native.build.architecture, native.build.abi, ""}};
+            const auto plan = athena::core::InstallPlanBuilder(
+                athena::core::resolve_request(request)).build();
 
-            athena::install::install_package(
-                package_file,
-                config.paths.target_root,
-                config.paths
-            );
+            if (!plan.selections().empty()) {
+                std::filesystem::create_directories(config.paths.store);
+                std::filesystem::create_directories(config.paths.build);
+                athena::store::ObjectStore objects(config.paths.store);
+                athena::realization::ExecutionOptions execution{config.paths.build};
+                athena::generation::GenerationManager generations(
+                    config.paths.generation_state,
+                    athena::generation::GenerationManager::GenerationDirectoryTag{});
+                generations.initialize();
+                athena::install::install_plan(plan, generations, objects, execution,
+                                             config.paths.target_root);
+            }
 
             return 0;
         } 

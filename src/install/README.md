@@ -5,7 +5,20 @@
 `ObjectStore`, C.4 `ExecutionOptions`, and explicit target root. A caller can use
 `PathLayout::generation_state` with the manager's `GenerationDirectoryTag` and
 `PathLayout::target_root`; ObjectStore and workspace locators remain explicit.
-The legacy installer/CLI is unchanged.
+`athena install <package>` now loads the existing local package catalog through
+the public LocalRepository adapter, calls resolve_request() and finalizes a
+core::InstallPlan before entering this transaction. Store, build workspace,
+generation state and target root come from the CLI's configured PathLayout.
+Runtime directories and GenerationManager initialization happen only after
+successful non-empty planning. The legacy installer remains compatibility code
+(including install-test), but is no longer the CLI install path.
+
+C.4 limitations still apply: one local file:///absolute/path gzip tar source,
+CMake only, no build parameters, remote acquisition, binary import or Athena IR.
+Unsupported recipes fail with diagnostics and never fall back to legacy install.
+The reused local repository bridge preserves manifest conflicts and feature
+dependencies. Distinct capability-specific versions are rejected because the
+current public metadata model uses the package version for capability providers.
 
 The transaction first calls C.4 `realize()` for the complete const plan. Until
 all selections succeed it writes no generation metadata and performs no
@@ -28,8 +41,7 @@ without returning a generation, its API provides no safely owned generation ID
 for cleanup; partial persistence cleanup remains that primitive's responsibility.
 No new crash-durability, concurrency, or current-pointer persistence guarantees
 are introduced. Callers must serialize environment transactions and initialize
-the manager before nonempty execution. CLI, removal, and GC migration remain
-outside C.5.
+the manager before nonempty execution. Removal and GC migration remain deferred.
 
 `install_transaction_test` checks capability-independent no-op/failure boundaries.
 `install_transaction_integration_test` exercises actual C.4 publication and C.3

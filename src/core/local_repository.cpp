@@ -60,6 +60,22 @@ RepositoryCandidate convert_package(const athena::package::Package& legacy,
     }
     metadata.capabilities = legacy.provides.capabilities;
     metadata.features = legacy.provides.features;
+    for (const auto& conflict : legacy.conflicts)
+        metadata.conflicts.push_back(athena::dependency::serialize_dependency(conflict));
+    for (const auto& [feature, dependencies] : legacy.feature_dependencies) {
+        auto& entries = metadata.feature_dependencies[feature];
+        for (const auto& dependency : dependencies)
+            entries.push_back({{athena::dependency::serialize_dependency(dependency)}});
+    }
+    metadata.platforms = legacy.platforms;
+    metadata.architectures = legacy.architectures;
+    metadata.abis = legacy.abis;
+    // Public capability providers currently use the package version. Never
+    // silently discard a distinct legacy capability version during migration.
+    for (const auto& [capability, version] : legacy.provides.capability_versions)
+        if (version != legacy.version)
+            throw RepositoryError(RepositoryErrorCode::InvalidCandidate,
+                "Unsupported capability-specific version for '" + capability + "'");
     metadata.validate();
 
     RepositoryCandidate candidate{

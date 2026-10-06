@@ -18,6 +18,16 @@ The initial implementation is written in C++20.
 
 Early development — version 0.1.0.
 
+`athena install <package>` uses the content-addressed pipeline: the existing
+local catalog under `repository_state/packages` supplies public repository
+candidates, public resolution produces a core install plan, and the install
+transaction realizes artifacts into ObjectStore and activates a new generation.
+The legacy installer remains compatibility code but is no longer the CLI install
+path. Current realization supports only one local `file:///absolute/path` gzip
+tar source and CMake, without build parameters; remote sources, Autotools,
+binary import and Athena IR are unsupported. See [install](src/install/README.md)
+and [realization](src/realization/README.md) for the precise limitations.
+
 At this stage the project contains the initial CMake-based C++ application.
 
 ## Build
