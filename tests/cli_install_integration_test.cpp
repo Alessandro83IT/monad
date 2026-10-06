@@ -27,6 +27,21 @@ int main() {
         require(!fs::exists(paths.store / (record.candidate.package.value() + "-1")),
                 "legacy store entry created");
     }
+
+    const auto list_result = invoke_command(paths, "list");
+    require(list_result.status == 0 &&
+            list_result.output.find("app 1") != std::string::npos &&
+            list_result.output.find("dependency 1") != std::string::npos,
+            "CLI list does not reflect realization memberships");
+
+    const auto info_result = invoke_command(paths, "info", {"app"});
+    require(info_result.status == 0 &&
+            info_result.output.find("Name: app") != std::string::npos &&
+            info_result.output.find("Version: 1") != std::string::npos &&
+            info_result.output.find("Repository: local") != std::string::npos &&
+            info_result.output.find("Artifact: sha256:") != std::string::npos &&
+            info_result.output.find("Object: objects/v1/sha256/") != std::string::npos,
+            "CLI info does not expose realization identity");
     const auto payload = paths.target_root / "usr/share/fixture/payload";
     const auto link = fs::read_symlink(payload);
     require(link == objects.object_path(active.realizations.front().artifact_id) /

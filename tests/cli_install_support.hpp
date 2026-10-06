@@ -17,10 +17,12 @@ inline void manifest(const core::PathLayout& paths, const std::string& name,
         << "\"\ndependencies = " << dependencies << '\n';
 }
 struct Result { int status; std::string output; };
-inline Result invoke(const core::PathLayout& paths, std::vector<std::string> args) {
+inline Result invoke_command(const core::PathLayout& paths,
+                             const std::string& command,
+                             std::vector<std::string> args = {}) {
     const auto config = paths.root / "cli.toml";
     std::ofstream(config) << "schema_version = 1\n[paths]\n";
-    std::vector<std::string> words{"athena", "install", "--config", config.native(),
+    std::vector<std::string> words{"athena", command, "--config", config.native(),
                                    "--root", paths.root.native()};
     words.insert(words.end(), args.begin(), args.end());
     std::vector<char*> argv;
@@ -31,6 +33,10 @@ inline Result invoke(const core::PathLayout& paths, std::vector<std::string> arg
     const int status = cli::run(static_cast<int>(argv.size()), argv.data());
     std::cout.rdbuf(out); std::cerr.rdbuf(err);
     return {status, output.str()};
+}
+
+inline Result invoke(const core::PathLayout& paths, std::vector<std::string> args) {
+    return invoke_command(paths, "install", std::move(args));
 }
 inline generation::GenerationManager manager(const core::PathLayout& paths) {
     return generation::GenerationManager(paths.generation_state,

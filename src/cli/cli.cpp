@@ -661,20 +661,37 @@ int run(int argc, char* argv[])
      */
     if (command_line.command == "list") {
 
-        const auto packages =
-            athena::store::list(config.paths.store);
+        if (!std::filesystem::exists(config.paths.generation_state)) {
+            return 0;
+        }
 
-        for (const auto& package_path : packages) {
+        athena::generation::GenerationManager generations(
+            config.paths.generation_state,
+            athena::generation::GenerationManager::GenerationDirectoryTag{}
+        );
+
+        const auto current = generations.current();
+
+        for (const auto& entry : current.entries) {
 
             const auto metadata =
                 athena::store::read_metadata(
-                    package_path
+                    entry.store_path
                 );
 
             std::cout
                 << metadata.name
                 << " "
                 << metadata.version
+                << '\n';
+        }
+
+        for (const auto& record : current.realizations) {
+
+            std::cout
+                << record.candidate.package.value()
+                << " "
+                << record.candidate.version.value()
                 << '\n';
         }
 
@@ -699,21 +716,31 @@ int run(int argc, char* argv[])
             const std::string package_name =
                 command_arguments[0];
 
-            const auto packages =
-                athena::store::list(config.paths.store);
+            if (!std::filesystem::exists(config.paths.generation_state)) {
+                throw std::runtime_error(
+                    "Pacchetto non installato: " +
+                    package_name
+                );
+            }
 
+            athena::generation::GenerationManager generations(
+                config.paths.generation_state,
+                athena::generation::GenerationManager::GenerationDirectoryTag{}
+            );
+
+            const auto current = generations.current();
             bool found = false;
 
-            for (const auto& package_path : packages) {
+            for (const auto& entry : current.entries) {
+
+                if (entry.package != package_name) {
+                    continue;
+                }
 
                 const auto metadata =
                     athena::store::read_metadata(
-                        package_path
+                        entry.store_path
                     );
-
-                if (metadata.name != package_name) {
-                    continue;
-                }
 
                 found = true;
 
@@ -723,8 +750,43 @@ int run(int argc, char* argv[])
                     << "Source: " << metadata.source << '\n'
                     << "SHA-256: " << metadata.sha256 << '\n'
                     << "Build system: " << metadata.build_system << '\n'
-                    << "Store: " << package_path << '\n'
+                    << "Store: " << entry.store_path << '\n'
                     << '\n';
+            }
+
+            for (const auto& record : current.realizations) {
+
+                if (record.candidate.package.value() != package_name) {
+                    continue;
+                }
+
+                found = true;
+
+                std::cout
+                    << "Name: "
+                    << record.candidate.package.value()
+                    << '\n'
+                    << "Version: "
+                    << record.candidate.version.value()
+                    << '\n'
+                    << "Repository: "
+                    << record.candidate.repository.value()
+                    << '\n'
+                    << "Artifact: "
+                    << record.artifact_id.value()
+                    << '\n'
+                    << "Object: "
+                    << record.object_reference()
+                    << '\n';
+
+                if (record.build_input_id) {
+                    std::cout
+                        << "Build input: "
+                        << record.build_input_id->value()
+                        << '\n';
+                }
+
+                std::cout << '\n';
             }
 
             if (!found) {
