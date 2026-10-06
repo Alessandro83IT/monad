@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "sha256.hpp"
 #include <array>
 #include <openssl/evp.h>

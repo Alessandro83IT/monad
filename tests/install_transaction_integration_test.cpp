@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "realization_executor_support.hpp"
 #include "install/transaction.hpp"
 #include "installed/environment.hpp"

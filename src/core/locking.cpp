@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "../../include/athena/core/locking.hpp"
 #include <cerrno>
 #include <cstring>

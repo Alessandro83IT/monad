@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "validator.hpp"
 #include "constraint.hpp"
 #include "expression_validation.hpp"

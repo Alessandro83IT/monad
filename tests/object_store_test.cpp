@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "object_store_test_support.hpp"
 #include <sys/syscall.h>
 int main() {

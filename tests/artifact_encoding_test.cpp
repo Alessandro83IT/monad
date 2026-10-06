@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "artifact/encoding.hpp"
 #include "artifact_golden_vectors.hpp"
 #include "artifact_test_support.hpp"

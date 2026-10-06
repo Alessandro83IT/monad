@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "dependency/parser.hpp"
 #include "dependency/resolver.hpp"
 #include "repository/repository_index.hpp"

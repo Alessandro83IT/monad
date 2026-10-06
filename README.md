@@ -63,4 +63,11 @@ The project is initially developed and tested on Arch Linux.
 
 ## License
 
-License to be decided.
+Athena Package Manager is free software licensed under the
+GNU General Public License, version 3 or (at your option) any later version
+(GPL-3.0-or-later).
+
+Copyright (C) 2026 Alessandro Bifaretti.
+
+See [LICENSE](LICENSE) for the full license text and [COPYRIGHT](COPYRIGHT)
+for copyright information.

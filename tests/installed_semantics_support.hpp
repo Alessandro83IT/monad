@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 #include "installed/environment.hpp"
 #include "install/generation_builder.hpp"

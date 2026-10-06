@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "../dependency/constraint.hpp"
 #include "../dependency/parser.hpp"
 #include "../dependency/serializer.hpp"

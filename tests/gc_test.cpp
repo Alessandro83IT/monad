@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "../src/generation/generation.hpp"
 #include "../src/store/gc.hpp"
 #include "../src/store/object_store.hpp"

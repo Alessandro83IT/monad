@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include <algorithm>
 #include "activation/activation.hpp"
 #include "generation/generation.hpp"

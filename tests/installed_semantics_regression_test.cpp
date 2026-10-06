@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "installed_semantics_support.hpp"
 #include "store/manifest.hpp"
 #include <toml++/toml.hpp>

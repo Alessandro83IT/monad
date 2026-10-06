@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "builder.hpp"
 #include "autotools_backend.hpp"
 #include "cmake_backend.hpp"

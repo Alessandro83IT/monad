@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "cli.hpp"
 #include "../installed/environment.hpp"
 #include "command_line.hpp"

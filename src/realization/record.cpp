@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "record.hpp"
 #include "identity_codec.hpp"
 #include "../core/resolution_order.hpp"

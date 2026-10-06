@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "../src/install/removal_planner.hpp"
 
 #include "../src/dependency/parser.hpp"
