@@ -1,0 +1,6 @@
+# Generated from the effective normalized GNUInstallDirs value.
+set(bindir [==[@CMAKE_INSTALL_BINDIR@]==])
+if(NOT bindir STREQUAL "bin")
+    message(FATAL_ERROR
+        "AppImage packaging requires CMAKE_INSTALL_BINDIR=bin; configured bindir is '${bindir}'. Custom bindirs remain supported for normal installation.")
+endif()

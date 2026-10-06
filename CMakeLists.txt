@@ -6,6 +6,8 @@ project(athena
     LANGUAGES CXX
 )
 
+include(cmake/AthenaPackaging.cmake)
+
 find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 find_package(LibArchive REQUIRED)
 
@@ -33,17 +35,13 @@ target_link_libraries(athena_core PRIVATE OpenSSL::Crypto LibArchive::LibArchive
 add_executable(athena src/main.cpp)
 target_link_libraries(athena PRIVATE Athena::Core)
 
-# Install the executable, shared core library, and public source-level headers.
-install(TARGETS athena RUNTIME DESTINATION usr/bin)
-install(TARGETS athena_core
-    LIBRARY DESTINATION usr/lib
-    ARCHIVE DESTINATION usr/lib
-    RUNTIME DESTINATION usr/bin
-)
-install(DIRECTORY include/athena DESTINATION usr/include)
+athena_install_targets("${PROJECT_SOURCE_DIR}/include")
 
 add_custom_target(appimage
-    COMMAND "${PROJECT_SOURCE_DIR}/packaging/build-appimage.sh"
+    COMMAND "${CMAKE_COMMAND}" -E env
+        "ATHENA_APPIMAGE_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+        "ATHENA_APPIMAGE_CONFIG=$<CONFIG>"
+        "${PROJECT_SOURCE_DIR}/packaging/build-appimage.sh"
     DEPENDS athena
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Building Athena Package Manager AppImage"
@@ -150,3 +148,13 @@ set_tests_properties(cli_install_integration_test PROPERTIES SKIP_RETURN_CODE 77
 
 add_test(NAME removal_realization_integration_test COMMAND removal_realization_test integration)
 set_tests_properties(removal_realization_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    athena_add_packaging_smoke_test("${PROJECT_SOURCE_DIR}/include")
+    configure_file(tests/packaging_regression_test.cmake.in
+        packaging_regression_test.cmake @ONLY)
+    add_test(NAME packaging_regression_test
+        COMMAND "${CMAKE_COMMAND}" -DCONFIG=$<CONFIG>
+            -P "${CMAKE_CURRENT_BINARY_DIR}/packaging_regression_test.cmake")
+    set_tests_properties(packaging_regression_test PROPERTIES LABELS packaging TIMEOUT 180)
+endif()

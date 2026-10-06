@@ -1,0 +1,199 @@
+execute_process(COMMAND "@ATHENA_MKTEMP@" -d "@CMAKE_CURRENT_BINARY_DIR@/packaging regression.XXXXXXXXXX"
+    RESULT_VARIABLE result OUTPUT_VARIABLE work OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT result EQUAL 0 OR NOT IS_DIRECTORY "${work}")
+    message(FATAL_ERROR "Cannot allocate packaging regression directory")
+endif()
+message(STATUS "Regression artifacts: ${work}")
+function(run)
+    execute_process(COMMAND ${ARGV} RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+    if(NOT result EQUAL 0)
+        message(FATAL_ERROR "Command failed: ${ARGV}\n${output}\n${error}\nArtifacts retained: ${work}")
+    endif()
+    set(output "${output}" PARENT_SCOPE)
+endfunction()
+set(config_args)
+set(ctest_config_args)
+if(NOT CONFIG STREQUAL "")
+    list(APPEND config_args --config "${CONFIG}")
+    list(APPEND ctest_config_args -C "${CONFIG}")
+endif()
+function(configure_case name)
+    set(case_build "${work}/${name}")
+    run("@CMAKE_COMMAND@" -S "@PROJECT_SOURCE_DIR@/tests/packaging_fixture" -B "${case_build}"
+        -G "@CMAKE_GENERATOR@" "-DCMAKE_CXX_COMPILER=@CMAKE_CXX_COMPILER@"
+        "-DATHENA_SOURCE_ROOT=@PROJECT_SOURCE_DIR@" "-DCMAKE_BUILD_TYPE=${CONFIG}" ${ARGN})
+    set(case_build "${case_build}" PARENT_SCOPE)
+endfunction()
+function(smoke_case)
+    run("@CMAKE_COMMAND@" --build "${case_build}" ${config_args} --parallel 2)
+    run("@CMAKE_COMMAND@" -E env LC_ALL=it_IT.UTF-8 LANGUAGE=it
+        "@CMAKE_CTEST_COMMAND@" --test-dir "${case_build}" ${ctest_config_args}
+        -R "^packaging_install_test$" -V)
+    message(STATUS "${case_build}: ${output}")
+endfunction()
+function(check_appimage accepted)
+    set(appdir "${case_build}/AthenaPM.AppDir")
+    file(MAKE_DIRECTORY "${appdir}")
+    file(WRITE "${appdir}/sentinel" "preserve on rejected bindir")
+    execute_process(COMMAND "@CMAKE_COMMAND@" -E env
+        "ATHENA_APPIMAGE_BUILD_DIR=${case_build}" "ATHENA_APPIMAGE_DIST_DIR=${work}/dist"
+        "ATHENA_APPIMAGE_CONFIG=${CONFIG}"
+        "APPIMAGETOOL=@PROJECT_SOURCE_DIR@/tests/packaging_appimage_tool_stub.sh"
+        "@PROJECT_SOURCE_DIR@/packaging/build-appimage.sh"
+        RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+    if(accepted)
+        if(NOT result EQUAL 0 OR NOT EXISTS "${appdir}/usr/bin/athena" OR EXISTS "${appdir}/sentinel")
+            message(FATAL_ERROR "Default AppImage staging failed: ${output}\n${error}")
+        endif()
+    else()
+        if(result EQUAL 0 OR NOT error MATCHES "requires CMAKE_INSTALL_BINDIR=bin" OR NOT EXISTS "${appdir}/sentinel")
+            message(FATAL_ERROR "Custom AppImage bindir not rejected before cleanup: ${output}\n${error}")
+        endif()
+        file(READ "${appdir}/sentinel" sentinel)
+        if(NOT sentinel STREQUAL "preserve on rejected bindir")
+            message(FATAL_ERROR "AppImage rejection changed the existing AppDir")
+        endif()
+    endif()
+endfunction()
+
+configure_case(default -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_INSTALL_LIBDIR=lib)
+file(READ "${case_build}/core-rpath.txt" core_rpath)
+if(NOT core_rpath STREQUAL "")
+    message(FATAL_ERROR "Default core RUNPATH should be empty: ${core_rpath}")
+endif()
+smoke_case()
+check_appimage(TRUE)
+set(default_build "${case_build}")
+
+configure_case(custom -DCMAKE_INSTALL_PREFIX=/usr
+    -DCMAKE_INSTALL_BINDIR=usr/bin -DCMAKE_INSTALL_LIBDIR=usr/lib/athena -DCMAKE_INSTALL_INCLUDEDIR=usr/include)
+smoke_case()
+check_appimage(FALSE)
+
+configure_case(nested -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_BINDIR=tools/bin
+    -DCMAKE_INSTALL_LIBDIR=lib/athena -DCMAKE_INSTALL_INCLUDEDIR=headers/athena-public)
+smoke_case()
+check_appimage(FALSE)
+
+configure_case(sbin -DCMAKE_INSTALL_BINDIR=sbin/ -DCMAKE_INSTALL_LIBDIR=lib64)
+smoke_case()
+check_appimage(FALSE)
+
+configure_case(normalized -DCMAKE_INSTALL_BINDIR=tools/../bin
+    -DCMAKE_INSTALL_LIBDIR=a/b/../lib -DCMAKE_INSTALL_INCLUDEDIR=include/./)
+file(READ "${case_build}/effective-dirs.txt" dirs)
+if(NOT dirs STREQUAL "bin|a/lib|include")
+    message(FATAL_ERROR "Incorrect normalized destinations: ${dirs}")
+endif()
+smoke_case()
+check_appimage(TRUE)
+
+# Root-level destinations and relative directory names resembling home paths
+# must not be confused with absolute runtime search paths.
+configure_case(root -DCMAKE_INSTALL_BINDIR=. -DCMAKE_INSTALL_LIBDIR=. -DCMAKE_INSTALL_INCLUDEDIR=headers)
+smoke_case()
+configure_case(relative_home -DCMAKE_INSTALL_LIBDIR=home/vendor/lib)
+smoke_case()
+
+# An explicit list uses normal CMake INSTALL_RPATH semantics; executable lookup
+# remains the independently derived Athena path, while core retains both entries.
+configure_case(explicit "-DCMAKE_INSTALL_RPATH=$ORIGIN/../vendor/lib"
+    "-DATHENA_FIXTURE_EXTRA_RPATH=\${ORIGIN}/../vendor/alternate" -DCMAKE_INSTALL_LIBDIR=lib64)
+file(READ "${case_build}/core-rpath.txt" core_rpath)
+if(NOT core_rpath STREQUAL "$ORIGIN/../vendor/lib;\${ORIGIN}/../vendor/alternate;\${ORIGIN}/../vendor/alternate")
+    message(FATAL_ERROR "Explicit core INSTALL_RPATH was not preserved: ${core_rpath}")
+endif()
+smoke_case()
+
+configure_case(explicit_genex
+    "-DCMAKE_INSTALL_RPATH=$<$<CONFIG:Debug>:$ORIGIN/../vendor/debug>"
+    "-DATHENA_FIXTURE_EXTRA_RPATH=$<$<CONFIG:Release>:$ORIGIN/../vendor/release>")
+smoke_case()
+
+# Discover the normal system dependencies through paths outside loader defaults.
+# Symlinks avoid copying or deploying dependencies just to inspect the property.
+file(MAKE_DIRECTORY "${work}/external development libraries")
+file(CREATE_LINK "@OPENSSL_CRYPTO_LIBRARY@" "${work}/external development libraries/libcrypto.so" SYMBOLIC)
+file(CREATE_LINK "@LibArchive_LIBRARY@" "${work}/external development libraries/libarchive.so" SYMBOLIC)
+set(has_shared_dependencies FALSE)
+foreach(library "@OPENSSL_CRYPTO_LIBRARY@" "@LibArchive_LIBRARY@")
+    run("@CMAKE_COMMAND@" -E env LC_ALL=C "@ATHENA_READELF@" -d "${library}")
+    string(REGEX MATCH "\\(SONAME\\)[^\n]*\\[([^]]+)\\]" match "${output}")
+    if(match STREQUAL "")
+        if(library MATCHES "\\.a$")
+            continue() # Static dependencies need no build-tree loader search.
+        endif()
+        message(FATAL_ERROR "Expected a SONAME on the discovered shared dependency: ${library}")
+    endif()
+    set(has_shared_dependencies TRUE)
+    file(CREATE_LINK "${library}" "${work}/external development libraries/${CMAKE_MATCH_1}" SYMBOLIC)
+endforeach()
+configure_case(nonstandard "-DOPENSSL_CRYPTO_LIBRARY=${work}/external development libraries/libcrypto.so"
+    "-DLibArchive_LIBRARY=${work}/external development libraries/libarchive.so"
+    -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON)
+file(READ "${case_build}/discovered-dependencies.txt" discovered)
+if(NOT discovered STREQUAL "${work}/external development libraries/libcrypto.so|${work}/external development libraries/libarchive.so")
+    message(FATAL_ERROR "Nonstandard dependency discovery was not exercised: ${discovered}")
+endif()
+smoke_case()
+file(READ "${case_build}/core-file-${CONFIG}.txt" core_file)
+run("@CMAKE_COMMAND@" -E env LC_ALL=C --unset=LD_LIBRARY_PATH --unset=LD_PRELOAD
+    "@ATHENA_LDD@" "${core_file}")
+string(FIND "${output}" "${work}/external development libraries/" found)
+if(has_shared_dependencies AND found EQUAL -1)
+    message(FATAL_ERROR "Build-tree loader did not use the discovered nonstandard directories: ${output}")
+endif()
+# Normal build-tree lookup must still find those discovered libraries.
+run("@CMAKE_COMMAND@" -E env --unset=LD_LIBRARY_PATH --unset=LD_PRELOAD
+    "@CMAKE_CTEST_COMMAND@" --test-dir "${case_build}" ${ctest_config_args}
+    -R "^packaging_fixture_build_execution$" --output-on-failure)
+
+foreach(bad "../bin" "a/../../lib" "/bin")
+    foreach(dir BINDIR LIBDIR INCLUDEDIR)
+        execute_process(COMMAND "@CMAKE_COMMAND@" -S "@PROJECT_SOURCE_DIR@/tests/packaging_fixture"
+            -B "${work}/invalid-${dir}" -G "@CMAKE_GENERATOR@"
+            "-DATHENA_SOURCE_ROOT=@PROJECT_SOURCE_DIR@" "-DCMAKE_INSTALL_${dir}=${bad}"
+            RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+        if(result EQUAL 0 OR NOT error MATCHES "(escapes the prefix|must be relative)")
+            message(FATAL_ERROR "Invalid ${dir} accepted: ${bad}\n${output}\n${error}")
+        endif()
+    endforeach()
+endforeach()
+
+# Independent CTest processes prove staging isolation; CTest -j alone would only
+# schedule the single registered smoke test once. Explicit waits check both exits.
+execute_process(COMMAND sh -c [=[
+    ctest_command="$1"
+    case_build="$2"
+    config="$3"
+    log_root="$4"
+    set -- "$ctest_command" --test-dir "$case_build" -R '^packaging_install_test$' -V
+    if [ -n "$config" ]; then
+        set -- "$@" -C "$config"
+    fi
+    "$@" > "$log_root/one.log" 2>&1 &
+    one=$!
+    "$@" > "$log_root/two.log" 2>&1 &
+    two=$!
+    wait "$one"; first=$?
+    wait "$two"; second=$?
+    cat "$log_root/one.log" "$log_root/two.log"
+    test "$first" -eq 0 && test "$second" -eq 0
+]=] sh "@CMAKE_CTEST_COMMAND@" "${default_build}" "${CONFIG}" "${work}"
+    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT result EQUAL 0)
+    message(FATAL_ERROR "Concurrent packaging tests failed: ${output}\n${error}\nArtifacts retained: ${work}")
+endif()
+foreach(log one two)
+    file(READ "${work}/${log}.log" content)
+    string(REGEX MATCH "Packaging staging root: ([^\n]+)" match "${content}")
+    set(${log}_stage "${CMAKE_MATCH_1}")
+    if(match STREQUAL "" OR EXISTS "${${log}_stage}")
+        message(FATAL_ERROR "Missing unique root or successful cleanup in ${log}: ${content}")
+    endif()
+endforeach()
+if(one_stage STREQUAL two_stage)
+    message(FATAL_ERROR "Concurrent invocations shared a staging root")
+endif()
+message(STATUS "Concurrent staging roots differed and were cleaned: ${one_stage}; ${two_stage}")
+file(REMOVE_RECURSE "${work}")
