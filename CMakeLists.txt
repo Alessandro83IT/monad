@@ -57,6 +57,9 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    installed_semantics_regression_test
+    installed_semantics_test
+    installed_semantics_integration_test
     cli_install_test
     cli_install_integration_test
     install_transaction_test
@@ -123,6 +126,7 @@ endforeach()
 set_tests_properties(package_loader_test PROPERTIES
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
 )
+set_tests_properties(installed_semantics_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
 set_tests_properties(artifact_identity_scanner_test PROPERTIES SKIP_RETURN_CODE 77)
 set_tests_properties(artifact_scanner_test PROPERTIES SKIP_RETURN_CODE 77)
 set_tests_properties(object_store_scanner_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)

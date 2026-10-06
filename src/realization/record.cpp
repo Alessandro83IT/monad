@@ -1,4 +1,5 @@
 #include "record.hpp"
+#include "identity_codec.hpp"
 #include "../core/resolution_order.hpp"
 #include <algorithm>
 #include <locale>
@@ -36,7 +37,8 @@ const toml::table& table(const toml::table& t, const char* k) {
     return *v;
 }
 void version(const toml::table& t) {
-    if (t["schema_version"].value<int>() != 1) throw TypeError("Unsupported realization schema version");
+    if (!t["schema_version"].is_integer() || t["schema_version"].value<int>() != 1)
+        throw TypeError("Unsupported snapshot schema version");
 }
 toml::table snapshot_table(const RepositorySnapshotRef& s) {
     toml::table t{{"repository_id", s.repository_id.value()}, {"revision", s.revision.value()},
@@ -67,7 +69,26 @@ ArtifactOrigin origin(const std::string& s) {
     throw TypeError("Unknown realization origin");
 }
 }
-void RealizationRecord::validate() const {
+toml::table encode_candidate(const CandidateIdentity& c) {
+    toml::table p{{"repository_id", c.provenance.repository_id.value()}};
+    if (c.provenance.revision) p.insert("revision", c.provenance.revision->value());
+    if (c.provenance.metadata_reference) p.insert("metadata_reference", c.provenance.metadata_reference->value());
+    if (c.provenance.snapshot) p.insert("snapshot", snapshot_table(*c.provenance.snapshot));
+    return toml::table{{"package", c.package.value()}, {"version", c.version.value()}, {"repository", c.repository.value()},
+        {"snapshot", snapshot_table(c.snapshot)}, {"provenance", std::move(p)}};
+}
+CandidateIdentity decode_candidate(const toml::table& c) {
+    keys(c, {"package", "version", "repository", "snapshot", "provenance"});
+    const auto& p = table(c, "provenance");
+    keys(p, {"repository_id", "revision", "metadata_reference", "snapshot"});
+    RepositoryProvenance provenance{RepositoryId(string(p, "repository_id"))};
+    if (auto v = optional(p, "revision")) provenance.revision = RepositoryRevision(*v);
+    if (auto v = optional(p, "metadata_reference")) provenance.metadata_reference = MetadataReference(*v);
+    if (p.contains("snapshot")) provenance.snapshot = snapshot(table(p, "snapshot"));
+    return {PackageId(string(c, "package")), PackageVersion(string(c, "version")),
+        RepositoryId(string(c, "repository")), snapshot(table(c, "snapshot")), std::move(provenance)};
+}
+void validate_candidate(const CandidateIdentity& candidate) {
     // Reuse package/version and repository validators without a candidate copy.
     PackageMetadata{candidate.package, candidate.version}.validate();
     candidate.snapshot.validate();
@@ -81,11 +102,20 @@ void RealizationRecord::validate() const {
         (candidate.provenance.revision && *candidate.provenance.revision != candidate.snapshot.revision) ||
         (candidate.provenance.snapshot && *candidate.provenance.snapshot != candidate.snapshot))
         throw TypeError("Contradictory or incomplete realization candidate identity");
+}
+void RealizationRecord::validate() const {
+    validate_candidate(candidate);
     digest(artifact_id.value());
     if (build_input_id) digest(build_input_id->value());
     (void)origin_name(origin);
     if ((origin == ArtifactOrigin::BuiltFromAthenaIR) != build_input_id.has_value())
         throw TypeError("Invalid realization origin/BuildInputId combination");
+    if (semantics) {
+        semantics->validate();
+        if (semantics->legacy_restricted || semantics->package.package_id != candidate.package ||
+            semantics->package.version != candidate.version)
+            throw TypeError("Realization semantic identity mismatch");
+    }
 }
 std::string RealizationRecord::object_reference() const {
     digest(artifact_id.value());
@@ -96,20 +126,16 @@ bool RealizationRecord::operator<(const RealizationRecord& other) const {
         auto k = core::detail::key(r.candidate);
         core::detail::append(k, {r.artifact_id.value(), r.build_input_id ? "1" : "0",
             r.build_input_id ? r.build_input_id->value() : "", origin_name(r.origin)});
+        core::detail::append(k, {r.semantics ? "1" : "0", r.semantics ? installed::serialize(*r.semantics) : ""});
         return k;
     };
     return key(*this) < key(other);
 }
 std::string serialize(const RealizationRecord& r) {
     r.validate();
-    const auto& c = r.candidate;
-    toml::table p{{"repository_id", c.provenance.repository_id.value()}};
-    if (c.provenance.revision) p.insert("revision", c.provenance.revision->value());
-    if (c.provenance.metadata_reference) p.insert("metadata_reference", c.provenance.metadata_reference->value());
-    if (c.provenance.snapshot) p.insert("snapshot", snapshot_table(*c.provenance.snapshot));
-    toml::table t{{"schema_version", 1}, {"artifact_id", r.artifact_id.value()}, {"origin", origin_name(r.origin)},
-        {"candidate", toml::table{{"package", c.package.value()}, {"version", c.version.value()},
-            {"repository", c.repository.value()}, {"snapshot", snapshot_table(c.snapshot)}, {"provenance", std::move(p)}}}};
+    toml::table t{{"schema_version", r.semantics ? 2 : 1}, {"artifact_id", r.artifact_id.value()},
+        {"origin", origin_name(r.origin)}, {"candidate", encode_candidate(r.candidate)}};
+    if (r.semantics) t.insert("semantics", toml::parse(installed::serialize(*r.semantics)));
     if (r.build_input_id) t.insert("build_input_id", r.build_input_id->value());
     std::ostringstream out;
     out.imbue(std::locale::classic());
@@ -119,19 +145,16 @@ std::string serialize(const RealizationRecord& r) {
 RealizationRecord deserialize_record(const std::string& document) {
     try {
         auto t = toml::parse(document);
-        keys(t, {"schema_version", "artifact_id", "origin", "candidate", "build_input_id"});
-        version(t);
-        const auto& c = table(t, "candidate");
-        keys(c, {"package", "version", "repository", "snapshot", "provenance"});
-        const auto& p = table(c, "provenance");
-        keys(p, {"repository_id", "revision", "metadata_reference", "snapshot"});
-        RepositoryProvenance provenance{RepositoryId(string(p, "repository_id"))};
-        if (auto v = optional(p, "revision")) provenance.revision = RepositoryRevision(*v);
-        if (auto v = optional(p, "metadata_reference")) provenance.metadata_reference = MetadataReference(*v);
-        if (p.contains("snapshot")) provenance.snapshot = snapshot(table(p, "snapshot"));
-        RealizationRecord r{{PackageId(string(c, "package")), PackageVersion(string(c, "version")),
-            RepositoryId(string(c, "repository")), snapshot(table(c, "snapshot")), std::move(provenance)},
+        keys(t, {"schema_version", "artifact_id", "origin", "candidate", "build_input_id", "semantics"});
+        const auto v = t["schema_version"].value<int>();
+        if (!t["schema_version"].is_integer() || (v != 1 && v != 2)) throw TypeError("Unsupported realization schema version");
+        if ((v == 2) != t.contains("semantics")) throw TypeError("Missing/unexpected realization semantics");
+        RealizationRecord r{decode_candidate(table(t, "candidate")),
             ArtifactId(string(t, "artifact_id")), {}, origin(string(t, "origin"))};
+        if (v == 2) {
+            std::ostringstream document; document.imbue(std::locale::classic()); document << table(t, "semantics");
+            r.semantics = installed::deserialize_semantics(document.str());
+        }
         if (auto v = optional(t, "build_input_id")) r.build_input_id = BuildInputId(*v);
         r.validate();
         return r;

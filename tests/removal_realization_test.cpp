@@ -1,5 +1,6 @@
 #include "install/generation_builder.hpp"
 #include "install/remover.hpp"
+#include "installed/environment.hpp"
 #include "store/metadata.hpp"
 #include "store/manifest.hpp"
 #include "object_store_test_support.hpp"
@@ -88,12 +89,16 @@ int main(int argc, char**) {
         return 77;
     }
     const auto object_before = snapshot(objects.object_path(id));
-    const auto historical = manager.create(mixed.entries, {record("app", id)});
+    auto modern_record = record("app", id);
+    modern_record.semantics = installed::SemanticState{PackageMetadata{PackageId("app"), PackageVersion("1")}};
+    const auto historical = manager.create(mixed.entries, {modern_record});
     manager.switch_to(historical.id, target, objects);
     require(fs::is_symlink(target / "bin/app"), "realization activated");
     install::remove_packages({"app", "app"}, target, paths);
     const auto after = manager.current();
-    require(after.id != historical.id && after.realizations.empty() && after.entries == historical.entries,
+    auto compatible_history = historical;
+    installed::capture_legacy_semantics(compatible_history);
+    require(after.id != historical.id && after.realizations.empty() && after.entries == compatible_history.entries,
         "new immutable mixed generation preserves legacy");
     require(!fs::exists(target / "bin/app") && fs::is_symlink(target / "bin/legacy"), "projection removed only for app");
     unchanged(objects.object_path(id), object_before);

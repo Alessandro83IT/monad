@@ -1,5 +1,6 @@
 #pragma once
 #include <athena/core/install_plan.hpp>
+#include "../installed/semantics.hpp"
 
 namespace athena::realization {
 // Internal durable association, outside the shared payload. Producers may
@@ -10,6 +11,8 @@ struct RealizationRecord {
     core::ArtifactId artifact_id;
     std::optional<core::BuildInputId> build_input_id;
     core::ArtifactOrigin origin = core::ArtifactOrigin::AmbientSourceBuild;
+    // Absent only for pre-M2.4 records. Never infer empty dependencies for them.
+    std::optional<installed::SemanticState> semantics;
 
     void validate() const;
     // Canonical reference relative to the configured authoritative store root.
@@ -19,7 +22,8 @@ struct RealizationRecord {
     bool operator<(const RealizationRecord& other) const;
 };
 
-// Independent version-1 TOML envelope; no persistence location or I/O.
+// Independent TOML envelope: v1 for historical records, v2 requires semantics.
+// Neither codec supplies a persistence location or performs I/O.
 std::string serialize(const RealizationRecord& record);
 RealizationRecord deserialize_record(const std::string& document);
 }

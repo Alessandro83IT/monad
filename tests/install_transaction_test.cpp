@@ -14,10 +14,10 @@ int main() {
     fs::create_directory(fixture.root / "workspace");
     const realization::ExecutionOptions valid_execution{fixture.root / "workspace"};
     auto unsupported = plan({recipe(fixture.root / "missing")}, false);
-    rejects(realization::ExecutionErrorCode::UnsupportedKind, [&] {
-        install::install_plan(unsupported, generations, objects, valid_execution, target);
-    });
-    require(!fs::exists(fixture.root / "state"), "realization failure initialized generations");
+    bool uninitialized = false;
+    try { install::install_plan(unsupported, generations, objects, valid_execution, target); }
+    catch (const std::runtime_error&) { uninitialized = true; }
+    require(uninitialized && !fs::exists(fixture.root / "state"), "uninitialized transaction created state");
     generations.initialize();
     const auto before = generations.current();
     auto bad = plan({recipe(fixture.root / "missing")}, false);

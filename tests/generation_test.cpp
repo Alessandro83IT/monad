@@ -1,5 +1,6 @@
 #include "../src/generation/generation.hpp"
 #include "../src/store/manifest.hpp"
+#include "../src/store/metadata.hpp"
 
 #include <cassert>
 #include <filesystem>
@@ -33,6 +34,16 @@ int main()
     const auto initial =
         manager.initialize();
 
+    // Modern generations require an explicit legacy dependency contract.
+    // These activation fixtures have no dependencies; retain uncaptured entries
+    // to exercise the real metadata compatibility adapter on switch.
+    auto create_fixture_generation = [&](const std::vector<athena::generation::GenerationEntry>& values) {
+        for (const auto& entry : values)
+            if (std::filesystem::is_directory(entry.store_path))
+                athena::store::write_metadata(entry.store_path, {entry.package, "1", "", "", "", {}});
+        return manager.create(values);
+    };
+
     assert(initial.id == 0);
     assert(initial.entries.empty());
 
@@ -61,7 +72,7 @@ int main()
     };
 
     const auto generation_one =
-        manager.create(entries);
+        create_fixture_generation(entries);
 
     assert(generation_one.id == 1);
     assert(generation_one.entries == entries);
@@ -173,10 +184,10 @@ int main()
         };
 
     const auto generation_two =
-        manager.create(switch_entries_a);
+        create_fixture_generation(switch_entries_a);
 
     const auto generation_three =
-        manager.create(switch_entries_b);
+        create_fixture_generation(switch_entries_b);
 
     manager.switch_to(
         generation_two.id,
@@ -293,7 +304,7 @@ int main()
     }
 
     const auto rollback_generation_a =
-        manager.create(
+        create_fixture_generation(
             {
                 {
                     "rollback-a",
@@ -303,7 +314,7 @@ int main()
         );
 
     const auto rollback_generation_b =
-        manager.create(
+        create_fixture_generation(
             {
                 {
                     "rollback-b",
@@ -492,7 +503,7 @@ int main()
     );
 
     const auto transition_generation_a =
-        manager.create(
+        create_fixture_generation(
             {
                 {
                     "package-a",
@@ -506,7 +517,7 @@ int main()
         );
 
     const auto transition_generation_b =
-        manager.create(
+        create_fixture_generation(
             {
                 {
                     "package-a",
@@ -627,7 +638,7 @@ int main()
      * under the control of the garbage collector.
      */
     const auto disposable_generation =
-        manager.create(
+        create_fixture_generation(
             {
                 {
                     "disposable-package",

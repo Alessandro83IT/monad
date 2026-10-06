@@ -10,6 +10,7 @@
 namespace athena::store { class ObjectStore; }
 
 namespace athena::generation {
+enum class GenerationCompatibility { Historical, Modern };
 
 /*
  * A legacy generation entry identifies one package and the immutable store
@@ -25,6 +26,7 @@ struct GenerationEntry {
 
     // Immutable store directory containing the package files.
     std::string store_path;
+    std::optional<installed::SemanticState> semantics;
 
     /*
      * Generation entries are value objects. Equality therefore means
@@ -52,13 +54,19 @@ struct Generation {
 
     // Explicitly distinct from legacy entries; resolved separately from legacy manifests.
     std::vector<realization::RealizationRecord> realizations{};
+    // Environment requirements outlive individual package memberships.
+    std::vector<installed::PolicyRequirement> policies{};
+    // Reader provenance, not inferred from optional member metadata. New
+    // values/writes are modern; only pre-M2.4 input receives historical mode.
+    GenerationCompatibility compatibility = GenerationCompatibility::Modern;
 
     void validate() const;
 };
 
 // Pure state boundary. Legacy order is preserved; realizations are canonicalized.
 Generation make_generation(std::uint64_t id, std::vector<GenerationEntry> legacy,
-    std::vector<realization::RealizationRecord> realizations = {});
+    std::vector<realization::RealizationRecord> realizations = {},
+    std::vector<installed::PolicyRequirement> policies = {});
 std::string serialize(const Generation& generation);
 Generation deserialize_generation(const std::string& document);
 
@@ -101,7 +109,8 @@ public:
      */
     Generation create(
         const std::vector<GenerationEntry>& entries,
-        const std::vector<realization::RealizationRecord>& realizations = {}
+        const std::vector<realization::RealizationRecord>& realizations = {},
+        const std::vector<installed::PolicyRequirement>& policies = {}
     );
 
     /*

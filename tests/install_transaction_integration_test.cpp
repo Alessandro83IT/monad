@@ -1,5 +1,8 @@
 #include "realization_executor_support.hpp"
 #include "install/transaction.hpp"
+#include "installed/environment.hpp"
+#include "store/metadata.hpp"
+#include "store/manifest.hpp"
 #include <algorithm>
 #include <iostream>
 using namespace execution_test;
@@ -37,6 +40,12 @@ int main() {
     realization::ExecutionOptions execution{fixture.root / "workspace"};
     generation::GenerationManager generations(fixture.root / "state");
     generations.initialize();
+    for (const auto& [name, directory] : std::vector<std::pair<std::string, fs::path>>{
+            {"app", fixture.root / "old-app"}, {"kept-legacy", fixture.root / "kept"}}) {
+        fs::create_directories(directory);
+        store::write_metadata(directory, {name, "1", "", "", "", {}});
+        store::write_manifest(directory, {});
+    }
     auto seed = generations.create({{"app", (fixture.root / "old-app").native()},
                                     {"kept-legacy", (fixture.root / "kept").native()}});
     const auto target = fixture.root / "target";
@@ -49,8 +58,10 @@ int main() {
     auto active = generations.current();
     require(active.id != seed.id, "successful transaction did not select target");
     require(first.result() == original, "plan changed");
-    require(active.entries == std::vector<generation::GenerationEntry>{{"kept-legacy", (fixture.root / "kept").native()}}, "legacy replacement/preservation");
-    require(active.realizations == std::vector<realization::RealizationRecord>{{first.selections()[0].identity(), id_one, std::nullopt, core::ArtifactOrigin::AmbientSourceBuild}}, "realization membership mismatch");
+    require(active.entries.size() == 1 && active.entries[0].package == "kept-legacy" &&
+            active.entries[0].store_path == (fixture.root / "kept").native() && active.entries[0].semantics,
+            "legacy replacement/preservation and compatibility capture");
+    require(active.realizations == std::vector<realization::RealizationRecord>{{first.selections()[0].identity(), id_one, std::nullopt, core::ArtifactOrigin::AmbientSourceBuild, installed::from_selection(first, first.selections()[0])}}, "realization membership mismatch");
     const auto payload = target / "usr/share/fixture/payload";
     require(fs::read_symlink(payload) == objects.object_path(id_one) / "usr/share/fixture/payload", "activation not from ObjectStore");
     require(read_bytes(payload) == "one", "activated bytes");
@@ -94,7 +105,7 @@ int main() {
     require(std::is_sorted(active.realizations.begin(), active.realizations.end()), "membership not canonical");
     for (const auto& selection : multi.selections())
         require(std::any_of(active.realizations.begin(), active.realizations.end(), [&](const auto& record) {
-            return record == realization::RealizationRecord{selection.identity(), id_one, std::nullopt, core::ArtifactOrigin::AmbientSourceBuild};
+            return record == realization::RealizationRecord{selection.identity(), id_one, std::nullopt, core::ArtifactOrigin::AmbientSourceBuild, installed::from_selection(multi, selection)};
         }), "multi-package record absent");
     require(multi.result() == multi_original, "multi plan changed");
     auto reversed_result = multi.result();

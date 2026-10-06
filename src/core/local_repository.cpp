@@ -65,7 +65,9 @@ RepositoryCandidate convert_package(const athena::package::Package& legacy,
     for (const auto& [feature, dependencies] : legacy.feature_dependencies) {
         auto& entries = metadata.feature_dependencies[feature];
         for (const auto& dependency : dependencies)
-            entries.push_back({{athena::dependency::serialize_dependency(dependency)}});
+            entries.push_back({{athena::dependency::serialize_expression(dependency.expression)},
+                static_cast<DependencyRole>(dependency.kind),
+                static_cast<DependencyTargetContext>(dependency.context), dependency.enabled});
     }
     metadata.platforms = legacy.platforms;
     metadata.architectures = legacy.architectures;

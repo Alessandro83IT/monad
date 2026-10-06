@@ -1,4 +1,5 @@
 #include "executor.hpp"
+#include "../installed/environment.hpp"
 #include "../artifact/scanner.hpp"
 #include "../artifact/identity.hpp"
 #include "../build/builder.hpp"
@@ -111,6 +112,8 @@ std::vector<RealizationRecord> realize(const core::InstallPlan& plan,
     step(Code::InvalidInput, [&] { plan.validate(); });
     std::vector<RealizationRecord> records;
     if (plan.selections().empty()) return records;
+    // Validate all semantic state before any acquisition/build/publication.
+    (void)installed::prepare_install(generation::Generation{0, {}}, plan);
     step(Code::InvalidInput, [&] {
         if (!options.workspace_root.is_absolute() || !safe(options.workspace_root.native()) ||
             !fs::is_directory(options.workspace_root)) fail(Code::InvalidInput, "Workspace must be an existing safe absolute directory");
@@ -153,7 +156,8 @@ std::vector<RealizationRecord> realize(const core::InstallPlan& plan,
             });
             const auto id = step(Code::ArtifactIdentity, [&] { return artifact::derive_artifact_id(artifact::scan(work / "staging")); });
             step(Code::Publication, [&] { objects.publish(work / "staging", id); });
-            RealizationRecord record{selection.identity(), id, std::nullopt, core::ArtifactOrigin::AmbientSourceBuild};
+            RealizationRecord record{selection.identity(), id, std::nullopt, core::ArtifactOrigin::AmbientSourceBuild,
+                installed::from_selection(plan, selection)};
             step(Code::InvalidInput, [&] { record.validate(); });
             records.push_back(std::move(record));
         } catch (ExecutionError& error) {

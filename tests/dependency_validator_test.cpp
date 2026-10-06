@@ -196,10 +196,10 @@ int main()
                 const athena::dependency::CapabilityRef
             >("compression");
 
-        require(
-            !validator.satisfies(capability),
-            "Unsupported capability expression must fail closed"
-        );
+        bool rejected = false;
+        try { (void)validator.satisfies(std::make_shared<const athena::dependency::NotExpression>(capability)); }
+        catch (const std::runtime_error&) { rejected = true; }
+        require(rejected, "Unsupported capability under NOT must fail closed");
     }
 
     std::cout

@@ -1,3 +1,5 @@
+#include "role_activity.hpp"
+#include "semantic_assignment.hpp"
 #include "resolver.hpp"
 #include "environment.hpp"
 #include "../repository/resolver_snapshot_adapter.hpp"
@@ -861,8 +863,8 @@ void apply_package_conflicts(const Package &owner, ResolutionState &state,
 
 std::string semantic_assignment_key(const DependencyTarget &target)
 {
-    const char* prefix = target.kind == DependencyTarget::Kind::Capability ? "capability:" : "feature:";
-    return std::string(prefix) + target.name;
+    return semantic_assignment_key(target.kind == DependencyTarget::Kind::Capability
+        ? SemanticSelectorKind::Capability : SemanticSelectorKind::Feature, target.name);
 }
 
 const Environment& environment_for_context(
@@ -949,46 +951,6 @@ bool evaluate_environment_selector(
     }
 }
 
-// Check effective roles at leaves, after traversing structural nodes and
-// applying scopes. An inactive inherited role must not hide an active nested
-// scope. Active structural nodes retain their existing boolean semantics;
-// explicit disabling is sticky for the entire enclosing subtree.
-bool expression_role_active(const ExpressionPtr& expression, DependencyKind role,
-                            bool enabled, const DependencyResolutionContext& policy,
-                            bool gate_inherited_role = true)
-{
-    if (!expression || !enabled) return false;
-    switch (expression->kind) {
-        case Expression::Kind::Scoped: {
-            const auto* scoped = dynamic_cast<const ScopedExpression*>(expression.get());
-            return scoped && expression_role_active(scoped->body, scoped->kind_role,
-                                                     scoped->enabled, policy);
-        }
-        case Expression::Kind::And: {
-            const auto* e = dynamic_cast<const AndExpression*>(expression.get());
-            return e && ((!gate_inherited_role || policy.activates(role))
-                || std::any_of(e->expressions.begin(), e->expressions.end(),
-                [&](const auto& child) { return expression_role_active(child, role, enabled, policy, gate_inherited_role); }));
-        }
-        case Expression::Kind::Or: {
-            const auto* e = dynamic_cast<const OrExpression*>(expression.get());
-            return e && ((!gate_inherited_role || policy.activates(role))
-                || std::any_of(e->expressions.begin(), e->expressions.end(),
-                [&](const auto& child) { return expression_role_active(child, role, enabled, policy, gate_inherited_role); }));
-        }
-        case Expression::Kind::Not: {
-            const auto* e = dynamic_cast<const NotExpression*>(expression.get());
-            return e && ((!gate_inherited_role || policy.activates(role))
-                || expression_role_active(e->expression, role, enabled, policy, gate_inherited_role));
-        }
-        case Expression::Kind::Conditional: {
-            const auto* e = dynamic_cast<const ConditionalExpression*>(expression.get());
-            return e && ((!gate_inherited_role || policy.activates(role))
-                || expression_role_active(e->body, role, enabled, policy, gate_inherited_role));
-        }
-        default: return !gate_inherited_role || policy.activates(role);
-    }
-}
 
 bool evaluate_boolean_condition(const ExpressionPtr& expression, const Package& owner,
                                 DependencyContext context, const ResolutionState& state,
@@ -1956,6 +1918,13 @@ RequestResolution resolve_request(const athena::core::InstallRequest& request)
     state.policy.optional_enabled = request.optional_enabled &&
         std::find(state.policy.active_kinds.begin(), state.policy.active_kinds.end(), DependencyKind::Optional) != state.policy.active_kinds.end();
     state.policy.propagated_enabled = request.propagated_enabled;
+    state.public_result.active_roles.clear();
+    for (const auto role : state.policy.active_kinds)
+        state.public_result.active_roles.push_back(static_cast<athena::core::DependencyRole>(role));
+    state.public_result.optional_enabled = state.policy.optional_enabled;
+    state.public_result.propagated_enabled = state.policy.propagated_enabled;
+    for (const auto& [id, rule] : request.repositories)
+        state.public_result.version_schemes.emplace(id, rule.version_scheme);
     state.policy.feature_states = request.feature_states;
     for (const auto& [feature, enabled] : request.feature_states) {
         if (feature.empty()) throw ResolutionError(ResolutionErrorCode::InvalidRequest, "Empty configured feature");

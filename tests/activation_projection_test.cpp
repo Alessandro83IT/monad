@@ -8,6 +8,19 @@ template<class F> void fails(F action) {
     try { action(); } catch (const std::runtime_error&) { return; }
     throw std::runtime_error("expected projection conflict");
 }
+// Projection fixtures deliberately share directories between logical packages.
+// Supply their known empty dependency contract explicitly, preserving the
+// ownership/rollback failure being tested after modern semantic preflight.
+athena::generation::Generation create_fixture_generation(
+    athena::generation::GenerationManager& manager,
+    std::vector<athena::generation::GenerationEntry> entries) {
+    for (auto& entry : entries) {
+        entry.semantics = athena::installed::SemanticState{athena::core::PackageMetadata{
+            athena::core::PackageId(entry.package), athena::core::PackageVersion("1")}};
+        entry.semantics->legacy_restricted = true;
+    }
+    return manager.create(entries);
+}
 int main() {
     StoreFixture fixture;
     const auto source = fixture.root / "source", target = fixture.root / "target";
@@ -65,8 +78,8 @@ int main() {
     athena::store::write_manifest(first, {{"new"}, {"new-dir/child"}});
     athena::store::write_manifest(second, {{"new"}});
     athena::generation::GenerationManager manager(fixture.root / "state"); manager.initialize();
-    const auto previous = manager.create({{"old", old.string()}});
-    const auto next = manager.create({{"first", first.string()}, {"second", second.string()}});
+    const auto previous = create_fixture_generation(manager, {{"old", old.string()}});
+    const auto next = create_fixture_generation(manager, {{"first", first.string()}, {"second", second.string()}});
     const auto switch_root = fixture.root / "switch-target";
     manager.switch_to(previous.id, switch_root);
     fails([&] { manager.switch_to(next.id, switch_root); });
@@ -79,8 +92,8 @@ int main() {
     std::ofstream(replacement / "node") << "replacement";
     athena::store::write_manifest(tree, {{"node/child"}});
     athena::store::write_manifest(replacement, {{"node"}});
-    const auto tree_generation = manager.create({{"tree", tree.string()}});
-    const auto replacement_generation = manager.create({{"replacement", replacement.string()}});
+    const auto tree_generation = create_fixture_generation(manager, {{"tree", tree.string()}});
+    const auto replacement_generation = create_fixture_generation(manager, {{"replacement", replacement.string()}});
     manager.switch_to(tree_generation.id, switch_root);
     manager.switch_to(replacement_generation.id, switch_root);
     require(manager.current().id == replacement_generation.id && read_bytes(switch_root / "node") == "replacement",
@@ -88,7 +101,7 @@ int main() {
     manager.switch_to(tree_generation.id, switch_root);
     require(fs::is_directory(switch_root / "node") && read_bytes(switch_root / "node/child") == "child",
             "file to implicit directory");
-    const auto replacement_conflict = manager.create({{"replacement", replacement.string()}, {"duplicate", replacement.string()}});
+    const auto replacement_conflict = create_fixture_generation(manager, {{"replacement", replacement.string()}, {"duplicate", replacement.string()}});
     fails([&] { manager.switch_to(replacement_conflict.id, switch_root); });
     require(manager.current().id == tree_generation.id && fs::is_directory(switch_root / "node") &&
             read_bytes(switch_root / "node/child") == "child", "rollback restores removed implicit scaffolding and current");
@@ -96,8 +109,8 @@ int main() {
     const auto peer = fixture.root / "peer"; fs::create_directories(peer / "node");
     std::ofstream(peer / "node/peer") << "peer";
     athena::store::write_manifest(peer, {{"node/peer"}});
-    const auto shared = manager.create({{"tree", tree.string()}, {"peer", peer.string()}});
-    const auto peer_only = manager.create({{"peer", peer.string()}});
+    const auto shared = create_fixture_generation(manager, {{"tree", tree.string()}, {"peer", peer.string()}});
+    const auto peer_only = create_fixture_generation(manager, {{"peer", peer.string()}});
     manager.switch_to(shared.id, switch_root);
     manager.switch_to(peer_only.id, switch_root);
     require(fs::is_directory(switch_root / "node") && read_bytes(switch_root / "node/peer") == "peer" &&
@@ -109,13 +122,13 @@ int main() {
     const auto occupied_root = fixture.root / "occupied-root";
     fs::create_directories(occupied_root / "node");
     athena::generation::GenerationManager occupied(fixture.root / "occupied-state"); occupied.initialize();
-    const auto occupied_generation = occupied.create({{"replacement", replacement.string()}});
+    const auto occupied_generation = create_fixture_generation(occupied, {{"replacement", replacement.string()}});
     fails([&] { occupied.switch_to(occupied_generation.id, occupied_root); });
     require(occupied.current().id == 0 && fs::is_directory(occupied_root / "node") && fs::is_empty(occupied_root / "node"),
             "unrelated preexisting empty directory is never deleted");
 
     athena::generation::GenerationManager nested(fixture.root / "nested-state"); nested.initialize();
-    const auto nested_conflict = nested.create({{"first", replacement.string()}, {"second", replacement.string()}});
+    const auto nested_conflict = create_fixture_generation(nested, {{"first", replacement.string()}, {"second", replacement.string()}});
     const auto nested_root = fixture.root / "new-parent/deeper/target";
     fails([&] { nested.switch_to(nested_conflict.id, nested_root); });
     require(nested.current().id == 0 && !fs::exists(fixture.root / "new-parent"),

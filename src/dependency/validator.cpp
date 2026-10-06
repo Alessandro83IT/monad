@@ -1,11 +1,11 @@
 #include "validator.hpp"
 #include "constraint.hpp"
+#include "expression_validation.hpp"
 
 #include <stdexcept>
 #include <string>
 
 namespace athena::dependency {
-
 DependencyValidator::DependencyValidator(
     const InstalledEnvironment& environment
 )
@@ -17,6 +17,9 @@ bool DependencyValidator::satisfies(
     const ExpressionPtr& expression
 ) const
 {
+    // This compatibility validator has only legacy package state. Structural
+    // rejection precedes evaluation, including NOT and short-circuit branches.
+    validate_expression(expression, ExpressionSupport::PackageOnly);
     return satisfies_expression(expression);
 }
 
@@ -162,8 +165,8 @@ bool DependencyValidator::satisfies_expression(
          * These expression kinds already exist in the semantic
          * model, but the installed environment does not yet expose
          * capability/feature/platform/ABI information. Returning
-         * false is intentional: an unsupported requirement must
-         * never silently validate a removal.
+         * false here is unreachable for public entry points: structural
+         * validation rejects these kinds before boolean evaluation.
          */
         case Expression::Kind::Capability:
         case Expression::Kind::Feature:
@@ -188,6 +191,7 @@ void DependencyValidator::validate() const
 
         for (const auto& dependency : package.dependencies) {
 
+            validate_expression(dependency.expression, ExpressionSupport::PackageOnly);
             if (!satisfies_expression(dependency.expression)) {
 
                 throw std::runtime_error(

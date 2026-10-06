@@ -150,6 +150,11 @@ struct ResolutionResult {
     ResolutionEnvironments environments;
     std::string profile;
     std::vector<SystemPolicySelection> system_policy_selections;
+    // Effective resolution policy needed by offline installed validation.
+    std::vector<DependencyRole> active_roles{DependencyRole::Runtime};
+    bool optional_enabled = false;
+    bool propagated_enabled = true;
+    std::map<RepositoryId, VersionScheme> version_schemes;
     bool operator==(const ResolutionResult&) const = default;
 };
 

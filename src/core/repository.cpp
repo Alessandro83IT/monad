@@ -196,6 +196,8 @@ std::map<std::string, std::vector<DependencyMetadata>> read_feature_dependencies
 {
     std::map<std::string, std::vector<DependencyMetadata>> result;
     const auto* features = table.get_as<toml::table>("feature_dependencies");
+    if (!features && table.contains("feature_dependencies"))
+        throw TypeError("Feature dependencies must be a table");
     if (!features) return result;
     for (const auto& [name_node, value] : *features) {
         const std::string name(name_node.str());

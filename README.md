@@ -28,7 +28,11 @@ tar source and CMake, without build parameters; remote sources, Autotools,
 binary import and Athena IR are unsupported. See [install](src/install/README.md)
 and [realization](src/realization/README.md) for the precise limitations.
 
-At this stage the project contains the initial CMake-based C++ application.
+M2.4 persists installed dependency semantics with realization records and validates
+complete resulting environments before install/remove activation. Partial removal
+and replacements are checked offline against preserved consumers, capabilities,
+features, conflicts and system policies. Historical records remain readable under
+an explicit conservative compatibility policy. See [installed semantic state](src/installed/README.md).
 
 ## Build
 

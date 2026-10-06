@@ -115,7 +115,17 @@ int main() {
     manager.initialize();
     assert(manager.get(7).entries == legacy.entries);
     { std::ifstream in(file); assert(std::string((std::istreambuf_iterator<char>(in)), {}) == old); }
-    auto created = manager.create(legacy.entries, records);
+    // These context-boundary fixtures are modern, so provide explicit known
+    // semantics. Unknown schema-3 activation is tested separately.
+    auto context_entries = legacy.entries;
+    for (auto& entry : context_entries) {
+        entry.semantics = athena::installed::SemanticState{PackageMetadata{PackageId(entry.package), PackageVersion("1")}};
+        entry.semantics->legacy_restricted = true;
+    }
+    auto context_records = records;
+    for (auto& record : context_records)
+        record.semantics = athena::installed::SemanticState{PackageMetadata{record.candidate.package, record.candidate.version}};
+    auto created = manager.create(context_entries, context_records);
     assert(manager.get(created.id).realizations == created.realizations);
     assert(manager.list().size() == 3 && manager.current().id == 0);
     // These are missing-context tests, replacing the C.2 unsupported-kind guard.

@@ -48,39 +48,50 @@ void Generation::validate() const {
     for (const auto& entry : entries) {
         legacy(entry);
         names.insert(entry.package);
+        if (entry.semantics) {
+            entry.semantics->validate();
+            if (!entry.semantics->legacy_restricted || entry.semantics->package.package_id.value() != entry.package)
+                throw core::TypeError("Legacy semantic identity mismatch");
+        }
     }
     for (const auto& record : realizations) {
         record.validate();
         if (!names.insert(record.candidate.package.value()).second)
             throw core::TypeError("Duplicate generation package selection");
     }
+    for (const auto& policy : policies) (void)installed::serialize(policy);
 }
 Generation make_generation(std::uint64_t id, std::vector<GenerationEntry> legacy,
-    std::vector<realization::RealizationRecord> records) {
-    Generation result{id, std::move(legacy), std::move(records)};
+    std::vector<realization::RealizationRecord> records, std::vector<installed::PolicyRequirement> policies) {
+    Generation result{id, std::move(legacy), std::move(records), std::move(policies)};
     result.validate();
     std::sort(result.realizations.begin(), result.realizations.end());
     return result;
 }
 std::string serialize(const Generation& generation) {
-    auto g = make_generation(generation.id, generation.entries, generation.realizations);
-    toml::array members;
-    for (const auto& entry : g.entries)
-        members.push_back(toml::table{{"kind", "legacy"}, {"package", entry.package}, {"store", entry.store_path}});
+    auto g = make_generation(generation.id, generation.entries, generation.realizations, generation.policies);
+    toml::array members, policies;
+    for (const auto& entry : g.entries) {
+        toml::table member{{"kind", "legacy"}, {"package", entry.package}, {"store", entry.store_path}};
+        if (entry.semantics) member.insert("semantics", toml::parse(installed::serialize(*entry.semantics)));
+        members.push_back(std::move(member));
+    }
     for (const auto& record : g.realizations)
         members.push_back(toml::table{{"kind", "realization"},
             {"record", toml::parse(realization::serialize(record))}});
-    return format(toml::table{{"schema_version", 2}, {"id", static_cast<std::int64_t>(g.id)},
-        {"memberships", std::move(members)}});
+    for (const auto& policy : g.policies) policies.push_back(toml::parse(installed::serialize(policy)));
+    return format(toml::table{{"schema_version", 3}, {"id", static_cast<std::int64_t>(g.id)},
+        {"memberships", std::move(members)}, {"policies", std::move(policies)}});
 }
 Generation deserialize_generation(const std::string& document) {
     try {
         auto t = toml::parse(document);
         const bool modern = t.contains("schema_version");
-        if (modern && (!t["schema_version"].is_integer() ||
-            t["schema_version"].value<std::int64_t>() != 2))
+        const auto version = t["schema_version"].value<std::int64_t>();
+        if (modern && (!t["schema_version"].is_integer() || (version != 2 && version != 3)))
             throw core::TypeError("Unsupported generation schema version");
-        if (modern) keys(t, {"schema_version", "id", "memberships"});
+        if (version == 3) keys(t, {"schema_version", "id", "memberships", "policies"});
+        else if (modern) keys(t, {"schema_version", "id", "memberships"});
         else keys(t, {"id", "entries"});
         auto id = t["id"].value<std::int64_t>();
         if (!t["id"].is_integer() || !id || *id < 0) throw core::TypeError("Invalid generation identifier");
@@ -94,9 +105,15 @@ Generation deserialize_generation(const std::string& document) {
             if (!member) throw core::TypeError("Invalid generation membership table");
             const auto kind = modern ? string(*member, "kind") : "legacy";
             if (kind == "legacy") {
-                if (modern) keys(*member, {"kind", "package", "store"});
+                if (version == 3) keys(*member, {"kind", "package", "store", "semantics"});
+                else if (modern) keys(*member, {"kind", "package", "store"});
                 else keys(*member, {"package", "store"});
                 g.entries.push_back({string(*member, "package"), string(*member, "store")});
+                if (member->contains("semantics")) {
+                    const auto* s = (*member)["semantics"].as_table();
+                    if (!s) throw core::TypeError("Invalid legacy semantic table");
+                    g.entries.back().semantics = installed::deserialize_semantics(format(*s));
+                }
             } else if (kind == "realization") {
                 keys(*member, {"kind", "record"});
                 const auto* record = (*member)["record"].as_table();
@@ -104,7 +121,18 @@ Generation deserialize_generation(const std::string& document) {
                 g.realizations.push_back(realization::deserialize_record(format(*record)));
             } else throw core::TypeError("Unknown generation membership kind");
         }
-        return make_generation(g.id, std::move(g.entries), std::move(g.realizations));
+        if (version == 3) {
+            const auto* policies = t["policies"].as_array();
+            if (!policies) throw core::TypeError("Invalid installed policy array");
+            for (const auto& item : *policies) {
+                const auto* p = item.as_table();
+                if (!p) throw core::TypeError("Invalid installed policy table");
+                g.policies.push_back(installed::deserialize_policy(format(*p)));
+            }
+        }
+        auto result = make_generation(g.id, std::move(g.entries), std::move(g.realizations), std::move(g.policies));
+        result.compatibility = version == 3 ? GenerationCompatibility::Modern : GenerationCompatibility::Historical;
+        return result;
     } catch (const toml::parse_error& error) { throw core::TypeError(error.what()); }
 }
 }

@@ -1,4 +1,4 @@
-# Install transaction (M2.2-C.5)
+# Install transaction (M2.4)
 
 `transaction.hpp` provides the internal `install::install_plan` overload for
 `core::InstallPlan`, an initialized `GenerationManager`, authoritative
@@ -10,7 +10,7 @@ the public LocalRepository adapter, calls resolve_request() and finalizes a
 core::InstallPlan before entering this transaction. Store, build workspace,
 generation state and target root come from the CLI's configured PathLayout.
 Runtime directories and GenerationManager initialization happen only after
-successful non-empty planning. The legacy installer remains compatibility code
+successful non-empty planning and complete-environment semantic preflight. The legacy installer remains compatibility code
 (including install-test), but is no longer the CLI install path.
 
 C.4 limitations still apply: one local file:///absolute/path gzip tar source,
@@ -20,7 +20,11 @@ The reused local repository bridge preserves manifest conflicts and feature
 dependencies. Distinct capability-specific versions are rejected because the
 current public metadata model uses the package version for capability providers.
 
-The transaction first calls C.4 `realize()` for the complete const plan. Until
+The transaction first reads the current generation and validates the complete
+resulting installed environment with `installed::prepare_install`. Preserved
+consumers, conflicts, features and policy requirements are included; replacement
+candidates come from the const plan, not repository reselection. A semantic failure
+has no publication, state or target writes. It then calls C.4 `realize()`. Until
 all selections succeed it writes no generation metadata and performs no
 activation. Published immutable objects can survive a later realization failure
 as unreferenced objects. Empty plans are validated no-ops, even for a manager
@@ -41,7 +45,9 @@ without returning a generation, its API provides no safely owned generation ID
 for cleanup; partial persistence cleanup remains that primitive's responsibility.
 No new crash-durability, concurrency, or current-pointer persistence guarantees
 are introduced. Callers must serialize environment transactions and initialize
-the manager before nonempty execution. Removal and GC migration remain deferred.
+the manager before nonempty execution. Removal now validates partial resulting membership using the same offline semantic
+model. GC already derives content-addressed roots from every historical generation.
+See [installed semantics](../installed/README.md) for codecs and compatibility.
 
 `install_transaction_test` checks capability-independent no-op/failure boundaries.
 `install_transaction_integration_test` exercises actual C.4 publication and C.3

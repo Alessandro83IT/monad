@@ -1,13 +1,17 @@
-# Realization record contract (M2.2-C.1)
+# Realization record contract (M2.4)
 
 RealizationRecord is an internal durable-state value connecting one exact
 selected core::CandidateIdentity to one locally verified ArtifactId in the
 configured authoritative ObjectStore. It is not a new identity layer or a
 candidate/artifact lookup table. Multiple candidates may share an artifact;
 one candidate may have multiple realized artifacts. No unique realization ID,
-timestamp, package metadata copy, or global one-to-one mapping is introduced.
+timestamp or global one-to-one mapping is introduced. Installed semantics retain
+the package metadata needed for offline environment validation.
 
-The fields are candidate, artifact_id, optional build_input_id, and origin.
+The fields are candidate, artifact_id, optional build_input_id, origin, and optional
+installed semantics. New executor records always include semantics; absence is
+reserved for historical v1 records. [Installed semantic state](../installed/README.md)
+describes the reused dependency model and conservative compatibility rules.
 CandidateIdentity is preserved in full, including its snapshot and repository
 provenance. Its repository fields, optional revision and optional provenance
 snapshot must agree; the selected snapshot must include its identity and
@@ -21,8 +25,9 @@ No additional RepositoryProvenance or free-form artifact Provenance copy is
 added. Current legacy installation state has no authoritative association for
 these identities. This contract records repository selection and origin, not
 signatures, producer attestations, full build audit evidence, source-content
-verification evidence, dependency semantics or effective configuration. Future
-generation state must retain the latter semantics separately where required.
+verification evidence or full build audit configuration. M2.4 records installed
+dependency semantics, effective role/feature policy and resolution environments
+separately from the shared payload.
 
 ArtifactId must use the ObjectStore v1 full lowercase SHA-256 spelling.
 BuildInputId, when present, must use ADR-001's same textual digest convention,
@@ -47,12 +52,15 @@ no producer integration. ObjectStore remains responsible for filesystem
 verification and publication. Its atomic visibility guarantee does not imply
 power-loss durability; this record does not strengthen it.
 
-The standalone deterministic TOML codec has an explicit schema_version = 1.
+The standalone deterministic TOML codec writes schema_version = 2 for records
+with semantics, and preserves schema_version = 1 for historical records without it.
+Version 2 requires the independently versioned semantic table.
 It preserves every CandidateIdentity field and optional presence exactly,
 including the optional nested provenance snapshot. It stores ArtifactId once;
 the canonical reference round-trips by derivation. Unknown versions, fields,
 wrong types, malformed identities and contradictory associations are rejected.
-No persistence destination or existing generation/state codec is changed.
+No persistence destination is implied by the record codec. Generation v3 embeds
+these records and independent policy requirements.
 Serialization validates first, uses TOML escaping and the classic locale, and
 has no filesystem operations. Equality compares all fields; ordering extends
 the existing complete candidate semantic key with artifact identity, optional
@@ -116,7 +124,7 @@ failure after otherwise successful publication has its own error category.
 Realization creates no generations, changes no current-generation pointer, and
 performs no activation or legacy store insertion. Publication is the transactional
 boundary for each object, not the entire plan. Already-published immutable objects
-may remain unreferenced after a later selection fails; future GC handles them.
-Generation creation from records, activation orchestration, removal/GC migration,
-remote acquisition, multi-source execution, build parameters, binary import,
+may remain unreferenced after a later selection fails; content-addressed GC handles them.
+Generation creation, activation, semantic install/remove and GC are integrated.
+Remote acquisition, multi-source execution, build parameters, binary import,
 Athena IR execution and BuildInputId derivation remain C.5 or later work.

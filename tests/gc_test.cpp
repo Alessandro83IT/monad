@@ -97,7 +97,7 @@ int main()
         athena::store::write_metadata(
             store,
             {
-                "test-package",
+                store.filename().string().substr(0, store.filename().string().size() - 4),
                 "1.0",
                 "test-source",
                 "test-sha256",

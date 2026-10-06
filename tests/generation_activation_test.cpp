@@ -12,7 +12,13 @@ RealizationRecord record(std::string name, ArtifactId id) {
     RepositorySnapshotRef snapshot{RepositoryId("repo"), RepositoryRevision("rev"), SchemaVersion(1),
         ContentDigest("sha256:" + std::string(64, 'a')), SnapshotId("sha256:" + std::string(64, 'b'))};
     return {{PackageId(name), PackageVersion("1"), snapshot.repository_id, snapshot,
-        RepositoryProvenance{snapshot.repository_id, snapshot.revision, {}, snapshot}}, id, {}, ArtifactOrigin::AmbientSourceBuild};
+        RepositoryProvenance{snapshot.repository_id, snapshot.revision, {}, snapshot}}, id, {}, ArtifactOrigin::AmbientSourceBuild,
+        athena::installed::SemanticState{PackageMetadata{PackageId(name), PackageVersion("1")}}};
+}
+GenerationEntry legacy_entry(const std::string& name, const fs::path& path) {
+    athena::installed::SemanticState semantics{PackageMetadata{PackageId(name), PackageVersion("1")}};
+    semantics.legacy_restricted = true;
+    return {name, path.string(), semantics};
 }
 template<class F> std::string failure(F action) {
     try { action(); } catch (const std::runtime_error& error) { return error.what(); }
@@ -88,7 +94,7 @@ int main() {
     fs::create_directories(implicit_source / "usr/bin");
     std::ofstream(implicit_source / "usr/bin/c") << "c";
     athena::store::write_manifest(implicit_source, {{"usr/bin/c"}});
-    const auto implicit = transitions.create({{"implicit", implicit_source.string()}});
+    const auto implicit = transitions.create({legacy_entry("implicit", implicit_source)});
     transitions.switch_to(implicit.id, transition_root, objects);
     require(fs::is_directory(transition_root / "usr/bin") && read_bytes(transition_root / "usr/bin/c") == "c",
             "added source implicit parents remain live");
@@ -106,14 +112,15 @@ int main() {
     const auto legacy = root / "legacy-1"; fs::create_directories(legacy / "bin");
     std::ofstream(legacy / "bin/legacy") << "legacy";
     athena::store::write_manifest(legacy, {{"bin/legacy"}});
-    const auto g_legacy = manager.create({{"legacy", legacy.string()}});
+    const auto g_legacy = manager.create({legacy_entry("legacy", legacy)});
     const auto g_a = manager.create({}, {record("pkg", id_a)});
     const auto g_b = manager.create({}, {record("pkg", id_b)});
     auto changed_candidate = record("pkg", id_a);
     changed_candidate.candidate.version = PackageVersion("2");
+    changed_candidate.semantics->package.version = PackageVersion("2");
     const auto g_metadata = manager.create({}, {changed_candidate});
     const auto g_shared = manager.create({}, {record("one", id_a), record("two", id_a)});
-    const auto g_mixed = manager.create({{"legacy", legacy.string()}}, {record("pkg", id_a)});
+    const auto g_mixed = manager.create({legacy_entry("legacy", legacy)}, {record("pkg", id_a)});
     manager.switch_to(g_legacy.id, target); // legacy -> legacy covered by existing generation_test
     manager.switch_to(g_a.id, target, objects);
     require(target_is_free(target / "bin/legacy"), "legacy removed");
@@ -189,7 +196,7 @@ int main() {
     mechanics::materialize(namespace_source, namespace_model);
     const auto namespace_id = derive_artifact_id(namespace_model); objects.publish(namespace_source, namespace_id);
     const auto legacy_alias = root / "manifest-alias"; fs::create_symlink(objects.object_path(namespace_id), legacy_alias);
-    const auto legacy_namespace = namespaces.create({{"legacy", legacy_alias.string()}});
+    const auto legacy_namespace = namespaces.create({legacy_entry("legacy", legacy_alias)});
     const auto object_namespace = namespaces.create({}, {record("object", namespace_id)});
     namespaces.switch_to(legacy_namespace.id, namespace_target);
     namespaces.switch_to(object_namespace.id, namespace_target, objects);

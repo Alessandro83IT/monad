@@ -240,6 +240,16 @@ InstallPlan InstallPlanBuilder::build() &&
 
 void InstallPlan::validate() const
 {
+    if (result_.active_roles.empty())
+        throw InstallPlanError(InstallPlanErrorCode::InvalidEdge, "Missing effective dependency roles");
+    std::set<DependencyRole> active_roles;
+    for (auto role : result_.active_roles)
+        if (!valid_scope(role, DependencyTargetContext::Target) || !active_roles.insert(role).second)
+            throw InstallPlanError(InstallPlanErrorCode::InvalidEdge, "Invalid effective dependency roles");
+    for (const auto& [repository, scheme] : result_.version_schemes) {
+        if (repository.empty() || (scheme != VersionScheme::Athena && scheme != VersionScheme::Arch))
+            throw InstallPlanError(InstallPlanErrorCode::RepositoryMismatch, "Invalid installed version scheme");
+    }
     std::set<detail::StableKey> identities;
     std::set<std::string> package_ids;
     std::map<SnapshotId, RepositorySnapshotRef> snapshots;

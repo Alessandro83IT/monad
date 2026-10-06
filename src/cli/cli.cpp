@@ -1,4 +1,5 @@
 #include "cli.hpp"
+#include "../installed/environment.hpp"
 #include "command_line.hpp"
 #include "../package/package.hpp"
 #include "../package/package_loader.hpp"
@@ -371,6 +372,12 @@ int run(int argc, char* argv[])
                 athena::core::resolve_request(request)).build();
 
             if (!plan.selections().empty()) {
+                athena::generation::GenerationManager preflight(
+                    config.paths.generation_state,
+                    athena::generation::GenerationManager::GenerationDirectoryTag{});
+                const auto current = std::filesystem::exists(config.paths.generation_state / "current")
+                    ? preflight.current() : athena::generation::Generation{0, {}};
+                (void)athena::installed::prepare_install(current, plan);
                 std::filesystem::create_directories(config.paths.store);
                 std::filesystem::create_directories(config.paths.build);
                 athena::store::ObjectStore objects(config.paths.store);

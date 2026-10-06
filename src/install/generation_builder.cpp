@@ -1,4 +1,5 @@
 #include "generation_builder.hpp"
+#include "../installed/environment.hpp"
 
 #include <algorithm>
 
@@ -84,8 +85,11 @@ athena::generation::Generation build_removal_generation(
     const athena::generation::Generation& current,
     const RemovePlan& removal)
 {
-    athena::generation::Generation target{0, remove_target_entries(current, removal)};
-    for (const auto& record : current.realizations) {
+    auto semantic_current = current;
+    installed::inherit_profile_features(semantic_current);
+    athena::generation::Generation target{0, remove_target_entries(semantic_current, removal)};
+    target.policies = current.policies;
+    for (const auto& record : semantic_current.realizations) {
         if (!removal.contains(record.candidate.package.value())) {
             target.realizations.push_back(record);
         }

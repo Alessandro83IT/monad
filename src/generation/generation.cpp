@@ -1,4 +1,5 @@
 #include "generation.hpp"
+#include "../installed/environment.hpp"
 
 #include "../activation/activation.hpp"
 
@@ -309,12 +310,13 @@ std::vector<Generation> GenerationManager::list() const
  */
 Generation GenerationManager::create(
     const std::vector<GenerationEntry>& entries,
-    const std::vector<realization::RealizationRecord>& realizations
+    const std::vector<realization::RealizationRecord>& realizations,
+    const std::vector<installed::PolicyRequirement>& policies
 )
 {
     ensure_directories();
 
-    const auto generation = make_generation(next_id(), entries, realizations);
+    const auto generation = make_generation(next_id(), entries, realizations, policies);
 
     write_generation(generation);
 
@@ -397,6 +399,16 @@ void GenerationManager::switch_impl(std::uint64_t id, const std::filesystem::pat
                                     const store::ObjectStore* objects) {
     const auto target = get(id);
     const auto previous = current();
+    // Historical pre-M2.4 generations remain switchable under their original
+    // integrity contract. Any generation carrying M2.4 state must validate its
+    // complete semantics before target mutation; do not consult repositories.
+    if (target.compatibility == GenerationCompatibility::Modern || !target.policies.empty() ||
+        std::any_of(target.realizations.begin(), target.realizations.end(), [](const auto& r) { return r.semantics.has_value(); }) ||
+        std::any_of(target.entries.begin(), target.entries.end(), [](const auto& e) { return e.semantics.has_value(); })) {
+        auto semantic_target = target;
+        installed::capture_legacy_semantics(semantic_target);
+        installed::validate_environment(semantic_target);
+    }
     const bool has_objects = !target.realizations.empty() || !previous.realizations.empty();
     if (has_objects && !objects)
         throw std::runtime_error("Realization activation requires an authoritative ObjectStore context");
