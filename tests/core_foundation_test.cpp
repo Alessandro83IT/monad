@@ -1,3 +1,6 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <athena/core/api.hpp>
 #include <athena/core/config.hpp>
 #include <athena/core/locking.hpp>

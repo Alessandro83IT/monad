@@ -56,6 +56,7 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    realization_record_test
     object_store_test
     object_store_scanner_test
     artifact_encoding_test
