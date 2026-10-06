@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../realization/record.hpp"
+
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -8,7 +10,7 @@
 namespace athena::generation {
 
 /*
- * A generation entry identifies one package and the immutable store
+ * A legacy generation entry identifies one package and the immutable store
  * directory containing its files.
  *
  * The generation stores references to immutable data; it never owns
@@ -43,9 +45,20 @@ struct Generation {
     // Monotonically increasing generation identifier.
     std::uint64_t id;
 
-    // Packages composing this generation.
+    // Ordered legacy packages composing this generation.
     std::vector<GenerationEntry> entries;
+
+    // Explicitly distinct from legacy entries; never consumed by legacy activation.
+    std::vector<realization::RealizationRecord> realizations{};
+
+    void validate() const;
 };
+
+// Pure state boundary. Legacy order is preserved; realizations are canonicalized.
+Generation make_generation(std::uint64_t id, std::vector<GenerationEntry> legacy,
+    std::vector<realization::RealizationRecord> realizations = {});
+std::string serialize(const Generation& generation);
+Generation deserialize_generation(const std::string& document);
 
 /*
  * Manage the persistent set of Athena generations.
@@ -85,7 +98,8 @@ public:
      * store references. The new generation is not activated.
      */
     Generation create(
-        const std::vector<GenerationEntry>& entries
+        const std::vector<GenerationEntry>& entries,
+        const std::vector<realization::RealizationRecord>& realizations = {}
     );
 
     /*

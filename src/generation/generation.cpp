@@ -6,7 +6,6 @@
 #include <fstream>
 #include <unordered_set>
 #include <stdexcept>
-#include <toml++/toml.hpp>
 
 namespace athena::generation {
 
@@ -119,6 +118,8 @@ void GenerationManager::write_generation(
     const Generation& generation
 ) const
 {
+    const auto document = serialize(generation);
+
     const auto directory =
         generations_directory_ /
         std::to_string(generation.id);
@@ -148,20 +149,9 @@ void GenerationManager::write_generation(
         );
     }
 
-    output << "id = "
-           << generation.id
-           << "\n\n";
-
-    for (const auto& entry : generation.entries) {
-        output
-            << "[[entries]]\n"
-            << "package = \""
-            << entry.package
-            << "\"\n"
-            << "store = \""
-            << entry.store_path
-            << "\"\n\n";
-    }
+    output << document;
+    output.close();
+    if (!output) throw std::runtime_error("Failed to persist generation");
 }
 
 /*
@@ -205,90 +195,13 @@ Generation GenerationManager::get(
         );
     }
 
-    try {
-
-        const auto table =
-            toml::parse_file(file.string());
-
-        const auto stored_id =
-            table["id"].value<std::uint64_t>();
-
-        if (!stored_id.has_value()) {
-            throw std::runtime_error(
-                "Generation priva di identificatore: " +
-                file.string()
-            );
-        }
-
-        if (*stored_id != id) {
-            throw std::runtime_error(
-                "Identificatore della generation non valido: " +
-                file.string()
-            );
-        }
-
-        Generation generation{
-            id,
-            {}
-        };
-
-        const auto* entries =
-            table["entries"].as_array();
-
-        if (entries == nullptr) {
-            return generation;
-        }
-
-        for (const auto& item : *entries) {
-
-            const auto* entry =
-                item.as_table();
-
-            if (entry == nullptr) {
-                throw std::runtime_error(
-                    "Voce di generation non valida: " +
-                    file.string()
-                );
-            }
-
-            const auto package =
-                (*entry)["package"].value<std::string>();
-
-            const auto store =
-                (*entry)["store"].value<std::string>();
-
-            if (!package.has_value()) {
-                throw std::runtime_error(
-                    "Voce di generation priva di 'package': " +
-                    file.string()
-                );
-            }
-
-            if (!store.has_value()) {
-                throw std::runtime_error(
-                    "Voce di generation priva di 'store': " +
-                    file.string()
-                );
-            }
-
-            generation.entries.push_back(
-                GenerationEntry{
-                    *package,
-                    *store
-                }
-            );
-        }
-
-        return generation;
-    }
-    catch (const toml::parse_error& error) {
-        throw std::runtime_error(
-            "Impossibile leggere la generation '" +
-            file.string() +
-            "': " +
-            error.what()
-        );
-    }
+    std::ifstream input(file);
+    if (!input) throw std::runtime_error("Failed to read generation: " + file.string());
+    std::string document((std::istreambuf_iterator<char>(input)), {});
+    if (input.bad()) throw std::runtime_error("Failed to read generation: " + file.string());
+    auto generation = deserialize_generation(document);
+    if (generation.id != id) throw std::runtime_error("Generation identifier mismatch");
+    return generation;
 }
 
 /*
@@ -400,15 +313,13 @@ std::vector<Generation> GenerationManager::list() const
  * Create a new immutable generation.
  */
 Generation GenerationManager::create(
-    const std::vector<GenerationEntry>& entries
+    const std::vector<GenerationEntry>& entries,
+    const std::vector<realization::RealizationRecord>& realizations
 )
 {
     ensure_directories();
 
-    const Generation generation{
-        next_id(),
-        entries
-    };
+    const auto generation = make_generation(next_id(), entries, realizations);
 
     write_generation(generation);
 
@@ -479,6 +390,10 @@ void GenerationManager::switch_to(
 
     const Generation previous =
         current();
+
+    if (!target.realizations.empty() || !previous.realizations.empty()) {
+        throw std::runtime_error("Realization-backed generation activation is not implemented");
+    }
 
     if (previous.id == target.id) {
         return;
