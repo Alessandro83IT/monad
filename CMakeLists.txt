@@ -7,6 +7,7 @@ project(athena
 )
 
 find_package(OpenSSL REQUIRED COMPONENTS Crypto)
+find_package(LibArchive REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -27,7 +28,7 @@ target_include_directories(athena_core
     PRIVATE "${PROJECT_SOURCE_DIR}/src"
 )
 target_compile_features(athena_core PUBLIC cxx_std_20)
-target_link_libraries(athena_core PRIVATE OpenSSL::Crypto)
+target_link_libraries(athena_core PRIVATE OpenSSL::Crypto LibArchive::LibArchive)
 
 add_executable(athena src/main.cpp)
 target_link_libraries(athena PRIVATE Athena::Core)
@@ -59,6 +60,8 @@ set(ATHENA_TESTS
     activation_projection_test
     generation_activation_test
     generation_membership_test
+    realization_executor_test
+    realization_executor_integration_test
     realization_record_test
     object_store_test
     object_store_scanner_test
@@ -130,3 +133,5 @@ target_include_directories(arch_repository_live_test PRIVATE "${PROJECT_SOURCE_D
 set_property(TARGET public_planning_test PROPERTY INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/include")
 
 set_tests_properties(generation_activation_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+
+set_tests_properties(realization_executor_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)

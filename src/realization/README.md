@@ -70,3 +70,53 @@ ObjectStore context. Resolution uses ObjectStore::object_path(artifact_id), and
 full verification rejects missing or corrupt objects before target changes.
 Record structure, canonical relative reference, producer preconditions and codec
 remain unchanged; activation supplies no producer or BuildInputId integration.
+
+C.4 adds `realize(const core::InstallPlan&, const store::ObjectStore&,
+const ExecutionOptions&)` in executor.hpp. It preserves the canonical
+`selections()` order and does not mutate the plan. workspace_root is an explicit,
+existing absolute executor-managed directory without hostile writers. Each
+selection receives a private mkdtemp directory; package identity never forms
+filesystem paths. Shell-sensitive workspace bytes and symlink components are
+rejected because the reused CMake backend executes shell commands.
+
+The supported path is SourceRecipe -> local source acquisition -> optional
+SHA-256 transport digest/size verification -> private gzip tar extraction -> existing
+CMake build/install into private staging -> Artifact Schema v1 scan -> local
+ArtifactId derivation -> ObjectStore publication -> AmbientSourceBuild record.
+The transport SHA-256 describes archive bytes; ArtifactId describes normalized
+installed output. Repository ArtifactMetadata never substitutes for local
+verification. SourceRecipe build_inputs are retained in the immutable plan but
+produce no BuildInputId: ambient records always have an absent build_input_id.
+
+C.4 supports exactly one source with a literal local `file:///absolute/path`
+URI (no authority, percent encoding, query or fragment). Repository-relative
+keys have no acquisition resolution contract here and are rejected, as are
+remote transports and other digest algorithms. Empty sources are already invalid at the public plan
+boundary; multi-source recipes are explicitly unsupported by execution.
+Non-empty build_parameters are unsupported. IR references are rejected rather
+than reinterpreted. ImportedBinary and BuiltFromAthenaIR realization remain
+unimplemented, including artifact-only candidates. Autotools is deferred because
+its current backend ignores the dedicated build directory. CMake is the only
+supported backend in this executor.
+
+Private extraction uses libarchive rather than the legacy shell extraction
+helper. Its intentionally narrow gzip tar subset requires one top-level directory
+and rejects traversal, duplicate paths, shell-sensitive path bytes, links,
+special entries and extended permissions. No authoritative object is used as
+writable staging. Builds are ambient, neither sandboxed nor claimed reproducible;
+source-controlled build programs execute with the caller's privileges.
+
+Execution errors distinguish invalid input, unsupported kind/recipe, acquisition,
+source verification, extraction, build, artifact identity, publication and cleanup.
+Wrapped stage failures retain the original exception_ptr, including ObjectStore's
+integrity categories. Temporary resources are cleaned best-effort on failure;
+cleanup diagnostics are attached without replacing the original failure. A cleanup
+failure after otherwise successful publication has its own error category.
+
+Realization creates no generations, changes no current-generation pointer, and
+performs no activation or legacy store insertion. Publication is the transactional
+boundary for each object, not the entire plan. Already-published immutable objects
+may remain unreferenced after a later selection fails; future GC handles them.
+Generation creation from records, activation orchestration, removal/GC migration,
+remote acquisition, multi-source execution, build parameters, binary import,
+Athena IR execution and BuildInputId derivation remain C.5 or later work.
