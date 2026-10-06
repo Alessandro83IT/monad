@@ -32,10 +32,11 @@ std::vector<athena::generation::GenerationEntry> build_target_entries(
 );
 
 /*
- * Apply a RemovePlan to the complete current generation.
+ * Filter the legacy portion of a generation (compatibility helper).
  *
  * The operation is deliberately pure: it only constructs the entry list
- * for the candidate generation. Store entries are never deleted here;
+ * for the candidate generation. Use build_removal_generation for both
+ * membership collections. Store entries are never deleted here;
  * unreferenced immutable store objects remain available for rollback
  * until a later garbage-collection pass removes them safely.
  */
@@ -43,5 +44,10 @@ std::vector<athena::generation::GenerationEntry> remove_target_entries(
     const athena::generation::Generation& current,
     const athena::install::RemovePlan& removal
 );
+
+// Complete removal candidate; id is assigned only by GenerationManager::create.
+athena::generation::Generation build_removal_generation(
+    const athena::generation::Generation& current,
+    const RemovePlan& removal);
 
 }

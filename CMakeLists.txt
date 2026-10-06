@@ -110,6 +110,7 @@ set(ATHENA_TESTS
     install_request_resolution_test
     local_repository_test
     removal_e2e_test
+    removal_realization_test
     core_foundation_test
     public_planning_test
     public_install_plan_test
@@ -142,3 +143,6 @@ set_tests_properties(realization_executor_integration_test PROPERTIES SKIP_RETUR
 
 set_tests_properties(install_transaction_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
 set_tests_properties(cli_install_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+
+add_test(NAME removal_realization_integration_test COMMAND removal_realization_test integration)
+set_tests_properties(removal_realization_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)

@@ -80,4 +80,17 @@ std::vector<athena::generation::GenerationEntry> remove_target_entries(
 }
 
 
+athena::generation::Generation build_removal_generation(
+    const athena::generation::Generation& current,
+    const RemovePlan& removal)
+{
+    athena::generation::Generation target{0, remove_target_entries(current, removal)};
+    for (const auto& record : current.realizations) {
+        if (!removal.contains(record.candidate.package.value())) {
+            target.realizations.push_back(record);
+        }
+    }
+    return target;
+}
+
 }

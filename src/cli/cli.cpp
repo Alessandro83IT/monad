@@ -9,6 +9,7 @@
 #include "../archive/archive.hpp"
 #include "../store/store.hpp"
 #include "../store/metadata.hpp"
+#include "../store/object_store.hpp"
 #include "../activation/activation.hpp"
 #include "../generation/generation.hpp"
 #include "../../include/athena/core/config.hpp"
@@ -487,7 +488,8 @@ int run(int argc, char* argv[])
                             : "  ")
                         << generation.id
                         << " ("
-                        << generation.entries.size()
+                        << (generation.entries.size() +
+                            generation.realizations.size())
                         << " packages)\n";
                 }
 
@@ -524,6 +526,19 @@ int run(int argc, char* argv[])
                         << '\n';
                 }
 
+                for (const auto& record :
+                     current.realizations) {
+
+                    std::cout
+                        << "  "
+                        << record.candidate.package.value()
+                        << " "
+                        << record.candidate.version.value()
+                        << " -> "
+                        << record.artifact_id.value()
+                        << '\n';
+                }
+
                 return 0;
             }
 
@@ -549,9 +564,14 @@ int run(int argc, char* argv[])
                     return 1;
                 }
 
+                athena::store::ObjectStore objects(
+                    config.paths.store
+                );
+
                 generations.switch_to(
                     id,
-                    config.paths.target_root
+                    config.paths.target_root,
+                    objects
                 );
 
                 std::cout
@@ -597,9 +617,14 @@ int run(int argc, char* argv[])
                 const auto previous_id =
                     previous->id;
 
+                athena::store::ObjectStore objects(
+                    config.paths.store
+                );
+
                 generations.switch_to(
                     previous_id,
-                    config.paths.target_root
+                    config.paths.target_root,
+                    objects
                 );
 
                 std::cout
