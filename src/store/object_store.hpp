@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace athena::store {
 enum class ObjectErrorCode {
@@ -24,11 +25,22 @@ private:
 
 // Internal Linux v1 payload store. Root must already exist and be managed by
 // Athena, with no hostile namespace writers. Sources must be quiescent.
-// No mutation/removal API for authoritative objects; no legacy integration.
+// GC deletion is selected by ArtifactId only; no arbitrary-path removal.
 class ObjectStore {
 public:
     explicit ObjectStore(std::filesystem::path root);
     std::filesystem::path object_path(const core::ArtifactId& id) const;
+
+    // Enumerate authoritative v1 objects by ArtifactId. Only canonical
+    // lowercase SHA-256 object names are returned; unrelated namespace
+    // entries are outside ObjectStore ownership.
+    std::vector<core::ArtifactId> list() const;
+
+    // Remove one authoritative object selected only by ArtifactId.
+    // Returns false when the object is already absent. Requires Linux openat2
+    // and statx mount IDs; unavailable identity or mount crossings fail closed.
+    bool remove_if_present(const core::ArtifactId& id) const;
+
     std::filesystem::path publish(const std::filesystem::path& staging_root,
                                   const core::ArtifactId& expected) const;
     void verify(const core::ArtifactId& expected) const;

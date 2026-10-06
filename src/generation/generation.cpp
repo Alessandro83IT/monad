@@ -279,28 +279,18 @@ std::vector<Generation> GenerationManager::list() const
             continue;
         }
 
+        std::uint64_t id;
         try {
-            const auto id =
-                std::stoull(
-                    entry.path().filename().string()
-                );
-
-            generations.push_back(
-                get(id)
-            );
+            id = std::stoull(entry.path().filename().string());
         }
         catch (const std::invalid_argument&) {
-            /*
-             * Ignore auxiliary directories such as non-numeric
-             * filesystem entries.
-             */
+            continue; // Auxiliary directories, never malformed metadata.
         }
         catch (const std::out_of_range&) {
-            throw std::runtime_error(
-                "Identificatore di generation fuori intervallo: " +
-                entry.path().string()
-            );
+            throw std::runtime_error("Generation identifier out of range: " + entry.path().string());
         }
+        // Validation errors must propagate: every persisted generation is a GC root.
+        generations.push_back(get(id));
     }
 
     std::sort(

@@ -1,4 +1,5 @@
 #include "object_store_test_support.hpp"
+#include <sys/syscall.h>
 int main() {
     StoreFixture fixture;
     ObjectStore store(fixture.root);
@@ -22,6 +23,63 @@ int main() {
     rejects(ObjectErrorCode::StoreDirectory, [&] { store.verify(id); });
     require(fs::is_symlink(fixture.root / "objects"), "namespace link changed");
     fs::remove(fixture.root / "objects");
+
+    require(store.list().empty() && !store.remove_if_present(id), "absent namespace");
+    rejects(ObjectErrorCode::MalformedArtifactId, [&] { store.remove_if_present(athena::core::ArtifactId("invalid")); });
+    fs::create_symlink(fixture.root / "missing", fixture.root / "objects");
+    rejects(ObjectErrorCode::StoreDirectory, [&] { store.list(); });
+    rejects(ObjectErrorCode::StoreDirectory, [&] { store.remove_if_present(id); });
+    fs::remove(fixture.root / "objects");
+    const auto ns = store.object_path(id).parent_path();
+    fs::create_directories(ns);
+    const athena::core::ArtifactId second("sha256:" + std::string(64, 'b'));
+    fs::create_directories(store.object_path(second));
+    fs::create_directories(store.object_path(id) / "nested");
+    std::ofstream(store.object_path(id) / "nested/file") << "payload";
+    fs::create_directory_symlink(fixture.root, store.object_path(id) / "external");
+    fs::permissions(store.object_path(id) / "nested", fs::perms::owner_read | fs::perms::owner_exec);
+    fs::permissions(store.object_path(id), fs::perms::owner_read | fs::perms::owner_exec);
+    fs::create_directory(ns / ".publish-keep");
+    fs::create_directory(ns / std::string(64, 'A'));
+    std::ofstream(ns / std::string(64, 'c')) << "unrelated";
+    const athena::core::ArtifactId link("sha256:" + std::string(64, 'd'));
+    fs::create_directory_symlink(fixture.root, store.object_path(link));
+    require(store.list() == std::vector<athena::core::ArtifactId>{id, second}, "canonical sorted directories only");
+    rejects(ObjectErrorCode::StoreDirectory, [&] { store.remove_if_present(link); });
+    rejects(ObjectErrorCode::StoreDirectory, [&] { store.remove_if_present(athena::core::ArtifactId("sha256:" + std::string(64, 'c'))); });
+    require(store.remove_if_present(id) && !store.remove_if_present(id), "read-only recursive removal/idempotence");
+    require(fs::is_symlink(store.object_path(link)) && fs::exists(ns / ".publish-keep") && fs::exists(ns / std::string(64, 'c')), "ownership boundary");
+
+    // Same-device bind mounts differ by mount ID. Missing identity must
+    // fail closed even if both records would otherwise compare equal.
+    struct statx expected_mount {};
+    expected_mount.stx_mask = STATX_MNT_ID;
+    expected_mount.stx_mnt_id = 100;
+    expected_mount.stx_dev_major = 8;
+    expected_mount.stx_dev_minor = 1;
+    auto actual_mount = expected_mount;
+    mechanics::require_same_gc_mount(expected_mount, actual_mount);
+    actual_mount.stx_mnt_id = 101;
+    rejects(ObjectErrorCode::Cleanup, [&] { mechanics::require_same_gc_mount(expected_mount, actual_mount); });
+    actual_mount = expected_mount;
+    actual_mount.stx_mask = 0;
+    rejects(ObjectErrorCode::Cleanup, [&] { mechanics::require_same_gc_mount(expected_mount, actual_mount); });
+    rejects(ObjectErrorCode::Cleanup, [&] { mechanics::require_same_gc_mount(actual_mount, expected_mount); });
+    actual_mount = expected_mount;
+    ++actual_mount.stx_dev_minor;
+    rejects(ObjectErrorCode::Cleanup, [&] { mechanics::require_same_gc_mount(expected_mount, actual_mount); });
+    // Real statx mount IDs can be inspected without mounting anything.
+    const int fixture_fd = ::open(ns.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    const int proc_fd = ::open("/proc", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    require(fixture_fd >= 0 && proc_fd >= 0, "open mount identity fixtures");
+    struct statx fixture_mount {}, proc_mount {};
+    require(::syscall(SYS_statx, fixture_fd, "", AT_EMPTY_PATH, STATX_MNT_ID, &fixture_mount) == 0 &&
+            ::syscall(SYS_statx, proc_fd, "", AT_EMPTY_PATH, STATX_MNT_ID, &proc_mount) == 0,
+            "read real mount identities");
+    ::close(fixture_fd); ::close(proc_fd);
+    rejects(ObjectErrorCode::Cleanup, [&] { mechanics::require_same_gc_mount(fixture_mount, proc_mount); });
+    // Actual bind-mount deletion integration needs CAP_SYS_ADMIN; these
+    // checks exercise the production mount decision without that privilege.
 
     const auto model = payload_model();
     const auto root = fixture.root / "private"; fs::create_directory(root);

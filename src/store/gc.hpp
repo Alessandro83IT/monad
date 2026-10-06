@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <athena/core/types.hpp>
 #include <vector>
 
 namespace athena::store {
@@ -42,6 +43,14 @@ private:
      * persisted generations.
      */
     std::vector<std::filesystem::path> referenced_stores() const;
+
+    /*
+     * Collect ArtifactIds reachable from every persisted generation.
+     *
+     * Historical generations are roots just like the current generation:
+     * collecting one of their artifacts would make rollback/switch invalid.
+     */
+    std::vector<core::ArtifactId> referenced_artifacts() const;
 
     /*
      * A valid store entry is identified by Athena metadata.
