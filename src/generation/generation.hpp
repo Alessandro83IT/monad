@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+namespace athena::store { class ObjectStore; }
+
 namespace athena::generation {
 
 /*
@@ -48,7 +50,7 @@ struct Generation {
     // Ordered legacy packages composing this generation.
     std::vector<GenerationEntry> entries;
 
-    // Explicitly distinct from legacy entries; never consumed by legacy activation.
+    // Explicitly distinct from legacy entries; resolved separately from legacy manifests.
     std::vector<realization::RealizationRecord> realizations{};
 
     void validate() const;
@@ -144,7 +146,13 @@ public:
         const std::filesystem::path& target_root
     );
 
+    // Explicit authoritative store context; existing legacy callers need none.
+    void switch_to(std::uint64_t id, const std::filesystem::path& target_root,
+                   const store::ObjectStore& object_store);
+
 private:
+    void switch_impl(std::uint64_t id, const std::filesystem::path& target_root,
+                     const store::ObjectStore* object_store);
 
     std::filesystem::path state_directory_;
     std::filesystem::path generations_directory_;

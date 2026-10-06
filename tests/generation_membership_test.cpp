@@ -118,16 +118,25 @@ int main() {
     auto created = manager.create(legacy.entries, records);
     assert(manager.get(created.id).realizations == created.realizations);
     assert(manager.list().size() == 3 && manager.current().id == 0);
-    rejects([&] { manager.switch_to(created.id, root / "target"); });
+    // These are missing-context tests, replacing the C.2 unsupported-kind guard.
+    auto requires_context = [&](std::uint64_t id) {
+        bool rejected = false;
+        try { manager.switch_to(id, root / "target"); }
+        catch (const std::runtime_error& error) {
+            rejected = std::string(error.what()).find("ObjectStore context") != std::string::npos;
+        }
+        assert(rejected);
+    };
+    requires_context(created.id);
     assert(manager.current().id == 0 && !std::filesystem::exists(root / "target"));
     auto count = manager.list().size();
     rejects([&] { manager.create({}, {ambient, contradictory}); });
     assert(manager.list().size() == count);
     { std::ofstream out(root / "generations/current"); out << created.id; }
     assert(manager.current().realizations == created.realizations);
-    rejects([&] { manager.switch_to(0, root / "target"); });
+    requires_context(0);
     assert(manager.current().id == created.id && !std::filesystem::exists(root / "target"));
-    rejects([&] { manager.switch_to(created.id, root / "target"); });
+    requires_context(created.id);
     { std::ofstream out(file); out << "id=8"; }
     rejects([&] { manager.get(7); });
     std::filesystem::remove_all(root);

@@ -64,3 +64,9 @@ remain untouched. No identities or realization records are fabricated for them.
 C.1 introduces no generation membership/persistence/switching/rollback,
 activation, GC, installer/executor/acquisition/backend, resolver, CLI or removal
 integration. ADR-001, Artifact Schema v1, hashing and publication are unchanged.
+
+C.3 now consumes these associations through generation switching with an explicit
+ObjectStore context. Resolution uses ObjectStore::object_path(artifact_id), and
+full verification rejects missing or corrupt objects before target changes.
+Record structure, canonical relative reference, producer preconditions and codec
+remain unchanged; activation supplies no producer or BuildInputId integration.

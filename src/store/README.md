@@ -147,3 +147,17 @@ Full publication/tampering/concurrency coverage must also run on a host with
 sufficient initial-namespace CAP_SYS_ADMIN (or a supported filesystem that
 explicitly cannot store xattrs). Mechanics passing cannot substitute for that
 privileged integration coverage. Whole-tree buffering remains a resource limit.
+
+## C.3 activation consumer
+
+Generation switching now accepts an explicit const ObjectStore context and uses
+object_path plus full verify before projecting realization-backed memberships.
+Publication, mapping, verification, schema and legacy storage are unchanged.
+No embedded administrative manifest is required or inserted. Runtime projection
+reads the verified payload tree, including .athena as ordinary data, and creates
+only target links/shared directories. Full verification rejects missing/tampered
+objects and incomplete inspection rather than trusting hardening permissions.
+The quiescent store/administrator assumption and readlink atime limitation remain.
+See ../generation/README.md for mixed-source identity, rollback and API boundaries.
+GC still does not traverse this namespace; later GC must retain ArtifactIds from
+all retained generations, shared artifacts and separately defined runtime roots.

@@ -1,226 +1,134 @@
 #include "activation.hpp"
-
 #include "../store/manifest.hpp"
-
+#include "../artifact/model.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <utility>
-#include <vector>
 
 namespace athena::activation {
-
-void activate_file(
-    const std::filesystem::path& source,
-    const std::filesystem::path& target
-)
-{
-    const auto parent =
-        target.parent_path();
-
-    if (!std::filesystem::exists(parent)) {
-        std::filesystem::create_directories(parent);
-    }
-
-    std::filesystem::create_symlink(
-        source,
-        target
-    );
+namespace {
+using Path = std::filesystem::path;
+Projection legacy_projection(const Path& source) {
+    Projection result;
+    for (const auto& entry : store::read_manifest(source)) result.links.push_back(entry.path);
+    return result;
 }
-
-bool target_is_free(
-    const std::filesystem::path& target
-)
-{
-    const auto status =
-        std::filesystem::symlink_status(target);
-
-    return status.type() ==
-           std::filesystem::file_type::not_found;
+void require_source(const Path& source) {
+    if (!std::filesystem::exists(source))
+        throw std::runtime_error("Directory dello store non trovata: " + source.string());
 }
-
-void deactivate(
-    const std::filesystem::path& store_directory,
-    const std::filesystem::path& target_root
-)
-{
-    if (!std::filesystem::exists(store_directory)) {
-        throw std::runtime_error(
-            "Directory dello store non trovata: " +
-            store_directory.string()
-        );
-    }
-
-    std::cout
-        << "Disattivazione del pacchetto: "
-        << store_directory.string()
-        << '\n';
-
-    const auto manifest =
-        athena::store::read_manifest(
-            store_directory
-        );
-
-    for (const auto& entry : manifest) {
-
-        const std::filesystem::path source =
-            store_directory / entry.path;
-
-        const std::filesystem::path target =
-            target_root / entry.path;
-
-        const auto status =
-            std::filesystem::symlink_status(target);
-
-        if (status.type() ==
-            std::filesystem::file_type::not_found) {
-            continue;
-        }
-
-        if (status.type() !=
-            std::filesystem::file_type::symlink) {
-            throw std::runtime_error(
-                "Impossibile disattivare: il target non è un symlink: " +
-                target.string()
-            );
-        }
-
-        const auto linked_target =
-            std::filesystem::read_symlink(target);
-
-        const auto expected_target =
-            std::filesystem::absolute(source);
-
-        const auto actual_target =
-            std::filesystem::absolute(
-                target.parent_path() / linked_target
-            );
-
-        if (actual_target != expected_target) {
-            throw std::runtime_error(
-                "Impossibile disattivare: il symlink non punta allo store previsto: " +
-                target.string()
-            );
-        }
-
-        std::cout
-            << "  Rimozione: "
-            << target
-            << '\n';
-
-        std::filesystem::remove(target);
+// Inspect each ancestor without following target symlinks. In particular a
+// projected artifact symlink must never become a writable payload parent.
+void real_parents(const Path& path) {
+    Path current;
+    for (const auto& part : std::filesystem::absolute(path)) {
+        current /= part;
+        const auto status = std::filesystem::symlink_status(current);
+        if (status.type() == std::filesystem::file_type::not_found) continue;
+        if (!std::filesystem::is_directory(status))
+            throw std::runtime_error("Conflitto: il parent non è una directory reale: " + current.string());
     }
 }
-
-void activate(
-    const std::filesystem::path& store_directory,
-    const std::filesystem::path& target_root
-)
-{
-    if (!std::filesystem::exists(store_directory)) {
-        throw std::runtime_error(
-            "Directory dello store non trovata: " +
-            store_directory.string()
-        );
+void outside_source(const Path& source, const Path& target) {
+    const auto relative = std::filesystem::absolute(target).lexically_normal().lexically_relative(
+        std::filesystem::absolute(source).lexically_normal());
+    if (!relative.empty() && *relative.begin() != "..")
+        throw std::runtime_error("Activation target must be outside the immutable source: " + target.string());
+}
+void validate(const Projection& projection) {
+    for (const auto& path : projection.links) artifact::validate_path(path);
+    for (const auto& path : projection.directories) artifact::validate_path(path);
+}
+void activate_impl(const Path& source, const Path& root, const Projection& projection, bool strict) {
+    require_source(source);
+    if (strict) validate(projection);
+    std::cout << "Attivazione del pacchetto: " << source.string() << '\n';
+    for (const auto& path : projection.directories) {
+        outside_source(source, root / path);
+        real_parents((root / path).parent_path());
+        const auto status = std::filesystem::symlink_status(root / path);
+        if (status.type() != std::filesystem::file_type::not_found && !std::filesystem::is_directory(status))
+            throw std::runtime_error("Conflitto: la directory di destinazione esiste già: " + (root / path).string());
     }
-
-    std::cout
-        << "Attivazione del pacchetto: "
-        << store_directory.string()
-        << '\n';
-
-    const auto manifest =
-        athena::store::read_manifest(
-            store_directory
-        );
-
-    std::vector<
-        std::pair<
-            std::filesystem::path,
-            std::filesystem::path
-        >
-    > files;
-
-    for (const auto& entry : manifest) {
-
-        const std::filesystem::path source =
-            store_directory / entry.path;
-
-        const std::filesystem::path target =
-            target_root /
-            entry.path;
-
-        if (!target_is_free(target)) {
-            throw std::runtime_error(
-                "Conflitto: il file di destinazione esiste già: " +
-                target.string()
-            );
+    for (const auto& path : projection.links) {
+        if (strict) { outside_source(source, root / path); real_parents((root / path).parent_path()); }
+        if (!target_is_free(root / path))
+            throw std::runtime_error("Conflitto: il file di destinazione esiste già: " + (root / path).string());
+    }
+    std::vector<Path> activated, directories;
+    activated.reserve(projection.links.size()); directories.reserve(projection.directories.size());
+    auto create_directories = [&](const Path& target) {
+        std::vector<Path> missing;
+        for (auto path = target; !path.empty() &&
+             std::filesystem::symlink_status(path).type() == std::filesystem::file_type::not_found;
+             path = path.parent_path()) missing.push_back(path);
+        for (auto it = missing.rbegin(); it != missing.rend(); ++it) {
+            // Journal each successful mkdir, including implicit ancestors.
+            if (std::filesystem::create_directory(*it)) directories.push_back(*it);
         }
-
-        files.emplace_back(
-            source,
-            target
-        );
-    }
-
-    /*
-     * Keep track of every symlink successfully created by this
-     * activation transaction. If a later operation fails, these
-     * targets can be removed without touching pre-existing objects.
-     */
-    std::vector<std::filesystem::path> activated_targets;
-
+    };
     try {
-
-        for (const auto& file : files) {
-
-            std::cout
-                << "  File: "
-                << file.second
-                << '\n';
-
-            activate_file(
-                file.first,
-                file.second
-            );
-
-            /*
-             * Record the target only after successful creation.
-             * Therefore rollback can remove only objects created
-             * by this activation transaction.
-             */
-            activated_targets.push_back(
-                file.second
-            );
+        for (const auto& path : projection.directories) {
+            const auto target = root / path;
+            create_directories(target);
         }
-    }
-    catch (...) {
-
-        /*
-         * Undo the transaction in reverse order. We intentionally
-         * ignore cleanup errors here so that the original exception
-         * remains the one reported to the caller.
-         */
-        for (
-            auto it = activated_targets.rbegin();
-            it != activated_targets.rend();
-            ++it
-        ) {
-            std::error_code error;
-
-            std::filesystem::remove(
-                *it,
-                error
-            );
+        for (const auto& path : projection.links) {
+            const auto target = root / path;
+            if (strict) real_parents(target.parent_path());
+            create_directories(target.parent_path());
+            std::filesystem::create_symlink(source / path, target);
+            activated.push_back(target);
         }
-
-        /*
-         * Preserve the original activation failure.
-         */
+    } catch (...) {
+        for (auto it = activated.rbegin(); it != activated.rend(); ++it) {
+            std::error_code error; std::filesystem::remove(*it, error);
+        }
+        for (auto it = directories.rbegin(); it != directories.rend(); ++it) {
+            std::error_code error; std::filesystem::remove(*it, error);
+        }
         throw;
     }
-  
 }
-
+void deactivate_impl(const Path& source, const Path& root, const Projection& projection, bool strict) {
+    require_source(source);
+    if (strict) validate(projection);
+    std::cout << "Disattivazione del pacchetto: " << source.string() << '\n';
+    // Validate all ownership before removal, avoiding a partially removed source
+    // on an ordinary conflict. Filesystem errors still have existing best-effort semantics.
+    std::vector<Path> targets;
+    for (const auto& path : projection.links) {
+        const auto target = root / path;
+        if (strict) { outside_source(source, target); real_parents(target.parent_path()); }
+        const auto status = std::filesystem::symlink_status(target);
+        if (status.type() == std::filesystem::file_type::not_found) continue;
+        if (!std::filesystem::is_symlink(status))
+            throw std::runtime_error("Impossibile disattivare: il target non è un symlink: " + target.string());
+        if (std::filesystem::absolute(target.parent_path() / std::filesystem::read_symlink(target)) !=
+            std::filesystem::absolute(source / path))
+            throw std::runtime_error("Impossibile disattivare: il symlink non punta allo store previsto: " + target.string());
+        if (strict) targets.push_back(target);
+        else std::filesystem::remove(target); // Preserve historical legacy iteration semantics.
+    }
+    for (const auto& target : targets) std::filesystem::remove(target);
+    // As for legacy activation's parent directories, real directories are shared
+    // scaffolding and retained. No source directory or symlink target is edited.
 }
-
-
+}
+bool target_is_free(const Path& target) {
+    return std::filesystem::symlink_status(target).type() == std::filesystem::file_type::not_found;
+}
+void activate(const Path& source, const Path& root) {
+    require_source(source);
+    activate_impl(source, root, legacy_projection(source), false);
+}
+void deactivate(const Path& source, const Path& root) {
+    require_source(source);
+    deactivate_impl(source, root, legacy_projection(source), false);
+}
+void activate(const Path& source, const Path& root, const Projection& projection) {
+    activate_impl(source, root, projection, true);
+}
+void deactivate(const Path& source, const Path& root, const Projection& projection) {
+    deactivate_impl(source, root, projection, true);
+}
+}
