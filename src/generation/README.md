@@ -164,8 +164,10 @@ retained generations and use their ArtifactIds/derived references without payloa
 rescanning, preserving shared objects and any separately specified runtime
 references. C.2 implements no such traversal or collection.
 
-Installer/executor, CLI, removal, installed-environment reconstruction and legacy
-objects are unchanged. No executor emits realization members yet. Future flow is
+Legacy installer, CLI, removal, installed-environment reconstruction and legacy
+objects are unchanged. C.5 now composes the executor and generation APIs in
+[`install/transaction.hpp`](../install/transaction.hpp); see the
+[transaction boundary](../install/README.md). The implemented flow is
 InstallPlan selection -> realization -> verified ObjectStore publication ->
 RealizationRecord -> generation membership. Dependency/effective configuration
 semantics needed by future removal and runtime reachability are not supplied by

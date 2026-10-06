@@ -57,6 +57,8 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    install_transaction_test
+    install_transaction_integration_test
     activation_projection_test
     generation_activation_test
     generation_membership_test
@@ -135,3 +137,5 @@ set_property(TARGET public_planning_test PROPERTY INCLUDE_DIRECTORIES "${PROJECT
 set_tests_properties(generation_activation_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
 
 set_tests_properties(realization_executor_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+
+set_tests_properties(install_transaction_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
