@@ -120,7 +120,7 @@ int main()
         assert(first.owns_lock());
         bool concurrent_rejected = false;
         try { FileLock second(lock_path, LockKind::State, LockMode::Exclusive, "contender", false); }
-        catch (const std::runtime_error&) { concurrent_rejected = true; }
+        catch (const std::logic_error&) { concurrent_rejected = true; }
         assert(concurrent_rejected);
 
         int result_pipe[2];
@@ -131,7 +131,7 @@ int main()
             ::close(result_pipe[0]);
             char result = '0';
             try { FileLock contender(lock_path, LockKind::State, LockMode::Exclusive, "child", false); }
-            catch (const std::runtime_error&) { result = '1'; }
+            catch (const std::logic_error&) { result = '1'; }
             (void)::write(result_pipe[1], &result, 1);
             ::_exit(0);
         }

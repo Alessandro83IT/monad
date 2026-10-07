@@ -10,6 +10,7 @@ include(cmake/AthenaPackaging.cmake)
 
 find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 find_package(LibArchive REQUIRED)
+find_package(Threads REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -30,7 +31,7 @@ target_include_directories(athena_core
     PRIVATE "${PROJECT_SOURCE_DIR}/src"
 )
 target_compile_features(athena_core PUBLIC cxx_std_20)
-target_link_libraries(athena_core PRIVATE OpenSSL::Crypto LibArchive::LibArchive)
+target_link_libraries(athena_core PRIVATE OpenSSL::Crypto LibArchive::LibArchive Threads::Threads)
 
 add_executable(athena src/main.cpp)
 target_link_libraries(athena PRIVATE Athena::Core)
@@ -55,6 +56,8 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    locking_test
+    durable_filesystem_test
     installed_semantics_regression_test
     installed_semantics_test
     installed_semantics_integration_test
@@ -158,3 +161,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
             -P "${CMAKE_CURRENT_BINARY_DIR}/packaging_regression_test.cmake")
     set_tests_properties(packaging_regression_test PROPERTIES LABELS packaging TIMEOUT 180)
 endif()
+
+target_link_libraries(locking_test PRIVATE Threads::Threads)
+set_tests_properties(locking_test durable_filesystem_test PROPERTIES TIMEOUT 30)

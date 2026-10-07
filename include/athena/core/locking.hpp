@@ -8,10 +8,11 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace athena::core {
 
-enum class LockKind { State, StoreGc, BuildInput, RepositorySnapshot };
+enum class LockKind { State, StoreGc, BuildInput, RepositorySnapshot, TransactionLease };
 enum class LockMode { Shared, Exclusive };
 
 const char* lock_kind_name(LockKind kind) noexcept;
@@ -27,6 +28,14 @@ struct LockLayout {
     std::filesystem::path build_input(const BuildInputId& id) const;
 };
 
+// Lease locks precede authority locks; nested equal-rank acquisitions are rejected.
+// Classification is a caller contract; namespace-derived paths are opt-in in M2.5-A.
+// The hierarchy is deliberately conservative across threads (not thread-local).
+// After a multithreaded fork, the child must exec/_exit before using C++ APIs.
+// Process-wide hierarchy, including pending acquisitions, enforced by inode identity.
+// Fork inherits the open file description and registry; close releases only the last
+// reference. No explicit LOCK_UN is issued. Exec closes descriptors via CLOEXEC.
+// Never unlink or replace a lock leaf while any participant may use it.
 class FileLock {
 public:
     FileLock(const std::filesystem::path& lock_path, LockKind kind,
@@ -42,15 +51,19 @@ public:
 private:
     std::filesystem::path path_;
     int descriptor_ = -1;
+    std::uint64_t registration_ = 0;
+    void release() noexcept;
 };
+
+// Namespace-derived authorities; opening FileLock safely creates missing directories.
+std::filesystem::path state_lock_path(const std::filesystem::path& generation_state);
+std::filesystem::path store_gc_lock_path(const std::filesystem::path& store);
 
 class LockSet {
 public:
     void acquire(const std::filesystem::path& path, LockKind kind,
                  LockMode mode, std::string operation, bool wait = true);
 private:
-    int last_order_ = -1;
-    std::string last_path_;
     std::vector<FileLock> locks_;
 };
 
