@@ -169,3 +169,13 @@ The quiescent store/administrator assumption and readlink atime limitation remai
 See ../generation/README.md for mixed-source identity, rollback and API boundaries.
 GC still does not traverse this namespace; later GC must retain ArtifactIds from
 all retained generations, shared artifacts and separately defined runtime roots.
+
+## M2.5-C lifetime and GC protocol
+
+Production publishes prepared objects through `TransactionPins::publish`, which
+establishes a durable pin under StoreGc before publication or adoption. Old B
+publication seams are explicitly named `*_unprotected_for_test`. Authoritative
+recursive removal has been removed; bound GC detaches to claimed same-mount trash
+before private recursive reclamation. All valid pins, including unlocked stale
+transactions, remain roots. See [the C contract](../../docs/m2.5-c-transaction-pins-gc.md)
+for binding, validation, locking, failure and recovery boundaries.

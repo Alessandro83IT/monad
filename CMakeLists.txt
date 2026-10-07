@@ -56,6 +56,9 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    transaction_gc_fault_test
+    transaction_gc_protocol_test
+    transaction_gc_test
     immutable_publication_test
     locking_test
     durable_filesystem_test
@@ -170,3 +173,13 @@ set_tests_properties(immutable_publication_test PROPERTIES TIMEOUT 60)
 
 add_test(NAME immutable_object_publication_test COMMAND immutable_publication_test objects)
 set_tests_properties(immutable_object_publication_test PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 77)
+
+add_test(NAME transaction_gc_crash_test COMMAND transaction_gc_test crash)
+add_test(NAME transaction_gc_concurrency_test COMMAND transaction_gc_test concurrency)
+add_test(NAME transaction_gc_scanner_test COMMAND transaction_gc_test scanner)
+set_tests_properties(transaction_gc_test transaction_gc_crash_test transaction_gc_concurrency_test PROPERTIES TIMEOUT 60)
+set_tests_properties(transaction_gc_scanner_test PROPERTIES TIMEOUT 90 SKIP_RETURN_CODE 77)
+
+set_tests_properties(transaction_gc_protocol_test PROPERTIES TIMEOUT 60)
+
+set_tests_properties(transaction_gc_fault_test PROPERTIES TIMEOUT 60)

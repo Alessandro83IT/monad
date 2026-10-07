@@ -20,6 +20,8 @@ struct Syscalls {
     int (*cloexec)(int) = nullptr;
     int (*fstatfs)(int, struct statfs*) = ::fstatfs;
     int (*unlink)(int, const char*, int) = nullptr;
+    int (*mkdir)(int, const char*, mode_t) = nullptr;
+    int (*chmod)(int, mode_t) = nullptr;
 };
 const Syscalls& linux_syscalls();
 class Fd {

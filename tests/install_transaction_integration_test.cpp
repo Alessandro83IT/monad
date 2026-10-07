@@ -49,7 +49,7 @@ int main() {
         store::write_metadata(directory, {name, "1", "", "", "", {}});
         store::write_manifest(directory, {});
     }
-    auto seed = generations.create({{"app", (fixture.root / "old-app").native()},
+    auto seed = generations.create_unprotected_for_test({{"app", (fixture.root / "old-app").native()},
                                     {"kept-legacy", (fixture.root / "kept").native()}});
     const auto target = fixture.root / "target";
     generations.switch_to(seed.id, target, objects);

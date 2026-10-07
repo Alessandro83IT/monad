@@ -103,16 +103,16 @@ std::filesystem::path store_gc_lock_path(const std::filesystem::path& authority)
 }
 
 FileLock::FileLock(const std::filesystem::path& path, LockKind kind,
-                   LockMode mode, std::string operation, bool wait) : path_(path)
+                   LockMode mode, std::string operation, bool wait, bool existing_only) : path_(path)
 {
     (void)operation; // Diagnostic metadata must never mutate the synchronization inode.
     if (!path.is_absolute()) throw std::invalid_argument("lock path must be absolute: " + path.string());
     initialize_registry();
-    auto parent = detail::open_directory(path.parent_path(), true, true);
+    auto parent = detail::open_directory(path.parent_path(), !existing_only, true);
     const auto parent_stat = detail::stat_fd(parent.get());
     if (parent_stat.st_uid != ::geteuid() || (parent_stat.st_mode & 0022))
         throw std::runtime_error("unsafe lock directory ownership or permissions: " + path.parent_path().string());
-    auto fd = detail::open_at(parent.get(), path.filename().string(), O_CREAT | O_RDWR, 0600);
+    auto fd = detail::open_at(parent.get(), path.filename().string(), (existing_only ? 0 : O_CREAT) | O_RDWR, 0600);
     const auto stat = detail::stat_fd(fd.get());
     if (!S_ISREG(stat.st_mode) || stat.st_uid != ::geteuid() || stat.st_nlink != 1 || (stat.st_mode & 0022))
         throw std::runtime_error("unsafe lock object type, ownership, links or permissions: " + path.string());

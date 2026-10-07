@@ -171,7 +171,7 @@ void read_and_visibility_cases(const fs::path& root) {
     // A byte-known namespace fixture tests reachability, not scanner eligibility.
     const auto retained_object = store / "objects/v1/sha256" / artifact.value().substr(7);
     fs::create_directories(retained_object);
-    const auto published = manager.create({{"legacy", legacy.string()}}, {record});
+    const auto published = manager.create_unprotected_for_test({{"legacy", legacy.string()}}, {record});
     require(manager.current().id == 0 && published.id == 1, "publication selected current");
     const auto missing = root / "missing-read-state";
     auto proc = d::open_directory("/proc/sys");
@@ -183,8 +183,10 @@ void read_and_visibility_cases(const fs::path& root) {
             require(manager.list().size() == 2 && manager.get(1).id == 1 && manager.current().id == 0,
                     "read-only inspection failed under syscall guard");
             athena::store::GarbageCollector gc(store, state);
-            require(gc.collect().empty() && fs::exists(legacy / ".athena/metadata.toml") && fs::exists(retained_object),
-                    "unselected generation lost legacy/artifact GC roots");
+            // C collection is explicitly a mutating locked operation, even
+            // when no payload is unreachable. Only list/get remain read-only.
+            require(fs::exists(legacy / ".athena/metadata.toml") && fs::exists(retained_object),
+                    "retained payload disappeared");
             require(athena::generation::GenerationManager(missing).list().empty(), "missing namespace not empty");
             athena::generation::GenerationManager unsupported("/proc/sys",
                 athena::generation::GenerationManager::GenerationDirectoryTag{});
@@ -196,7 +198,7 @@ void read_and_visibility_cases(const fs::path& root) {
     require(::waitpid(child, &status, 0) == child && WIFEXITED(status) && WEXITSTATUS(status) == 0,
             "read-only enumeration attempted mutation/barrier/preflight");
     require(!fs::exists(missing), "enumeration created missing state");
-    require(manager.create({}).id == 2 && manager.current().id == 0, "unselected generation ignored by allocation");
+    require(manager.create_unprotected_for_test({}).id == 2 && manager.current().id == 0, "unselected generation ignored by allocation");
     fs::create_directory(state / "generations/3");
     rejects_state([&] { manager.list(); }); // Incomplete authoritative metadata must not become empty.
 }
@@ -218,12 +220,12 @@ void locator_cases(const fs::path& root) {
             for (std::size_t i = 0; i < locators.size(); ++i) {
                 const auto bound = (locators[i].is_absolute() ? locators[i] : a / locators[i]).lexically_normal();
                 defaults[i].initialize();
-                const auto generation = defaults[i].create({});
+                const auto generation = defaults[i].create_unprotected_for_test({});
                 require(defaults[i].get(generation.id).id == generation.id && defaults[i].current().id == 0,
                         "default authority binding changed");
                 require(fs::exists(bound / "generations" / std::to_string(generation.id) / "generation.toml"), "default locator spelling");
                 tagged[i].initialize();
-                const auto custom = tagged[i].create({});
+                const auto custom = tagged[i].create_unprotected_for_test({});
                 const auto custom_bound = (custom_locators[i].is_absolute() ? custom_locators[i] : a / custom_locators[i]).lexically_normal();
                 require(tagged[i].get(custom.id).id == custom.id && tagged[i].current().id == 0, "tagged authority binding changed");
                 require(fs::exists(custom_bound / std::to_string(custom.id) / "generation.toml"), "tagged locator spelling");
@@ -278,7 +280,7 @@ void crash_case(const fs::path& parent, int point, bool object = false, bool mec
                 mechanics::synchronize(payload, model, ops());
                 exact_payload(payload, model, true);
                 d::publish_tree(ns.get(), name, ns.get(), id.value().substr(7), ops());
-            } else if (object) store.publish(source, id, ops());
+            } else if (object) store.publish_unprotected_for_test(source, id, ops());
             else gp::persist(parent, 7, "complete metadata\n", ops());
             ::_exit(2);
         } catch (const std::exception& e) { std::cerr << "crash child: " << e.what() << "\n"; ::_exit(3); }
@@ -325,10 +327,10 @@ int main(int argc, char**) {
     const auto boundary_parent = boundary_state / "generations";
     gp::persist(boundary_parent, gp::max_id - 1, athena::generation::serialize(athena::generation::make_generation(gp::max_id - 1, {})));
     require(boundary.get(gp::max_id - 1).id == gp::max_id - 1, "penultimate persisted ID not decodable");
-    require(boundary.create({}).id == gp::max_id && boundary.get(gp::max_id).id == gp::max_id,
+    require(boundary.create_unprotected_for_test({}).id == gp::max_id && boundary.get(gp::max_id).id == gp::max_id,
             "maximum allocation/persistence failed");
     const auto boundary_before = snapshot(boundary_parent);
-    try { boundary.create({}); require(false, "maximum allocation did not exhaust"); } catch (const std::overflow_error&) {}
+    try { boundary.create_unprotected_for_test({}); require(false, "maximum allocation did not exhaust"); } catch (const std::overflow_error&) {}
     unchanged(boundary_parent, boundary_before);
     require(boundary.list().size() == 3 && boundary.current().id == 0, "maximum ID list/selection changed");
     const auto invalid_parent = fixture.root / "invalid-id"; fs::create_directory(invalid_parent);
@@ -339,9 +341,9 @@ int main(int argc, char**) {
     athena::generation::GenerationManager manager(state); manager.initialize();
     for (auto name : {"01", "1suffix", "+1"}) fs::create_directory(state / "generations" / name);
     fs::create_directory_symlink(fixture.root, state / "generations/99");
-    require(manager.create({}).id == 1 && manager.list().size() == 2, "malformed generation names affected allocation/list");
+    require(manager.create_unprotected_for_test({}).id == 1 && manager.list().size() == 2, "malformed generation names affected allocation/list");
     fs::create_directory(state / "generations/9223372036854775808");
-    try { manager.create({}); require(false, "allocation overflow accepted"); } catch (const std::overflow_error&) {}
+    try { manager.create_unprotected_for_test({}); require(false, "allocation overflow accepted"); } catch (const std::overflow_error&) {}
     try { manager.list(); require(false, "out-of-domain root silently ignored"); } catch (const std::overflow_error&) {}
     for (int p : {1, 2, 3}) {
         crash_case(fixture.root / ("crash-" + std::to_string(p)), p);
@@ -369,7 +371,7 @@ int main(int argc, char**) {
         children[i] = ::fork(); require(children[i] >= 0, "allocation race fork");
         if (children[i] == 0) {
             ::close(pipefd[1]); char t; if (::read(pipefd[0], &t, 1) != 1) ::_exit(3);
-            try { allocated.create({}); ::_exit(0); } catch (...) { ::_exit(1); }
+            try { allocated.create_unprotected_for_test({}); ::_exit(0); } catch (...) { ::_exit(1); }
         }
     }
     ::close(pipefd[0]); require(::write(pipefd[1], "go", 2) == 2, "allocation race release"); ::close(pipefd[1]);
@@ -452,53 +454,53 @@ int main(int argc, char**) {
     const auto source = fixture.root / "source"; fs::create_directory(source);
     auto model = payload_model(); mechanics::materialize(source, model);
     auto id = derive_artifact_id(model); ObjectStore store(fixture.root);
-    try { store.publish(source, id); }
+    try { store.publish_unprotected_for_test(source, id); }
     catch (const ObjectError& e) {
         if (e.code() != ObjectErrorCode::InvalidSource || std::string(e.what()).find("hidden trusted.*") == std::string::npos) throw;
         require(!fs::exists(store.object_path(id)), "failed scanner published");
         std::cout << "SKIP complete ArtifactId publication coverage: " << e.what() << '\n';
         return 77;
     }
-    require(store.remove_if_present(id), "remove probe object");
+    require(athena::store::GarbageCollector(store.root(), fixture.root / "gc-state").collect().size() == 1, "remove probe object");
     for (int p : {1, 2, 3}) crash_case(fixture.root / ("object-crash-" + std::to_string(p)), p, true);
     for (int f : {1, 6, 11, 2, 3, 4, 8}) {
-        persistence_failure(f, false, [&] { store.publish(source, id, ops()); });
+        persistence_failure(f, false, [&] { store.publish_unprotected_for_test(source, id, ops()); });
         require(!fs::exists(store.object_path(id)), "object pre-publication failure became visible");
     }
     for (int f : {12, 14, 13, 5}) {
-        persistence_failure(f, true, [&] { store.publish(source, id, ops()); });
+        persistence_failure(f, true, [&] { store.publish_unprotected_for_test(source, id, ops()); });
         require(fs::exists(store.object_path(id)), "object post-rename failure lost winner");
         store.verify(id); exact_payload(store.object_path(id), model, true);
-        require(store.remove_if_present(id), "remove uncertain object");
+        require(athena::store::GarbageCollector(store.root(), fixture.root / "gc-state").collect().size() == 1, "remove uncertain object");
     }
-    require(store.publish_durable(source, id).result == d::Publication::Published, "new object result");
-    require(store.publish_durable(source, id).result == d::Publication::AlreadyExists, "valid winner result");
+    require(store.publish_durable_unprotected_for_test(source, id).result == d::Publication::Published, "new object result");
+    require(store.publish_durable_unprotected_for_test(source, id).result == d::Publication::AlreadyExists, "valid winner result");
     store.verify(id); // Valid EEXIST convergence.
     const auto existing_before = snapshot(store.object_path(id));
     for (int f : {17, 18}) {
-        persistence_failure(f, true, [&] { store.publish_durable(source, id, ops()); });
+        persistence_failure(f, true, [&] { store.publish_durable_unprotected_for_test(source, id, ops()); });
         unchanged(store.object_path(id), existing_before);
     }
-    require(store.remove_if_present(id), "remove fixture object");
-    persistence_failure(10, true, [&] { store.publish(source, id, ops()); });
+    require(athena::store::GarbageCollector(store.root(), fixture.root / "gc-state").collect().size() == 1, "remove fixture object");
+    persistence_failure(10, true, [&] { store.publish_unprotected_for_test(source, id, ops()); });
     require(fs::exists(store.object_path(id)), "post-publication error claimed rollback");
-    require(store.remove_if_present(id), "remove post-publication corruption");
+    require(athena::store::GarbageCollector(store.root(), fixture.root / "gc-state").collect().size() == 1, "remove post-publication corruption");
     reset(7);
-    rejects(ObjectErrorCode::Materialization, [&] { store.publish(source, id, ops()); });
+    rejects(ObjectErrorCode::Materialization, [&] { store.publish_unprotected_for_test(source, id, ops()); });
     reset(); require(!fs::exists(store.object_path(id)), "prepared mismatch published");
-    reset(); concurrent(store.object_path(id), model, [&](int) { store.publish(source, id, ops()); });
-    require(store.remove_if_present(id), "remove race object");
+    reset(); concurrent(store.object_path(id), model, [&](int) { store.publish_unprotected_for_test(source, id, ops()); });
+    require(athena::store::GarbageCollector(store.root(), fixture.root / "gc-state").collect().size() == 1, "remove race object");
     fs::create_directory(store.object_path(id));
-    rejects(ObjectErrorCode::CollisionCorruption, [&] { store.publish(source, id); });
+    rejects(ObjectErrorCode::CollisionCorruption, [&] { store.publish_unprotected_for_test(source, id); });
     require(fs::is_empty(store.object_path(id)), "corrupted winner changed");
     reset(19);
-    try { store.publish(source, id, ops()); require(false, "corrupt winner accepted with cleanup fault"); }
+    try { store.publish_unprotected_for_test(source, id, ops()); require(false, "corrupt winner accepted with cleanup fault"); }
     catch (const ObjectError& e) {
         require(e.code() == ObjectErrorCode::CollisionCorruption && !e.cleanup_failure().empty(),
                 "cleanup replaced primary winner integrity failure");
     }
     reset(); require(fs::is_empty(store.object_path(id)), "cleanup deleted/changed corrupt winner");
     auto wrong = athena::core::ArtifactId("sha256:" + std::string(64, 'f'));
-    rejects(ObjectErrorCode::SourceIdentityMismatch, [&] { store.publish(source, wrong); });
+    rejects(ObjectErrorCode::SourceIdentityMismatch, [&] { store.publish_unprotected_for_test(source, wrong); });
     require(!fs::exists(store.object_path(wrong)), "mismatch published");
 }

@@ -3,6 +3,8 @@
 
 #include "object_store_test_support.hpp"
 #include <sys/syscall.h>
+#include "store/gc.hpp"
+#include "generation/generation.hpp"
 int main() {
     StoreFixture fixture;
     ObjectStore store(fixture.root);
@@ -11,13 +13,13 @@ int main() {
     for (const auto& text : std::vector<std::string>{"opaque", "sha256:abc", "sha256:" + std::string(64, 'A'),
                             "sha256:" + std::string(63, 'a') + "g", "sha256:" + std::string(64, 'a') + "/.."})
         rejects(ObjectErrorCode::MalformedArtifactId, [&] { store.object_path(athena::core::ArtifactId(text)); });
-    rejects(ObjectErrorCode::MalformedArtifactId, [&] { store.publish(fixture.root, athena::core::ArtifactId("invalid")); });
+    rejects(ObjectErrorCode::MalformedArtifactId, [&] { store.publish_unprotected_for_test(fixture.root, athena::core::ArtifactId("invalid")); });
     require(!fs::exists(fixture.root / "objects"), "invalid id created namespace");
-    rejects(ObjectErrorCode::InvalidSource, [&] { store.publish(fixture.root / "missing", id); });
-    rejects(ObjectErrorCode::InvalidSource, [&] { store.publish({}, id); });
-    rejects(ObjectErrorCode::InvalidSource, [&] { store.publish(fs::path(std::string("a\0b", 3)), id); });
+    rejects(ObjectErrorCode::InvalidSource, [&] { store.publish_unprotected_for_test(fixture.root / "missing", id); });
+    rejects(ObjectErrorCode::InvalidSource, [&] { store.publish_unprotected_for_test({}, id); });
+    rejects(ObjectErrorCode::InvalidSource, [&] { store.publish_unprotected_for_test(fs::path(std::string("a\0b", 3)), id); });
     require(!fs::exists(fixture.root / "objects"), "invalid source created namespace");
-    rejects(ObjectErrorCode::InvalidSource, [&] { store.publish(fixture.root, id); });
+    rejects(ObjectErrorCode::InvalidSource, [&] { store.publish_unprotected_for_test(fixture.root, id); });
     require(!fs::exists(fixture.root / "objects"), "source containing namespace was mutated");
     rejects(ObjectErrorCode::StoreDirectory, [&] { ObjectStore invalid("relative"); });
     // Namespace failures are testable without scanner privilege, and links
@@ -27,11 +29,9 @@ int main() {
     require(fs::is_symlink(fixture.root / "objects"), "namespace link changed");
     fs::remove(fixture.root / "objects");
 
-    require(store.list().empty() && !store.remove_if_present(id), "absent namespace");
-    rejects(ObjectErrorCode::MalformedArtifactId, [&] { store.remove_if_present(athena::core::ArtifactId("invalid")); });
+    require(store.list().empty(), "absent namespace");
     fs::create_symlink(fixture.root / "missing", fixture.root / "objects");
     rejects(ObjectErrorCode::StoreDirectory, [&] { store.list(); });
-    rejects(ObjectErrorCode::StoreDirectory, [&] { store.remove_if_present(id); });
     fs::remove(fixture.root / "objects");
     const auto ns = store.object_path(id).parent_path();
     fs::create_directories(ns);
@@ -48,9 +48,18 @@ int main() {
     const athena::core::ArtifactId link("sha256:" + std::string(64, 'd'));
     fs::create_directory_symlink(fixture.root, store.object_path(link));
     require(store.list() == std::vector<athena::core::ArtifactId>{id, second}, "canonical sorted directories only");
-    rejects(ObjectErrorCode::StoreDirectory, [&] { store.remove_if_present(link); });
-    rejects(ObjectErrorCode::StoreDirectory, [&] { store.remove_if_present(athena::core::ArtifactId("sha256:" + std::string(64, 'c'))); });
-    require(store.remove_if_present(id) && !store.remove_if_present(id), "read-only recursive removal/idempotence");
+    athena::generation::GenerationManager manager(fixture.root / "state"); manager.initialize();
+    athena::store::GarbageCollector gc(fixture.root, fixture.root / "state");
+    bool permission_rejected = false;
+    try { gc.collect(); } catch (const athena::core::detail::PersistenceError& e) {
+        require(!e.outcome_uncertain && e.error == EACCES, "readonly detach classification"); permission_rejected = true;
+    }
+    if (permission_rejected) {
+        require(fs::exists(store.object_path(id) / "nested/file"), "failed detach modified authority");
+        // Fixture-only permission change: production never chmods authority.
+        fs::permissions(store.object_path(id), fs::perms::owner_all);
+    }
+    require(gc.collect().size() == 2 && gc.collect().empty(), "recoverable removal/idempotence");
     require(fs::is_symlink(store.object_path(link)) && fs::exists(ns / ".publish-keep") && fs::exists(ns / std::string(64, 'c')), "ownership boundary");
 
     // Same-device bind mounts differ by mount ID. Missing identity must

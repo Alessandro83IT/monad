@@ -128,7 +128,7 @@ int main() {
     auto context_records = records;
     for (auto& record : context_records)
         record.semantics = athena::installed::SemanticState{PackageMetadata{record.candidate.package, record.candidate.version}};
-    auto created = manager.create(context_entries, context_records);
+    auto created = manager.create_unprotected_for_test(context_entries, context_records);
     assert(manager.get(created.id).realizations == created.realizations);
     assert(manager.list().size() == 3 && manager.current().id == 0);
     // These are missing-context tests, replacing the C.2 unsupported-kind guard.
@@ -143,7 +143,7 @@ int main() {
     requires_context(created.id);
     assert(manager.current().id == 0 && !std::filesystem::exists(root / "target"));
     auto count = manager.list().size();
-    rejects([&] { manager.create({}, {ambient, contradictory}); });
+    rejects([&] { manager.create_unprotected_for_test({}, {ambient, contradictory}); });
     assert(manager.list().size() == count);
     { std::ofstream out(root / "generations/current"); out << created.id; }
     assert(manager.current().realizations == created.realizations);

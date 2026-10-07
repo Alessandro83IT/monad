@@ -40,13 +40,14 @@ class FileLock {
 public:
     FileLock(const std::filesystem::path& lock_path, LockKind kind,
              LockMode mode = LockMode::Exclusive,
-             std::string operation = "unspecified", bool wait = true);
+             std::string operation = "unspecified", bool wait = true, bool existing_only = false);
     ~FileLock();
     FileLock(const FileLock&) = delete;
     FileLock& operator=(const FileLock&) = delete;
     FileLock(FileLock&& other) noexcept;
     FileLock& operator=(FileLock&& other) noexcept;
     bool owns_lock() const noexcept;
+    int descriptor() const noexcept { return descriptor_; } // Borrowed, for immutable lease identity checks.
     const std::filesystem::path& path() const noexcept { return path_; }
 private:
     std::filesystem::path path_;

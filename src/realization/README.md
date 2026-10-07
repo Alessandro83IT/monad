@@ -128,3 +128,9 @@ may remain unreferenced after a later selection fails; content-addressed GC hand
 Generation creation, activation, semantic install/remove and GC are integrated.
 Remote acquisition, multi-source execution, build parameters, binary import,
 Athena IR execution and BuildInputId derivation remain C.5 or later work.
+
+M2.5-C requires a caller-owned `TransactionPins` handle in
+`ExecutionOptions::transaction` before any publication. Ordinary records do not
+own lifetime protection; callers retain the handle through durable generation
+handoff or explicit abandonment. Failure/destruction never automatically retires
+registered pins. Preparation/build remains outside StoreGc.

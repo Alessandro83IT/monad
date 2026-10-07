@@ -199,7 +199,7 @@ std::string private_directory(int parent, const Syscalls& ops) {
         std::string name = ".publish-";
         constexpr char hex[] = "0123456789abcdef";
         for (auto b : bytes) { name += hex[b >> 4]; name += hex[b & 15]; }
-        if (::mkdirat(parent, name.c_str(), 0700) == 0) return name;
+        if ((ops.mkdir ? ops.mkdir : ::mkdirat)(parent, name.c_str(), 0700) == 0) return name;
         if (errno != EEXIST) fail("private mkdirat");
     }
 }
@@ -207,7 +207,7 @@ namespace {
 void remove_private(int parent, const std::string& name, dev_t device, const Syscalls& ops) {
     auto node = open_at(parent, name, O_RDONLY | O_DIRECTORY);
     if (stat_fd(node.get()).st_dev != device) throw std::runtime_error("private cleanup mount crossing");
-    if (::fchmod(node.get(), 0700) < 0) fail("private cleanup chmod");
+    if ((ops.chmod ? ops.chmod : ::fchmod)(node.get(), 0700) < 0) fail("private cleanup chmod");
     int raw = ::openat(node.get(), ".", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
     if (raw < 0) fail("private cleanup directory stream");
     DIR* stream = ::fdopendir(raw);

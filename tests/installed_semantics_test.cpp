@@ -198,7 +198,7 @@ int main() {
     fs::create_directories(paths.store);
     generation::GenerationManager manager(paths.generation_state, generation::GenerationManager::GenerationDirectoryTag{});
     manager.initialize();
-    auto historical = manager.create(base.entries, base.realizations);
+    auto historical = manager.create_unprotected_for_test(base.entries, base.realizations);
     std::ofstream(paths.generation_state / "current") << historical.id << '\n';
     installed::validate_environment(manager.get(historical.id));
     const auto current_before = read_bytes(paths.generation_state / "current");

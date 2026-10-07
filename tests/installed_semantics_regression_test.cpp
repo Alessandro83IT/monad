@@ -105,7 +105,7 @@ void h3() {
     std::ofstream(paths.target_root / "sentinel") << "unchanged";
     generation::GenerationManager manager(paths.generation_state, generation::GenerationManager::GenerationDirectoryTag{});
     manager.initialize(); auto prior = state(plan({a, p2}));
-    const auto seed = manager.create({}, prior.realizations);
+    const auto seed = manager.create_unprotected_for_test({}, prior.realizations);
     std::ofstream(paths.generation_state / "current") << seed.id << '\n';
     store::ObjectStore objects(paths.store);
     const auto before_state = snapshot(paths.generation_state), before_objects = snapshot(paths.store), before_target = snapshot(paths.target_root);
@@ -206,7 +206,7 @@ void m1() {
     manager.switch_to(41, f.root / "target");
     require(manager.current().id == 41 && fs::is_symlink(f.root / "target/payload"), "legitimate historical switch failed");
     auto unknown = state(plan({pkg("unknown")})).realizations.front(); unknown.semantics.reset();
-    const auto modern = manager.create({}, {unknown});
+    const auto modern = manager.create_unprotected_for_test({}, {unknown});
     require(manager.get(modern.id).compatibility == generation::GenerationCompatibility::Modern, "schema 3 downgraded");
     fs::create_directories(f.root / "target"); std::ofstream(f.root / "target/sentinel") << "unchanged";
     const auto before_state = snapshot(f.root / "state"); const auto before_target = snapshot(f.root / "target");

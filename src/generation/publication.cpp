@@ -17,7 +17,8 @@ std::optional<std::uint64_t> canonical_id(std::string_view name) {
     if (id > max_id) throw std::overflow_error("Generation identifier exceeds TOML integer range");
     return id;
 }
-std::vector<std::uint64_t> existing_ids(const std::filesystem::path& path) {
+namespace {
+std::vector<std::uint64_t> enumerate_ids(const std::filesystem::path& path, bool fail_closed) {
     namespace d = core::detail;
     if (!path.is_absolute()) throw std::invalid_argument("generation authority must be absolute");
     auto directory = d::open_directory("/");
@@ -53,11 +54,42 @@ std::vector<std::uint64_t> existing_ids(const std::filesystem::path& path) {
         struct stat status{};
         if (::fstatat(directory.get(), name.c_str(), &status, AT_SYMLINK_NOFOLLOW) < 0)
             throw std::system_error(errno, std::generic_category(), "inspect generation entry");
-        if (!S_ISDIR(status.st_mode)) continue; // Links and auxiliary files are not roots.
         const auto id = canonical_id(name);
-        if (id) result.push_back(*id);
+        if (!S_ISDIR(status.st_mode)) {
+            if (id && fail_closed) throw std::runtime_error("unsafe canonical generation entry: " + name);
+            continue; // Historical generic listing keeps its compatibility behavior.
+        }
+        if (id) {
+            auto opened = d::open_at(directory.get(), name, O_RDONLY | O_DIRECTORY);
+            const auto after = d::stat_fd(opened.get());
+            struct stat named{};
+            if (::fstatat(directory.get(), name.c_str(), &named, AT_SYMLINK_NOFOLLOW) < 0 ||
+                named.st_dev != after.st_dev || named.st_ino != after.st_ino || !S_ISDIR(named.st_mode))
+                throw std::runtime_error("canonical generation entry substituted: " + name);
+            if (fail_closed && (after.st_uid != ::geteuid() || (after.st_mode & 07777) != 0700 || after.st_nlink != 2))
+                throw std::runtime_error("unsafe canonical generation directory: " + name);
+            if (fail_closed) {
+                struct stat metadata{};
+                if (::fstatat(opened.get(), "generation.toml", &metadata, AT_SYMLINK_NOFOLLOW) < 0 ||
+                    !S_ISREG(metadata.st_mode) || metadata.st_uid != ::geteuid() ||
+                    (metadata.st_mode & 07777) != 0600 || metadata.st_nlink != 1)
+                    throw std::runtime_error("unsafe canonical generation metadata: " + name);
+                auto file = d::open_at(opened.get(), "generation.toml", O_RDONLY);
+                const auto file_stat = d::stat_fd(file.get());
+                if (file_stat.st_dev != metadata.st_dev || file_stat.st_ino != metadata.st_ino)
+                    throw std::runtime_error("canonical generation metadata substituted: " + name);
+            }
+            result.push_back(*id);
+        }
     }
     return result;
+}
+}
+std::vector<std::uint64_t> existing_ids(const std::filesystem::path& path) {
+    return enumerate_ids(path, false);
+}
+std::vector<std::uint64_t> existing_ids_for_gc(const std::filesystem::path& path) {
+    return enumerate_ids(path, true);
 }
 void persist(const std::filesystem::path& path, std::uint64_t id, std::string_view document,
              const core::detail::Syscalls& ops) {

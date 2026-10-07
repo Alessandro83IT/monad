@@ -5,6 +5,7 @@
 #include "record.hpp"
 #include "../store/object_store.hpp"
 #include <exception>
+#include "../store/transaction_pins.hpp"
 
 namespace athena::realization {
 enum class ExecutionErrorCode {
@@ -29,6 +30,7 @@ struct ExecutionOptions {
     // Existing, executor-managed absolute directory without hostile writers.
     // C.4 rejects shell-sensitive path bytes used by the existing build backend.
     std::filesystem::path workspace_root;
+    store::TransactionPins* transaction = nullptr; // Required before publication; caller owns lifetime.
 };
 // Preserves selections() order. Publishes only; never creates or activates a
 // generation. Earlier objects may remain unreferenced after a later failure.

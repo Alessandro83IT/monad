@@ -9,8 +9,9 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include "../core/detail/filesystem.hpp"
 
-namespace athena::store { class ObjectStore; }
+namespace athena::store { class ObjectStore; class TransactionPins; }
 
 namespace athena::generation {
 enum class GenerationCompatibility { Historical, Modern };
@@ -118,6 +119,16 @@ public:
         const std::vector<installed::PolicyRequirement>& policies = {}
     );
 
+    // UNSAFE metadata-only test/historical fixture seam; does not adopt payloads.
+    Generation create_unprotected_for_test(const std::vector<GenerationEntry>&,
+        const std::vector<realization::RealizationRecord>& = {},
+        const std::vector<installed::PolicyRequirement>& = {});
+    const std::filesystem::path& authority() const { return generations_directory_; }
+    Generation create_pinned(const std::vector<GenerationEntry>&,
+        const std::vector<realization::RealizationRecord>&,
+        const std::vector<installed::PolicyRequirement>&, store::TransactionPins&,
+        const core::detail::Syscalls& = core::detail::linux_syscalls());
+
     /*
      * Read an existing generation.
      */
@@ -165,6 +176,9 @@ public:
                    const store::ObjectStore& object_store);
 
 private:
+    Generation create_impl(const std::vector<GenerationEntry>&,
+        const std::vector<realization::RealizationRecord>&,
+        const std::vector<installed::PolicyRequirement>&);
     void switch_impl(std::uint64_t id, const std::filesystem::path& target_root,
                      const store::ObjectStore* object_store);
 

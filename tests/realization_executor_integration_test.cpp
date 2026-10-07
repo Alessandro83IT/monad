@@ -15,6 +15,8 @@ int main() {
         if (e.code() != artifact::ErrorCode::InspectionFailure || std::string(e.what()).find("hidden trusted.*") == std::string::npos) throw;
         std::cout << "SKIP realization publication: " << e.what() << '\n'; return 77;
     }
+    store::TransactionPins transaction({objects.root(), fixture.root / "realization-authority"});
+    options.transaction = &transaction;
     auto archive = archive_fixture(fixture, "one");
     auto r = recipe(archive);
     const auto digest = hash::sha256(read_bytes(archive));

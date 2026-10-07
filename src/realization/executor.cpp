@@ -158,7 +158,11 @@ std::vector<RealizationRecord> realize(const core::InstallPlan& plan,
                 build::install(source, work / "build", work / "staging", recipe.build_backend);
             });
             const auto id = step(Code::ArtifactIdentity, [&] { return artifact::derive_artifact_id(artifact::scan(work / "staging")); });
-            step(Code::Publication, [&] { objects.publish(work / "staging", id); });
+            step(Code::Publication, [&] {
+                if (!options.transaction) fail(Code::Publication, "realization requires caller-owned transaction pins");
+                auto prepared = objects.prepare(work / "staging", id);
+                options.transaction->publish(objects, prepared);
+            });
             RealizationRecord record{selection.identity(), id, std::nullopt, core::ArtifactOrigin::AmbientSourceBuild,
                 installed::from_selection(plan, selection)};
             step(Code::InvalidInput, [&] { record.validate(); });

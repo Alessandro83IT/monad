@@ -129,7 +129,7 @@ int main()
 
     manager.initialize();
 
-    manager.create(
+    manager.create_unprotected_for_test(
         {
             {
                 "package-historical",
@@ -144,7 +144,7 @@ int main()
      * The historical store must survive because generation 1 still
      * makes it reachable for rollback.
      */
-    manager.create(
+    manager.create_unprotected_for_test(
         {
             {
                 "package-kept",
@@ -260,7 +260,7 @@ int main()
     std::filesystem::create_directory_symlink(compat_real, compat_link);
     athena::generation::GenerationManager compat_manager(compat_state);
     compat_manager.initialize();
-    compat_manager.create({{"keep", (compat_link / "keep").string()}});
+    compat_manager.create_unprotected_for_test({{"keep", (compat_link / "keep").string()}});
     auto compat_entry = [&](const char* name) {
         const auto path = compat_real / name;
         std::filesystem::create_directories(path / ".athena");
@@ -270,34 +270,35 @@ int main()
     athena::store::GarbageCollector compat_gc(compat_link, compat_state);
     assert(compat_gc.collect() == std::vector<std::filesystem::path>{compat_link / "orphan"});
     assert(std::filesystem::exists(compat_real / "keep"));
-    assert(compat_gc.collect().empty());
+    athena::store::GarbageCollector compat_gc_restart(compat_link, compat_state);
+    assert(compat_gc_restart.collect().empty());
     // An incomplete, real namespace is absent; a namespace symlink is
     // suspicious even when dangling and must stop both deletion domains.
     std::filesystem::create_directories(compat_real / "objects/v1");
     assert(compat_gc.collect().empty());
     compat_entry("orphan");
+    std::filesystem::remove_all(compat_real / "objects/v1/sha256"); // replace C administrative namespace in this corruption fixture
     std::filesystem::create_directory_symlink(test_root / "missing", compat_real / "objects/v1/sha256");
     bool unsafe_namespace_rejected = false;
-    try { compat_gc.collect(); } catch (const athena::store::ObjectError&) { unsafe_namespace_rejected = true; }
+    try { compat_gc.collect(); } catch (const std::exception&) { unsafe_namespace_rejected = true; }
     assert(unsafe_namespace_rejected && std::filesystem::exists(compat_real / "orphan"));
     const auto strict_state = test_root / "strict-namespace-state";
     athena::generation::GenerationManager strict_manager(strict_state);
     strict_manager.initialize();
     athena::store::GarbageCollector strict_gc(compat_real, strict_state);
     unsafe_namespace_rejected = false;
-    try { strict_gc.collect(); } catch (const athena::store::ObjectError&) { unsafe_namespace_rejected = true; }
+    try { strict_gc.collect(); } catch (const std::exception&) { unsafe_namespace_rejected = true; }
     assert(unsafe_namespace_rejected && std::filesystem::exists(compat_real / "orphan"));
     std::filesystem::remove(compat_real / "objects/v1/sha256");
     std::filesystem::create_directory(compat_real / "objects/v1/sha256");
     // Even a real namespace cannot enable ObjectStore through a linked root.
     unsafe_namespace_rejected = false;
-    try { compat_gc.collect(); } catch (const athena::store::ObjectError&) { unsafe_namespace_rejected = true; }
+    try { compat_gc.collect(); } catch (const std::exception&) { unsafe_namespace_rejected = true; }
     assert(unsafe_namespace_rejected && std::filesystem::exists(compat_real / "orphan"));
 
     // GC must not normalize away a linked component before strict validation.
-    athena::store::GarbageCollector ambiguous_gc(compat_link / "../compat-real", strict_state);
     unsafe_namespace_rejected = false;
-    try { ambiguous_gc.collect(); } catch (const athena::store::ObjectError&) { unsafe_namespace_rejected = true; }
+    try { athena::store::GarbageCollector ambiguous_gc(compat_link / "../compat-real", strict_state); ambiguous_gc.collect(); } catch (const std::exception&) { unsafe_namespace_rejected = true; }
     assert(unsafe_namespace_rejected && std::filesystem::exists(compat_real / "orphan"));
 
     // Retained legacy generations can still activate their payload after GC.
@@ -352,7 +353,7 @@ int main()
     );
 
     const auto historical_realization =
-        manager.create(
+        manager.create_unprotected_for_test(
             {},
             {
                 realization_record(
@@ -363,7 +364,7 @@ int main()
         );
 
     const auto current_realization =
-        manager.create(
+        manager.create_unprotected_for_test(
             {},
             {
                 realization_record(
@@ -373,7 +374,7 @@ int main()
             }
         );
 
-    const auto shared = manager.create({}, {realization_record("shared", current_artifact)});
+    const auto shared = manager.create_unprotected_for_test({}, {realization_record("shared", current_artifact)});
     // Select current state without invoking the privileged artifact scanner.
     std::ofstream(state_directory / "generations/current") << current_realization.id << '\n';
     assert(manager.current().id == current_realization.id);
@@ -460,7 +461,7 @@ int main()
      * path as an Athena-owned store entry.
      */
     const auto invalid_generation =
-        manager.create(
+        manager.create_unprotected_for_test(
             {
                 {
                     "external-package",

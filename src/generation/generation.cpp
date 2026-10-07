@@ -18,6 +18,7 @@
 #include <set>
 #include <map>
 #include "../store/object_store.hpp"
+#include "../store/transaction_pins.hpp"
 #include "../store/manifest.hpp"
 #include "../artifact/scanner.hpp"
 #include "../artifact/identity.hpp"
@@ -194,6 +195,7 @@ void GenerationManager::discard(
     std::uint64_t id
 )
 {
+    core::FileLock state(core::state_lock_path(generations_directory_), core::LockKind::State);
     const auto current_generation =
         current();
 
@@ -254,11 +256,50 @@ std::vector<Generation> GenerationManager::list() const
 /*
  * Create a new immutable generation.
  */
-Generation GenerationManager::create(
+Generation GenerationManager::create_pinned(const std::vector<GenerationEntry>& entries,
+    const std::vector<realization::RealizationRecord>& records,
+    const std::vector<installed::PolicyRequirement>& policies, store::TransactionPins& transaction,
+    const core::detail::Syscalls& ops) {
+    if (transaction.authority().generations() != generations_directory_)
+        throw std::runtime_error("generation transaction authority mismatch");
+    ensure_durable_directories();
+    core::FileLock state(core::state_lock_path(generations_directory_), core::LockKind::State);
+    store::StoreGcLock gc(transaction.authority().store());
+    transaction.authority().validate_binding(false, ops);
+    transaction.validate_live();
+    for (const auto& record : records) {
+        transaction.add_locked(record.artifact_id, gc, ops);
+        store::ObjectStore(transaction.authority().store()).verify(record.artifact_id);
+    }
+    const auto generation = make_generation(next_id(), entries, records, policies);
+    try { publication::persist(generations_directory_, generation.id, serialize(generation), ops); }
+    catch (const core::detail::PersistenceError& error) {
+        if (error.outcome_uncertain) transaction.stopped_ = true;
+        throw;
+    }
+    return generation;
+}
+
+Generation GenerationManager::create(const std::vector<GenerationEntry>& entries,
+    const std::vector<realization::RealizationRecord>& records,
+    const std::vector<installed::PolicyRequirement>& policies) {
+    if (!records.empty()) throw std::runtime_error("realization generation publication requires transaction pins");
+    return create_impl(entries, records, policies);
+}
+
+Generation GenerationManager::create_unprotected_for_test(
     const std::vector<GenerationEntry>& entries,
     const std::vector<realization::RealizationRecord>& realizations,
     const std::vector<installed::PolicyRequirement>& policies
 )
+{
+    return create_impl(entries, realizations, policies);
+}
+
+Generation GenerationManager::create_impl(
+    const std::vector<GenerationEntry>& entries,
+    const std::vector<realization::RealizationRecord>& realizations,
+    const std::vector<installed::PolicyRequirement>& policies)
 {
     ensure_durable_directories();
 
@@ -328,6 +369,8 @@ void GenerationManager::switch_to(std::uint64_t id, const std::filesystem::path&
 }
 void GenerationManager::switch_impl(std::uint64_t id, const std::filesystem::path& root,
                                     const store::ObjectStore* objects) {
+    // Keep both persisted activation source generations alive against discard.
+    core::FileLock state(core::state_lock_path(generations_directory_), core::LockKind::State, core::LockMode::Shared);
     const auto target = get(id);
     const auto previous = current();
     // Historical pre-M2.4 generations remain switchable under their original
@@ -343,6 +386,14 @@ void GenerationManager::switch_impl(std::uint64_t id, const std::filesystem::pat
     const bool has_objects = !target.realizations.empty() || !previous.realizations.empty();
     if (has_objects && !objects)
         throw std::runtime_error("Realization activation requires an authoritative ObjectStore context");
+    // Bind the supplied object namespace to this generation authority before
+    // looking up or scanning any ArtifactId source. State -> StoreGc is the
+    // same order used by publication and collection.
+    if (has_objects) {
+        store::StoreGcLock gc(objects->root());
+        store::AuthorityContext authority(objects->root(), generations_directory_);
+        authority.validate_binding(false);
+    }
 
     // Full verification precedes any target mutation, including unchanged
     // memberships. Physical read-only permissions are not integrity evidence.

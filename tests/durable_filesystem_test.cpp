@@ -57,6 +57,8 @@ int cloexec_test(int fd) {
     if (fault == 9) { adoption_fd = fd; errno = EIO; return -1; }
     return ::fcntl(fd, F_SETFD, FD_CLOEXEC);
 }
+int mkdir_fail(int, const char*, mode_t) { errno = EIO; return -1; }
+int chmod_fail(int, mode_t) { errno = EIO; return -1; }
 const Syscalls injected{write_test, fsync_test, rename_test, flock_test, stat_test, nullptr, cloexec_test};
 long rejected_type = 0;
 int unsupported_fs(int, struct statfs* fs) { *fs = {}; fs->f_type = rejected_type; return 0; }
@@ -68,6 +70,15 @@ int main() {
     const auto raw_root = ::mkdtemp(pattern); assert(raw_root);
     const auto root = std::filesystem::path(raw_root);
     auto parent = open_directory(root);
+    auto private_ops = linux_syscalls(); private_ops.random = random_test; private_ops.mkdir = mkdir_fail;
+    rejects([&] { private_directory(parent.get(), private_ops); });
+    private_ops.mkdir = nullptr;
+    const auto private_name = private_directory(parent.get(), private_ops);
+    private_ops.chmod = chmod_fail;
+    assert(!cleanup_private_tree(parent.get(), private_name, private_ops).empty());
+    assert(std::filesystem::exists(root / private_name));
+    private_ops.chmod = nullptr;
+    assert(cleanup_private_tree(parent.get(), private_name, private_ops).empty());
     {
         auto fd = open_at(parent.get(), "move", O_CREAT | O_RDWR | O_EXCL);
         int raw = fd.get(); assert(::fcntl(raw, F_GETFD) & FD_CLOEXEC);

@@ -11,6 +11,7 @@
 #include "../archive/archive.hpp"
 #include "../build/builder.hpp"
 #include "../store/store.hpp"
+#include "../store/transaction_pins.hpp"
 #include "../generation/generation.hpp"
 #include "generation_builder.hpp"
 
@@ -284,6 +285,7 @@ void install_plan(
     );
 
     generations.initialize();
+    athena::store::TransactionPins transaction({paths.store, generations.authority()});
 
     /*
      * Install every package into the immutable store first.
@@ -372,6 +374,7 @@ void install_plan(
         throw;
     }
 
+    transaction.handoff(target.id);
     std::cout
         << "Generation "
         << target.id

@@ -19,7 +19,7 @@ int main() {
     const auto root = fixture.root / "store"; fs::create_directory(root);
     ObjectStore store(root);
     // Scanner limitation is detected with the real publication entry point.
-    try { store.publish(source, id); }
+    try { store.publish_unprotected_for_test(source, id); }
     catch (const ObjectError& error) {
         if (error.code() != ObjectErrorCode::InvalidSource || std::string(error.what()).find("hidden trusted.*") == std::string::npos) throw;
         exact_payload(source, model, false);
@@ -35,8 +35,8 @@ int main() {
     // Record source inode/mode/ownership/mtime/ctime; readlink atime is excluded
     // according to the scanner's documented kernel limitation.
     struct stat before{}, after{}; require(::lstat((source / "bin/tool").c_str(), &before) == 0, "source stat");
-    require(store.publish(source, id) == store.object_path(id), "idempotent republish");
-    require(store.publish(independent, id) == store.object_path(id), "independent source convergence");
+    require(store.publish_unprotected_for_test(source, id) == store.object_path(id), "idempotent republish");
+    require(store.publish_unprotected_for_test(independent, id) == store.object_path(id), "independent source convergence");
     require(::lstat((source / "bin/tool").c_str(), &after) == 0, "source stat after");
     require(before.st_ino == after.st_ino && before.st_mode == after.st_mode && before.st_uid == after.st_uid && before.st_gid == after.st_gid &&
             before.st_mtim.tv_sec == after.st_mtim.tv_sec && before.st_mtim.tv_nsec == after.st_mtim.tv_nsec &&
@@ -44,13 +44,13 @@ int main() {
     store.verify(id); no_private_work(store.object_path(id).parent_path());
     const auto empty = fixture.root / "empty-source"; fs::create_directory(empty);
     const auto empty_id = derive_artifact_id({});
-    exact_payload(store.publish(empty, empty_id), {}, true);
-    rejects(ObjectErrorCode::SourceIdentityMismatch, [&] { store.publish(source, empty_id); });
+    exact_payload(store.publish_unprotected_for_test(empty, empty_id), {}, true);
+    rejects(ObjectErrorCode::SourceIdentityMismatch, [&] { store.publish_unprotected_for_test(source, empty_id); });
     store.verify(empty_id);
     // Legacy namespace is opaque to publication; no package metadata is added.
     fs::create_directories(root / "legacy-1/.athena");
     std::ofstream(root / "legacy-1/.athena/metadata.toml") << "legacy sentinel";
-    store.publish(source, id);
+    store.publish_unprotected_for_test(source, id);
     require(read_bytes(root / "legacy-1/.athena/metadata.toml") == "legacy sentinel", "legacy changed");
     require(!fs::exists(store.object_path(id) / ".athena/manifest.toml"), "legacy manifest inserted");
 
@@ -58,7 +58,7 @@ int main() {
         const auto concurrent_root = fixture.root / ("concurrent-" + std::to_string(scenario)); fs::create_directory(concurrent_root);
         ObjectStore concurrent_store(concurrent_root);
         concurrent(concurrent_store.object_path(id), model, [&](int index) {
-            concurrent_store.publish(scenario == 0 || index == 0 ? source : independent, id);
+            concurrent_store.publish_unprotected_for_test(scenario == 0 || index == 0 ? source : independent, id);
             concurrent_store.verify(id);
         });
         no_private_work(concurrent_store.object_path(id).parent_path());
@@ -67,7 +67,7 @@ int main() {
     // unhardened in test setup. Production never repairs an existing object.
     for (int mutation = 0; mutation < 5; ++mutation) {
         const auto corrupt_root = fixture.root / ("tamper-" + std::to_string(mutation)); fs::create_directory(corrupt_root);
-        ObjectStore corrupt_store(corrupt_root); const auto object = corrupt_store.publish(source, id);
+        ObjectStore corrupt_store(corrupt_root); const auto object = corrupt_store.publish_unprotected_for_test(source, id);
         require(::chmod(object.c_str(), 0755) == 0 && ::chmod((object / "bin").c_str(), 0755) == 0, "tamper directory setup");
         if (mutation == 0) { require(::chmod((object / "binary").c_str(), 0644) == 0, "tamper write setup"); std::ofstream(object / "binary") << "modified"; }
         if (mutation == 1) fs::remove(object / "binary");
@@ -76,7 +76,7 @@ int main() {
         if (mutation == 4) require(::chmod((object / "bin/tool").c_str(), 0444) == 0, "tamper executable");
         const auto changed = scan(object);
         rejects(ObjectErrorCode::CollisionCorruption, [&] { corrupt_store.verify(id); });
-        rejects(ObjectErrorCode::CollisionCorruption, [&] { corrupt_store.publish(source, id); });
+        rejects(ObjectErrorCode::CollisionCorruption, [&] { corrupt_store.publish_unprotected_for_test(source, id); });
         require(scan(object) == changed, "conflict was modified");
         no_private_work(object.parent_path());
     }
@@ -85,7 +85,7 @@ int main() {
     ObjectStore corrupt_store(corrupt_root);
     fs::create_directories(corrupt_store.object_path(id).parent_path());
     fs::create_symlink(source, corrupt_store.object_path(id));
-    rejects(ObjectErrorCode::ExistingObjectVerification, [&] { corrupt_store.publish(source, id); });
+    rejects(ObjectErrorCode::ExistingObjectVerification, [&] { corrupt_store.publish_unprotected_for_test(source, id); });
     require(fs::is_symlink(corrupt_store.object_path(id)), "existing symlink removed");
     no_private_work(corrupt_store.object_path(id).parent_path());
     exact_payload(source, model, false);

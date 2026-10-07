@@ -9,6 +9,7 @@
 #include "../generation/generation.hpp"
 #include "../paths/paths.hpp"
 #include "../store/object_store.hpp"
+#include "../store/transaction_pins.hpp"
 
 #include <algorithm>
 
@@ -63,11 +64,21 @@ void remove_packages(
     if (removal.empty()) return;
 
     auto candidate = build_removal_generation(current, removal);
+    // Keep semantic rejection read-only, matching existing install/remove contracts.
     installed::capture_legacy_semantics(candidate);
     installed::validate_environment(candidate);
-
+    athena::store::TransactionPins transaction({paths.store, generations.authority()});
+    {
+        core::FileLock state(core::state_lock_path(generations.authority()), core::LockKind::State, core::LockMode::Shared);
+        store::StoreGcLock gc(paths.store);
+        const auto stable_current = generations.current();
+        candidate = build_removal_generation(stable_current, removal);
+        installed::capture_legacy_semantics(candidate);
+        installed::validate_environment(candidate);
+        for (const auto& record : candidate.realizations) transaction.add_locked(record.artifact_id, gc);
+    }
     athena::store::ObjectStore objects(paths.store);
-    const auto target = generations.create(candidate.entries, candidate.realizations, candidate.policies);
+    const auto target = generations.create_pinned(candidate.entries, candidate.realizations, candidate.policies, transaction);
     try {
         generations.switch_to(target.id, target_root, objects);
     }
@@ -77,6 +88,7 @@ void remove_packages(
         throw;
     }
 
+    transaction.handoff(target.id);
     std::cout << "Rimozione completata. "
               << "Nuova generation: "
               << target.id

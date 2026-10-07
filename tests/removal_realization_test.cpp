@@ -49,7 +49,7 @@ int main(int argc, char**) {
     require(candidate.entries.empty() && candidate.realizations.empty(), "complete removal yields empty candidate");
     require(mixed.entries.size() == 1 && mixed.realizations == std::vector{a, b}, "builder leaves current immutable");
     // Pure/preflight checks run separately and never depend on scanner capability.
-    const auto missing = manager.create({}, {a});
+    const auto missing = manager.create_unprotected_for_test({}, {a});
     // Select fixture metadata without activation to exercise offline preflight.
     std::ofstream(paths.generation_state / "current") << missing.id << '\n';
     const auto count = manager.list().size();
@@ -62,13 +62,13 @@ int main(int argc, char**) {
         "all-realization removal reaches authoritative object verification");
     require(manager.current().id == missing.id && manager.list().size() == count && !fs::exists(target),
         "failed activation preserves current and discards candidate");
-    const auto pair = manager.create({}, {a, b});
+    const auto pair = manager.create_unprotected_for_test({}, {a, b});
     std::ofstream(paths.generation_state / "current") << pair.id << '\n';
     require(failure([&] { install::remove_packages({"a"}, target, paths); }).find("dependency state") != std::string::npos,
         "unknown dependencies of surviving realization fail closed");
     require(manager.current().id == pair.id && manager.list().size() == count + 1,
         "dependency rejection creates no generation");
-    const auto mixed_state = manager.create(mixed.entries, {a});
+    const auto mixed_state = manager.create_unprotected_for_test(mixed.entries, {a});
     std::ofstream(paths.generation_state / "current") << mixed_state.id << '\n';
     require(failure([&] { install::remove_packages({"legacy"}, target, paths); }).find("dependency state") != std::string::npos,
         "legacy removal also rejects unknown realization dependencies");
@@ -85,7 +85,7 @@ int main(int argc, char**) {
     const auto source = fixture.root / "source"; fs::create_directory(source);
     mechanics::materialize(source, model);
     const auto id = derive_artifact_id(model);
-    try { objects.publish(source, id); }
+    try { objects.publish_unprotected_for_test(source, id); }
     catch (const ObjectError& e) {
         if (e.code() != ObjectErrorCode::InvalidSource || std::string(e.what()).find("hidden trusted.*") == std::string::npos) throw;
         std::cout << "SKIP removal ObjectStore integration: " << e.what() << '\n';
@@ -94,7 +94,7 @@ int main(int argc, char**) {
     const auto object_before = snapshot(objects.object_path(id));
     auto modern_record = record("app", id);
     modern_record.semantics = installed::SemanticState{PackageMetadata{PackageId("app"), PackageVersion("1")}};
-    const auto historical = manager.create(mixed.entries, {modern_record});
+    const auto historical = manager.create_unprotected_for_test(mixed.entries, {modern_record});
     manager.switch_to(historical.id, target, objects);
     require(fs::is_symlink(target / "bin/app"), "realization activated");
     install::remove_packages({"app", "app"}, target, paths);

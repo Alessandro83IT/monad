@@ -3,8 +3,10 @@
 
 #include "gc.hpp"
 #include "object_store.hpp"
+#include "gc_trash.hpp"
 
 #include "../generation/generation.hpp"
+#include "../generation/publication.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -59,261 +61,217 @@ static std::filesystem::path normalize_path(
     return std::filesystem::absolute(path).lexically_normal();
 }
 
-GarbageCollector::GarbageCollector(
-    std::filesystem::path store_directory,
-    std::filesystem::path state_directory
-)
-    : store_directory_(std::move(store_directory)),
-      state_directory_(std::move(state_directory))
-{
-}
-
-/*
- * A package store entry contains Athena metadata below .athena.
- *
- * This deliberately ignores unrelated directories in the store so
- * that the collector does not delete files it does not own.
- */
-bool GarbageCollector::is_store_entry(
-    const std::filesystem::path& path
-)
-{
-    /*
-     * Symlinks are never considered Athena store entries. The GC must
-     * only delete directories physically owned by the store root and
-     * must never follow a link to another filesystem location.
-     */
-    if (std::filesystem::is_symlink(path)) {
-        return false;
+GarbageCollector::GarbageCollector(std::filesystem::path store, std::filesystem::path state)
+    : GarbageCollector(std::move(store), std::move(state) / "generations", GenerationDirectoryTag{}) {}
+GarbageCollector::GarbageCollector(std::filesystem::path store, std::filesystem::path generations, GenerationDirectoryTag)
+    : store_directory_(administrative::locator(store)), state_directory_(administrative::locator(generations)),
+      bound_store_(store_directory_) {
+    // Explicit legacy compatibility binding; a modern namespace never permits linked locators.
+    if (std::filesystem::exists(store_directory_)) {
+        const bool linked = std::filesystem::is_symlink(std::filesystem::symlink_status(store_directory_));
+        const auto canonical = std::filesystem::canonical(store_directory_);
+        if (!has_object_namespace(store_directory_)) bound_store_ = canonical;
+        else if (linked) {
+            // A prior legacy-only pass may have created the modern admin
+            // namespace through this validated locator. Continue only when
+            // both durable binding records prove that exact canonical target.
+            try {
+                AuthorityContext(canonical, state_directory_).validate_binding(false);
+                bound_store_ = canonical;
+            } catch (...) { /* Strict modern validation will reject the locator. */ }
+        }
     }
-
-    return
-        std::filesystem::is_directory(path) &&
-        std::filesystem::is_regular_file(
-            path / ".athena" / "metadata.toml"
-        );
 }
-
-/*
- * Collect all store paths referenced by every persisted generation.
- *
- * Historical generations are intentionally included. Removing their
- * stores would make rollback impossible.
- */
-std::vector<std::filesystem::path>
-GarbageCollector::referenced_stores() const
-{
-    athena::generation::GenerationManager manager(
-        state_directory_
-    );
-
-    const auto generations =
-        manager.list();
-
-    const auto normalized_store_root =
-        normalize_path(store_directory_);
-
-    std::unordered_set<std::string> unique_paths;
-
+GarbageCollector::GarbageCollector(AuthorityContext authority)
+    : GarbageCollector(authority.store(), authority.generations(), GenerationDirectoryTag{}) {}
+bool GarbageCollector::is_store_entry(const std::filesystem::path& path) {
+    namespace d = core::detail;
+    const auto status = std::filesystem::symlink_status(path);
+    if (!std::filesystem::is_directory(status)) return false;
+    auto entry = d::open_directory(path, false, true);
+    struct stat metadata{};
+    if (::fstatat(entry.get(), ".athena", &metadata, AT_SYMLINK_NOFOLLOW) < 0) {
+        if (errno == ENOENT) return false; throw std::runtime_error("legacy ownership inspection");
+    }
+    if (!S_ISDIR(metadata.st_mode)) throw std::runtime_error("unsafe legacy metadata directory");
+    auto admin = d::open_at(entry.get(), ".athena", O_RDONLY | O_DIRECTORY);
+    administrative::same_mount(entry.get(), admin.get());
+    if (::fstatat(admin.get(), "metadata.toml", &metadata, AT_SYMLINK_NOFOLLOW) < 0) {
+        if (errno == ENOENT) return false; throw std::runtime_error("legacy metadata inspection");
+    }
+    if (!S_ISREG(metadata.st_mode) || metadata.st_uid != ::geteuid() || (metadata.st_mode & 0022) || metadata.st_nlink != 1)
+        throw std::runtime_error("unsafe legacy ownership marker");
+    return true;
+}
+namespace {
+struct Snapshot {
+    std::set<std::string> artifacts, legacy;
+    bool transactions;
+};
+Snapshot roots(const AuthorityContext& authority, const std::filesystem::path& legacy_locator) {
+    // Exactly one enumeration under shared State -> exclusive StoreGc.
+    generation::GenerationManager manager(authority.generations(), generation::GenerationManager::GenerationDirectoryTag{});
+    std::vector<generation::Generation> generations;
+    for (const auto id : generation::publication::existing_ids_for_gc(authority.generations()))
+        generations.push_back(manager.get(id));
+    const auto pins = scan_pins(authority);
+    Snapshot result{pins.artifacts, {}, pins.transactions};
+    const auto root = normalize_path(legacy_locator);
+    std::error_code object_namespace_error;
+    const auto object_namespace = std::filesystem::canonical(authority.objects(), object_namespace_error);
     for (const auto& generation : generations) {
-
+        generation.validate();
+        for (const auto& record : generation.realizations) {
+            record.validate(); result.artifacts.insert(record.artifact_id.value());
+        }
         for (const auto& entry : generation.entries) {
-
-            const auto normalized =
-                normalize_path(entry.store_path);
-
-            /*
-             * A generation may protect only an entry below the
-             * configured Athena store root. This prevents malformed
-             * generation metadata from causing the GC to treat an
-             * arbitrary filesystem path as part of the store.
-             */
-            const auto relative =
-                normalized.lexically_relative(
-                    normalized_store_root
-                );
-
-            if (
-                relative.empty() ||
-                relative == "." ||
-                relative.string().starts_with("..") ||
-                relative.is_absolute()
-            ) {
-                throw std::runtime_error(
-                    "Store path fuori dallo store Athena: " +
-                    entry.store_path
-                );
+            const auto path = normalize_path(entry.store_path), relative = path.lexically_relative(root);
+            if (relative.empty() || relative == "." || relative.is_absolute() || *relative.begin() == "..")
+                throw std::runtime_error("generation legacy path outside bound store");
+            result.legacy.insert(path.string());
+            // A legacy locator may intentionally be a symlink to an ArtifactId
+            // directory. Preserve that historical alias behavior while also
+            // retaining the underlying object as a G root.
+            if (!object_namespace_error) {
+                std::error_code resolved_error;
+                const auto resolved = std::filesystem::canonical(entry.store_path, resolved_error);
+                if (!resolved_error) {
+                    const auto object_relative = resolved.lexically_relative(object_namespace);
+                    if (!object_relative.empty() && !object_relative.is_absolute() && *object_relative.begin() != "..") {
+                        const auto digest = object_relative.begin()->string();
+                        if (digest.size() == 64 && std::all_of(digest.begin(), digest.end(), [](unsigned char c) {
+                                return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+                            })) result.artifacts.insert("sha256:" + digest);
+                    }
+                }
             }
-
-            unique_paths.insert(
-                normalized.string()
-            );
         }
     }
-
-    std::vector<std::filesystem::path> result;
-
-    result.reserve(
-        unique_paths.size()
-    );
-
-    for (const auto& path : unique_paths) {
-        result.emplace_back(path);
-    }
-
     return result;
 }
-
-/*
- * Collect all content-addressed artifacts referenced by every persisted
- * generation. Artifact identity, rather than an object-store path, is the
- * authoritative reachability key.
- */
-std::vector<core::ArtifactId>
-GarbageCollector::referenced_artifacts() const
-{
-    athena::generation::GenerationManager manager(
-        state_directory_
-    );
-
-    const auto generations =
-        manager.list();
-
-    std::unordered_set<std::string> unique_ids;
-
-    for (const auto& generation : generations) {
-        for (const auto& realization : generation.realizations) {
-            realization.validate();
-
-            unique_ids.insert(
-                realization.artifact_id.value()
-            );
-        }
-    }
-
-    std::vector<core::ArtifactId> result;
-    result.reserve(unique_ids.size());
-
-    for (const auto& id : unique_ids) {
-        result.emplace_back(id);
-    }
-
-    std::sort(
-        result.begin(),
-        result.end(),
-        [](const auto& left, const auto& right) {
-            return left.value() < right.value();
-        }
-    );
-
-    return result;
+void validate_generation_authority(const AuthorityContext& authority) {
+    generation::GenerationManager manager(authority.generations(), generation::GenerationManager::GenerationDirectoryTag{});
+    const auto ids = generation::publication::existing_ids_for_gc(authority.generations());
+    if (ids.empty()) throw std::runtime_error("uninitialized generation authority");
+    for (const auto id : ids) { auto value = manager.get(id); value.validate(); }
+    const auto current = manager.current();
+    if (std::find(ids.begin(), ids.end(), current.id) == ids.end())
+        throw std::runtime_error("current generation is outside persisted authority");
 }
-
-/*
- * Remove unreachable store entries.
- *
- * Only directories owned by Athena are considered. Unrelated files
- * or directories under the store root are left untouched.
- */
-std::vector<std::filesystem::path>
-GarbageCollector::collect()
-{
-    if (!std::filesystem::exists(store_directory_)) {
-        return {};
+}
+std::vector<std::filesystem::path> GarbageCollector::collect(const core::detail::Syscalls& ops) {
+    namespace d = core::detail;
+    if (!std::filesystem::exists(store_directory_)) return {};
+    AuthorityContext authority(bound_store_, state_directory_);
+    // Binding initialization mutates both authorities and therefore uses
+    // exclusive State. Reachability snapshots below use shared State.
+    struct stat witness{};
+    const auto witness_path = state_directory_ / ".athena-store-authority.toml";
+    if (::lstat(witness_path.c_str(), &witness) < 0) {
+        if (errno != ENOENT) throw std::runtime_error("generation binding witness inspection failed");
+        core::FileLock state(core::state_lock_path(state_directory_), core::LockKind::State);
+        core::FileLock store(core::store_gc_lock_path(bound_store_), core::LockKind::StoreGc);
+        // Validate the concrete generation namespace before writing either
+        // side of a new authority binding. Empty, uninitialized, malformed,
+        // or state-parent locators are never promoted into authorities.
+        validate_generation_authority(authority);
+        authority.validate_binding(true, ops);
     }
-
-    if (!std::filesystem::is_directory(store_directory_)) {
-        throw std::runtime_error(
-            "Lo store non è una directory: " +
-            store_directory_.string()
-        );
+    std::vector<core::ArtifactId> objects;
+    std::vector<std::filesystem::path> legacy;
+    {
+        core::FileLock state(core::state_lock_path(state_directory_), core::LockKind::State, core::LockMode::Shared);
+        core::FileLock store(core::store_gc_lock_path(bound_store_), core::LockKind::StoreGc);
+        authority.validate_binding(false, ops);
+        const auto snapshot = roots(authority, store_directory_); // Validate ALL roots before first detach.
+        ObjectStore object_store(bound_store_);
+        for (const auto& id : object_store.list()) if (!snapshot.artifacts.contains(id.value())) objects.push_back(id);
+        if (!snapshot.transactions) for (const auto& entry : std::filesystem::directory_iterator(bound_store_)) {
+            const auto display = store_directory_ / entry.path().filename();
+            if (is_store_entry(entry.path()) && !snapshot.legacy.contains(normalize_path(display).string())) legacy.push_back(display);
+        }
     }
-
-    const auto referenced =
-        referenced_stores();
-
-    std::unordered_set<std::string> referenced_set;
-
-    for (const auto& path : referenced) {
-        referenced_set.insert(
-            normalize_path(path).string()
-        );
-    }
-
-    /*
-     * Content-addressed objects form a separate ownership domain from
-     * legacy package-store entries. Reachability is determined only by
-     * ArtifactId memberships persisted in generations.
-     */
-    const auto referenced_artifact_list =
-        referenced_artifacts();
-
-    std::unordered_set<std::string> referenced_artifact_set;
-
-    for (const auto& id : referenced_artifact_list) {
-        referenced_artifact_set.insert(
-            id.value()
-        );
-    }
-
-    std::optional<ObjectStore> objects;
-    std::vector<core::ArtifactId> candidates;
-    if (has_object_namespace(store_directory_)) {
-        // Preserve locator components for strict ObjectStore validation;
-        // lexical normalization could hide a symlink followed by "..".
-        objects.emplace(std::filesystem::absolute(store_directory_));
-        candidates = objects->list();
-    }
-
     std::vector<std::filesystem::path> removed;
-
-    for (
-        const auto& entry :
-        std::filesystem::directory_iterator(
-            store_directory_
-        )
-    ) {
-        if (!is_store_entry(entry.path())) {
-            continue;
+    // Each claimant is acquired BEFORE authority locks. Re-snapshot before each
+    // detach; never reuse a released reachability decision.
+    for (const auto& id : objects) {
+        GcTrash trash(authority.objects(), true, ops);
+        bool detached = false;
+        {
+            core::FileLock state(core::state_lock_path(state_directory_), core::LockKind::State, core::LockMode::Shared);
+            core::FileLock store(core::store_gc_lock_path(bound_store_), core::LockKind::StoreGc);
+            authority.validate_binding(false, ops);
+            const auto snapshot = roots(authority, store_directory_);
+            if (!snapshot.artifacts.contains(id.value())) {
+                const auto candidates = ObjectStore(bound_store_).list();
+                if (std::find(candidates.begin(), candidates.end(), id) != candidates.end()) {
+                    trash.detach_locked(id.value().substr(7), ops); detached = true;
+                } else trash.confirm_locked(ops);
+            } else trash.confirm_locked(ops);
         }
-
-        const auto normalized =
-            normalize_path(entry.path());
-
-        if (referenced_set.contains(
-                normalized.string()
-            )) {
-            continue;
-        }
-
-        std::filesystem::remove_all(
-            entry.path()
-        );
-
-        removed.push_back(
-            entry.path()
-        );
+        if (detached) removed.push_back(ObjectStore(store_directory_).object_path(id));
+        trash.reclaim(authority, ops);
     }
-
-    for (const auto& id : candidates) {
-        if (referenced_artifact_set.contains(id.value())) {
-            continue;
+    for (const auto& path : legacy) {
+        GcTrash trash(bound_store_, false, ops); bool detached = false;
+        {
+            core::FileLock state(core::state_lock_path(state_directory_), core::LockKind::State, core::LockMode::Shared);
+            core::FileLock store(core::store_gc_lock_path(bound_store_), core::LockKind::StoreGc);
+            authority.validate_binding(false, ops); const auto snapshot = roots(authority, store_directory_);
+            if (!snapshot.transactions && !snapshot.legacy.contains(normalize_path(path).string()) &&
+                is_store_entry(bound_store_ / path.filename())) {
+                trash.detach_locked(path.filename().string(), ops); detached = true;
+            } else trash.confirm_locked(ops);
         }
-
-        const auto path =
-            objects->object_path(id);
-
-        if (objects->remove_if_present(id)) {
-            removed.push_back(path);
-        }
+        if (detached) removed.push_back(path);
+        trash.reclaim(authority, ops);
     }
-
-    std::sort(
-        removed.begin(),
-        removed.end()
-    );
-
-    return removed;
+    std::sort(removed.begin(), removed.end()); return removed;
 }
-
+void GarbageCollector::reclaim_trash(const core::detail::Syscalls& ops) {
+    namespace d = core::detail;
+    AuthorityContext authority(bound_store_, state_directory_);
+    for (const auto& source : {authority.objects(), bound_store_}) {
+        for (const auto& id : GcTrash::containers(source)) {
+            {
+                core::FileLock store(core::store_gc_lock_path(bound_store_), core::LockKind::StoreGc);
+                authority.validate_binding(false, ops);
+                auto parent = d::open_directory(source / ".athena-gc-trash", false, true);
+                struct stat status{};
+                if (::fstatat(parent.get(), id.c_str(), &status, AT_SYMLINK_NOFOLLOW) < 0) {
+                    if (errno == ENOENT) continue; throw std::runtime_error("trash cleanup entry inspection");
+                }
+                auto container = d::open_at(parent.get(), id, O_RDONLY | O_DIRECTORY);
+                administrative::private_directory(container.get()); administrative::same_mount(parent.get(), container.get());
+                if (administrative::entries(container.get()).empty()) {
+                    administrative::unchanged(parent.get(), id, container.get());
+                    if ((ops.unlink ? ops.unlink : ::unlinkat)(parent.get(), id.c_str(), AT_REMOVEDIR) < 0)
+                        throw std::runtime_error("empty trash final cleanup");
+                    d::directory_barrier(parent.get(), true, ops); continue;
+                }
+            }
+            try {
+                GcTrash trash(source, source == authority.objects(), id);
+                {
+                    core::FileLock state(core::state_lock_path(state_directory_), core::LockKind::State, core::LockMode::Shared);
+                    core::FileLock store(core::store_gc_lock_path(bound_store_), core::LockKind::StoreGc);
+                    authority.validate_binding(false, ops); trash.confirm_locked(ops);
+                }
+                trash.reclaim(authority, ops);
+            } catch (const std::exception&) {
+                // A competing successful reclaimer may have removed the name
+                // between enumeration and claim. Recheck under StoreGc.
+                const auto failure = std::current_exception();
+                core::FileLock store(core::store_gc_lock_path(bound_store_), core::LockKind::StoreGc);
+                auto parent = d::open_directory(source / ".athena-gc-trash", false, true); struct stat status{};
+                if (::fstatat(parent.get(), id.c_str(), &status, AT_SYMLINK_NOFOLLOW) < 0 && errno == ENOENT) continue;
+                try { std::rethrow_exception(failure); }
+                catch (const std::system_error& error) {
+                    if (error.code().value() == EWOULDBLOCK || error.code().value() == EAGAIN) continue;
+                    throw;
+                }
+            }
+        }
+    }
+}
 }

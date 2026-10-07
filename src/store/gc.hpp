@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <athena/core/types.hpp>
 #include <vector>
+#include "transaction_pins.hpp"
 
 namespace athena::store {
 
@@ -27,6 +28,11 @@ public:
         std::filesystem::path state_directory
     );
 
+    struct GenerationDirectoryTag {};
+    GarbageCollector(std::filesystem::path store_directory,
+                     std::filesystem::path generation_directory, GenerationDirectoryTag);
+    explicit GarbageCollector(AuthorityContext authority);
+
     /*
      * Remove every valid Athena store entry that is not referenced by
      * any persisted generation.
@@ -34,30 +40,16 @@ public:
      * The returned paths identify the entries that were actually
      * removed.
      */
-    std::vector<std::filesystem::path> collect();
+    std::vector<std::filesystem::path> collect(
+        const core::detail::Syscalls& = core::detail::linux_syscalls());
+    void reclaim_trash(const core::detail::Syscalls& = core::detail::linux_syscalls());
 
 private:
 
     std::filesystem::path store_directory_;
     std::filesystem::path state_directory_;
+    std::filesystem::path bound_store_;
 
-    /*
-     * Determine which immutable store paths are reachable from all
-     * persisted generations.
-     */
-    std::vector<std::filesystem::path> referenced_stores() const;
-
-    /*
-     * Collect ArtifactIds reachable from every persisted generation.
-     *
-     * Historical generations are roots just like the current generation:
-     * collecting one of their artifacts would make rollback/switch invalid.
-     */
-    std::vector<core::ArtifactId> referenced_artifacts() const;
-
-    /*
-     * A valid store entry is identified by Athena metadata.
-     */
     static bool is_store_entry(
         const std::filesystem::path& path
     );

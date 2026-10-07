@@ -3,6 +3,7 @@
 
 #include "object_store.hpp"
 #include "object_store_detail.hpp"
+#include "transaction_pins.hpp"
 #include "../artifact/scanner.hpp"
 #include "../artifact/identity.hpp"
 #include <cerrno>
@@ -216,6 +217,7 @@ ObjectStore::ObjectStore(fs::path root) : root_(std::move(root)) {
         throw ObjectError(Code::StoreDirectory, "store root must be an absolute NUL-free locator");
     for (const auto& part : root_)
         if (part == "..") throw ObjectError(Code::StoreDirectory, "store root must not contain parent traversal");
+    root_ = administrative::locator(root_);
 }
 fs::path ObjectStore::object_path(const core::ArtifactId& id) const {
     return root_ / "objects/v1/sha256" / digest(id);
@@ -247,7 +249,7 @@ struct statx gc_identity(int fd, const char* name, int flags) {
         throw ObjectError(Code::Cleanup, "GC directory identity unavailable (no fallback)");
     return identity;
 }
-void remove_directory(int parent_fd, const std::string& name, const struct statx& expected_mount) {
+void remove_directory(int parent_fd, const std::string& name, const struct statx& expected_mount, const durable::Syscalls& ops) {
     // NO_XDEV rejects bind mounts too, before opening/traversing their root.
     // Require Linux openat2; an unsupported kernel fails closed.
     struct open_how how {};
@@ -257,7 +259,7 @@ void remove_directory(int parent_fd, const std::string& name, const struct statx
     if (node.get() < 0) fail(Code::Cleanup, "open object directory for removal");
     const auto pinned = gc_identity(node.get(), "", AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW);
     object_detail::require_same_gc_mount(expected_mount, pinned);
-    if (::fchmod(node.get(), (pinned.stx_mode & 0777) | 0700) != 0)
+    if ((ops.chmod ? ops.chmod : ::fchmod)(node.get(), (pinned.stx_mode & 0777) | 0700) != 0)
         fail(Code::Cleanup, "restore directory write permissions");
     auto stream = directory_stream(node.get());
     for (;;) {
@@ -272,18 +274,25 @@ void remove_directory(int parent_fd, const std::string& name, const struct statx
         struct stat status {};
         if (::fstatat(node.get(), child.c_str(), &status, AT_SYMLINK_NOFOLLOW) != 0)
             fail(Code::Cleanup, "inspect object child");
-        if (S_ISDIR(status.st_mode)) remove_directory(node.get(), child, expected_mount);
-        else if (::unlinkat(node.get(), child.c_str(), 0) != 0)
+        if (S_ISDIR(status.st_mode)) remove_directory(node.get(), child, expected_mount, ops);
+        else if ((ops.unlink ? ops.unlink : ::unlinkat)(node.get(), child.c_str(), 0) != 0)
             fail(Code::Cleanup, "unlink object child");
     }
+    durable::directory_barrier(node.get(), true, ops);
     const auto current = gc_identity(parent_fd, name.c_str(), AT_SYMLINK_NOFOLLOW);
     object_detail::require_same_gc_mount(expected_mount, current);
     if (!S_ISDIR(current.stx_mode) || current.stx_dev_major != pinned.stx_dev_major ||
         current.stx_dev_minor != pinned.stx_dev_minor || current.stx_ino != pinned.stx_ino)
         throw ObjectError(Code::Cleanup, "object directory replaced during removal");
-    if (::unlinkat(parent_fd, name.c_str(), AT_REMOVEDIR) != 0)
+    if ((ops.unlink ? ops.unlink : ::unlinkat)(parent_fd, name.c_str(), AT_REMOVEDIR) != 0)
         fail(Code::Cleanup, "unlink object directory");
 }
+}
+
+void ObjectStore::reclaim_private_trash_payload(int parent, std::string_view name, const durable::Syscalls& ops) {
+    durable::leaf(name);
+    const auto mount = gc_identity(parent, "", AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW);
+    remove_directory(parent, std::string(name), mount, ops);
 }
 
 std::vector<core::ArtifactId> ObjectStore::list() const {
@@ -314,31 +323,36 @@ std::vector<core::ArtifactId> ObjectStore::list() const {
     return result;
 }
 
-bool ObjectStore::remove_if_present(const core::ArtifactId& id) const {
-    const auto name = digest(id); // validate before filesystem effects
-    auto directory = namespace_directory(root_, false, true);
-    if (directory.get() < 0) return false;
-    struct stat status {};
-    if (::fstatat(directory.get(), name.c_str(), &status, AT_SYMLINK_NOFOLLOW) != 0) {
-        if (errno == ENOENT) return false;
-        fail(Code::StoreDirectory, "inspect object before removal");
-    }
-    if (!S_ISDIR(status.st_mode))
-        throw ObjectError(Code::StoreDirectory, "authoritative object entry is not a real directory");
-    const auto namespace_identity = gc_identity(directory.get(), "", AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW);
-    remove_directory(directory.get(), name, namespace_identity);
-    return true;
-}
 void ObjectStore::verify(const core::ArtifactId& expected) const {
     const auto path = object_path(expected);
     auto directory = namespace_directory(root_, false);
     check_identity(path, expected, Code::ExistingObjectVerification, Code::CollisionCorruption);
 }
-fs::path ObjectStore::publish(const fs::path& source, const core::ArtifactId& expected, const durable::Syscalls& ops) const {
-    return publish_durable(source, expected, ops).path;
+struct PreparedObject::Impl {
+    core::ArtifactId id;
+    fs::path store, destination, container;
+    artifact::NormalizedArtifact model;
+    durable::Fd namespace_fd, private_fd;
+    std::string private_name;
+    durable::Syscalls syscalls = durable::linux_syscalls();
+    Impl(core::ArtifactId value) : id(std::move(value)) {}
+    ~Impl() { if (namespace_fd.get() >= 0 && !private_name.empty())
+        durable::cleanup_private_tree(namespace_fd.get(), private_name, syscalls); }
+};
+PreparedObject::PreparedObject(std::unique_ptr<Impl> value) : impl_(std::move(value)) {}
+PreparedObject::~PreparedObject() = default;
+PreparedObject::PreparedObject(PreparedObject&&) noexcept = default;
+PreparedObject& PreparedObject::operator=(PreparedObject&&) noexcept = default;
+const core::ArtifactId& PreparedObject::artifact_id() const { return impl_->id; }
+fs::path ObjectStore::publish_unprotected_for_test(const fs::path& source, const core::ArtifactId& expected, const durable::Syscalls& ops) const {
+    return publish_durable_unprotected_for_test(source, expected, ops).path;
 }
-ObjectPublication ObjectStore::publish_durable(const fs::path& source, const core::ArtifactId& expected, const durable::Syscalls& ops) const {
-    const auto destination = object_path(expected); // validate before filesystem effects
+ObjectPublication ObjectStore::publish_durable_unprotected_for_test(const fs::path& source, const core::ArtifactId& expected, const durable::Syscalls& ops) const {
+    auto prepared = prepare(source, expected, ops);
+    return finish_prepared(prepared, ops);
+}
+PreparedObject ObjectStore::prepare(const fs::path& source, const core::ArtifactId& expected, const durable::Syscalls& ops) const {
+    const auto destination = object_path(expected);
     if (source.empty() || source.native().find('\0') != std::string::npos)
         throw ObjectError(Code::InvalidSource, "source locator must be nonempty and NUL-free");
     std::error_code locator_error;
@@ -347,63 +361,78 @@ ObjectPublication ObjectStore::publish_durable(const fs::path& source, const cor
     const auto relative_namespace = destination.parent_path().lexically_normal().lexically_relative(source_locator);
     if (!relative_namespace.empty() && *relative_namespace.begin() != "..")
         throw ObjectError(Code::InvalidSource, "publication namespace must not be inside source staging");
-    artifact::NormalizedArtifact model;
+    auto value = std::make_unique<PreparedObject::Impl>(expected);
+    value->syscalls = ops;
     try {
-        model = artifact::scan(source);
-        if (artifact::derive_artifact_id(model) != expected)
+        value->model = artifact::scan(source);
+        if (artifact::derive_artifact_id(value->model) != expected)
             throw ObjectError(Code::SourceIdentityMismatch, "source does not match expected ArtifactId");
     } catch (const artifact::Error& error) { throw ObjectError(Code::InvalidSource, error.what()); }
-    auto directory = object_detail::publication_namespace(root_, ops);
-    // Container is immediately beneath the destination directory: same fs,
-    // including when objects/v1/sha256 is a mount point. Payload is private
-    // even after its root is finalized to world-traversable permissions.
-    durable::require_durable_directory(directory.get(), ops);
-    const auto private_name = durable::private_directory(directory.get(), ops);
-    const fs::path container = destination.parent_path() / private_name;
+    value->store = root_; value->destination = destination;
+    value->namespace_fd = object_detail::publication_namespace(root_, ops);
+    value->private_name = durable::private_directory(value->namespace_fd.get(), ops);
+    value->container = destination.parent_path() / value->private_name;
+    try {
+        value->private_fd = durable::open_at(value->namespace_fd.get(), value->private_name, O_RDONLY | O_DIRECTORY);
+        if (::mkdirat(value->private_fd.get(), "payload", 0700) != 0) fail(Code::PrivateStaging, "create private payload");
+        const auto payload = value->container / "payload";
+        object_detail::materialize(payload, value->model, ops);
+        object_detail::finalize(payload, value->model);
+        object_detail::synchronize(payload, value->model, ops);
+        durable::directory_barrier(value->private_fd.get(), false, ops);
+        if (check_identity(payload, expected, Code::Materialization, Code::Materialization) != value->model)
+            throw ObjectError(Code::Materialization, "materialized model differs from verified source");
+    } catch (durable::PersistenceError& error) {
+        error.cleanup_failure = durable::cleanup_private_tree(value->namespace_fd.get(), value->private_name, ops); throw;
+    } catch (ObjectError& error) {
+        error.record_cleanup_failure(durable::cleanup_private_tree(value->namespace_fd.get(), value->private_name, ops)); throw;
+    }
+    return PreparedObject(std::move(value));
+}
+ObjectPublication ObjectStore::publish_prepared_locked(PreparedObject& prepared, const TransactionPins& transaction,
+                                                      const durable::Syscalls& ops) const {
+    if (transaction.authority().store() != root_ || !transaction.artifacts().contains(prepared.artifact_id().value()))
+        throw std::runtime_error("publication requires durable transaction pin in this store");
+    transaction.authority().validate_binding(false, ops);
+    return finish_prepared(prepared, ops);
+}
+ObjectPublication ObjectStore::finish_prepared(PreparedObject& prepared, const durable::Syscalls& ops) const {
+    auto& value = *prepared.impl_;
+    if (value.store != root_) throw std::runtime_error("prepared object authority mismatch");
+    auto current = object_detail::publication_namespace(root_, ops);
+    const auto pinned = durable::stat_fd(value.namespace_fd.get()), named = durable::stat_fd(current.get());
+    if (pinned.st_dev != named.st_dev || pinned.st_ino != named.st_ino)
+        throw std::runtime_error("prepared object namespace substituted");
+    const auto& expected = value.id;
     auto result = durable::Publication::AlreadyExists;
     try {
-        auto private_directory = open_directory(container, Code::PrivateStaging);
-        if (::fchmod(private_directory.get(), 0700) != 0 || ::mkdirat(private_directory.get(), "payload", 0700) != 0)
-            fail(Code::PrivateStaging, "create private payload");
-        const auto payload = container / "payload";
-        object_detail::materialize(payload, model, ops);
-        object_detail::finalize(payload, model);
-        object_detail::synchronize(payload, model, ops);
-        durable::directory_barrier(private_directory.get(), false, ops);
-        if (check_identity(payload, expected, Code::Materialization, Code::Materialization) != model)
-            throw ObjectError(Code::Materialization, "materialized model differs from verified source");
-        result = durable::publish_tree(private_directory.get(), "payload", directory.get(), digest(expected), ops);
+        result = durable::publish_tree(value.private_fd.get(), "payload", current.get(), digest(expected), ops);
         const bool won = result == durable::Publication::Published;
         try {
-            const auto final_model = check_identity(destination, expected,
-            won ? Code::PostPublicationIntegrity : Code::ExistingObjectVerification,
-            won ? Code::PostPublicationIntegrity : Code::CollisionCorruption);
-            if (final_model != model)
+            const auto final_model = check_identity(value.destination, expected,
+                won ? Code::PostPublicationIntegrity : Code::ExistingObjectVerification,
+                won ? Code::PostPublicationIntegrity : Code::CollisionCorruption);
+            if (final_model != value.model)
                 throw ObjectError(won ? Code::PostPublicationIntegrity : Code::CollisionCorruption,
-                              "destination model differs from verified source under the same digest");
+                                  "destination model differs under the same digest");
             if (!won) {
-                // Also establish durability for valid objects predating M2.5-B.
-                try { object_detail::synchronize(destination, final_model, ops); }
+                try { object_detail::synchronize(value.destination, final_model, ops); }
                 catch (const durable::PersistenceError& e) {
                     throw durable::PersistenceError(e.stage, true, e.error, "existing winner synchronization");
                 }
-                durable::directory_barrier(directory.get(), true, ops);
+                durable::directory_barrier(current.get(), true, ops);
             }
         } catch (...) {
             if (won) std::throw_with_nested(durable::PersistenceError(durable::PersistenceError::Stage::Publication, true, EIO, "published object verification"));
             throw;
         }
     } catch (durable::PersistenceError& error) {
-        error.cleanup_failure = durable::cleanup_private_tree(directory.get(), private_name, ops);
-        throw;
+        error.cleanup_failure = durable::cleanup_private_tree(current.get(), value.private_name, ops); throw;
     } catch (ObjectError& error) {
-        error.record_cleanup_failure(durable::cleanup_private_tree(directory.get(), private_name, ops));
-        throw;
-    } catch (...) {
-        durable::cleanup_private_tree(directory.get(), private_name, ops); // Secondary failure cannot replace primary.
-        throw;
+        error.record_cleanup_failure(durable::cleanup_private_tree(current.get(), value.private_name, ops)); throw;
     }
-    durable::cleanup_private_tree(directory.get(), private_name, ops); // Best effort after durable success.
-    return {destination, result};
+    durable::cleanup_private_tree(current.get(), value.private_name, ops);
+    value.private_name.clear();
+    return {value.destination, result};
 }
 }

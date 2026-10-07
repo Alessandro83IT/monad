@@ -11,6 +11,9 @@ inline constexpr std::uint64_t max_id = std::numeric_limits<std::int64_t>::max()
 std::optional<std::uint64_t> canonical_id(std::string_view);
 // Read-only, no-follow enumeration. Missing namespace is empty; other errors propagate.
 std::vector<std::uint64_t> existing_ids(const std::filesystem::path&);
+// GC-only discovery: canonical numeric names are authoritative roots, so an
+// unsafe filesystem entry with such a name is an error rather than absence.
+std::vector<std::uint64_t> existing_ids_for_gc(const std::filesystem::path&);
 // Caller owns exclusive namespace-derived State lock. No implicit current selection.
 // Collision is an error, never overwrite or reinterpret a generation.
 void persist(const std::filesystem::path&, std::uint64_t, std::string_view,

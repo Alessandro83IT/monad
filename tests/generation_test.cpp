@@ -44,7 +44,7 @@ int main()
         for (const auto& entry : values)
             if (std::filesystem::is_directory(entry.store_path))
                 athena::store::write_metadata(entry.store_path, {entry.package, "1", "", "", "", {}});
-        return manager.create(values);
+        return manager.create_unprotected_for_test(values);
     };
 
     assert(initial.id == 0);

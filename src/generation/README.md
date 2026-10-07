@@ -258,3 +258,11 @@ central switch transaction's multiple-addition and new-directory rollback with
 legacy manifests. Checks in both new tests remain active in Debug and Release.
 Existing activation/generation/installer/removal/GC/ObjectStore tests are retained;
 C.2 guard checks now assert the explicit missing-context error.
+
+M2.5-C adds `create_pinned` for protected realization membership publication under
+State then StoreGc. Ordinary `create` rejects unchecked realization records;
+`create_unprotected_for_test` is the explicit metadata-only fixture seam. Discard
+uses exclusive State; switch retains shared State while it uses persisted roots.
+All persisted generations remain roots, so pin handoff does not require current
+selection. Internal authority-binding files do not change generation/current
+formats or historical decoding.
