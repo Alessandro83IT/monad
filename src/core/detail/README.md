@@ -1,7 +1,7 @@
 # M2.5-A Linux foundations
 
-These internal helpers are not a transaction engine. No existing current,
-activation, journal, object-store, install/remove, or GC caller is migrated.
+These internal helpers are not a transaction engine. M2.5-B migrates immutable ObjectStore/generation publication only. Current,
+activation, journal, integrated install/remove commits and GC remain unchanged.
 
 `Fd::adopt` explicitly transfers ownership. `get()` borrows it; `release()`
 explicitly transfers ownership out. Descriptors are move-only and close once,
@@ -94,3 +94,10 @@ this contract does a rename error prove pre-visibility failure. The syscall test
 seam must obey that same contract, including normal errno returns without C++
 exceptions. Filesystem recognition cannot authenticate mount options, hardware
 or privileged mount changes.
+
+M2.5-B adds preflighted durable directory creation, exclusive private directories,
+descriptor-relative private cleanup and two-parent tree publication. The latter
+checks same-device ancestry and retains kernel EXDEV rejection (including bind
+mounts); it synchronizes both parents after NOREPLACE. EEXIST synchronizes the
+destination before returning to caller-owned identity verification. The unlink
+seam is per-operation and only used for best-effort private cleanup.

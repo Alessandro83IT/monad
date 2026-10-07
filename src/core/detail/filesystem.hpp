@@ -19,6 +19,7 @@ struct Syscalls {
     ssize_t (*random)(void*, size_t, unsigned) = nullptr;
     int (*cloexec)(int) = nullptr;
     int (*fstatfs)(int, struct statfs*) = ::fstatfs;
+    int (*unlink)(int, const char*, int) = nullptr;
 };
 const Syscalls& linux_syscalls();
 class Fd {
@@ -42,6 +43,7 @@ struct PersistenceError : std::runtime_error {
     // Namespace publication uncertainty; false does not roll back arbitrary direct writes.
     bool outcome_uncertain;
     int error;
+    std::string cleanup_failure; // Secondary detail never changes stage/errno/outcome.
     PersistenceError(Stage, bool, int, std::string_view);
 };
 // Single leaf names only; no slash, dot, or dot-dot. Directory traversal never follows symlinks.
@@ -64,7 +66,15 @@ void acquire_flock(int, int, const Syscalls& = linux_syscalls());
 // Parent must be a private/trusted directory: concurrent untrusted entry mutation is unsupported.
 void atomic_replace(int parent, std::string_view destination, std::string_view data,
                     const Syscalls& = linux_syscalls());
+void require_durable_directory(int, const Syscalls& = linux_syscalls());
+// Exclusive random private directory; parent must pass durability preflight first.
+std::string private_directory(int, const Syscalls& = linux_syscalls());
+// Best effort, descriptor-relative cleanup of caller-owned private tree only.
+std::string cleanup_private_tree(int, std::string_view, const Syscalls& = linux_syscalls()) noexcept;
+Fd open_durable_directory(const std::filesystem::path&);
 enum class Publication { Published, AlreadyExists };
+Publication publish_tree(int source_parent, std::string_view prepared, int destination_parent,
+                         std::string_view destination, const Syscalls& = linux_syscalls());
 // The same supported local filesystem contract applies here.
 // Caller has already synchronized prepared file/tree contents. This only publishes the name.
 // Same parent enforces same-filesystem publication and one parent durability barrier.

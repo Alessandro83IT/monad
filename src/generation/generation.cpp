@@ -7,6 +7,13 @@
 #include "../activation/activation.hpp"
 
 #include <algorithm>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sstream>
+#include <system_error>
+#include <athena/core/locking.hpp>
+#include "../core/detail/filesystem.hpp"
+#include "publication.hpp"
 #include <fstream>
 #include <set>
 #include <map>
@@ -17,11 +24,39 @@
 #include <stdexcept>
 
 namespace athena::generation {
+namespace {
+std::filesystem::path bind_authority(const std::filesystem::path& locator) {
+    const auto absolute = std::filesystem::absolute(locator);
+    auto bound = absolute.root_path();
+    for (const auto& component : absolute.relative_path()) {
+        if (component.empty() || component == ".") continue;
+        // Never collapse parent traversal across a component that may be a link.
+        core::detail::leaf(component.string());
+        bound /= component;
+    }
+    return bound;
+}
+std::string read_metadata(const std::filesystem::path& directory, std::string_view name) {
+    namespace d = core::detail;
+    auto parent = d::open_directory(directory);
+    auto file = d::open_at(parent.get(), name, O_RDONLY);
+    d::regular(file.get());
+    std::string document;
+    char buffer[4096];
+    for (;;) {
+        const auto size = ::read(file.get(), buffer, sizeof(buffer));
+        if (size < 0 && errno == EINTR) continue;
+        if (size < 0) throw std::system_error(errno, std::generic_category(), "read generation metadata");
+        if (size == 0) return document;
+        document.append(buffer, static_cast<std::size_t>(size));
+    }
+}
+}
 
 GenerationManager::GenerationManager(
     std::filesystem::path state_directory
 )
-    : state_directory_(std::move(state_directory)),
+    : state_directory_(bind_authority(state_directory)),
       generations_directory_(
           state_directory_ / "generations"
       )
@@ -32,19 +67,24 @@ GenerationManager::GenerationManager(
     std::filesystem::path generation_directory,
     GenerationDirectoryTag
 )
-    : state_directory_(generation_directory.parent_path()),
-      generations_directory_(std::move(generation_directory))
+    : generations_directory_(bind_authority(generation_directory))
 {
+    state_directory_ = generations_directory_.parent_path();
 }
 
 /*
  * Ensure that the persistent generation directory exists.
  */
-void GenerationManager::ensure_directories() const
+void GenerationManager::ensure_durable_directories() const
 {
-    std::filesystem::create_directories(
-        generations_directory_
-    );
+    namespace d = core::detail;
+    // Existing authority ancestors must already be durable. Validate before mkdir.
+    auto parent = d::open_durable_directory(generations_directory_);
+    auto state = d::open_directory(state_directory_);
+    d::require_durable_directory(state.get());
+    d::require_durable_directory(parent.get());
+    d::directory_barrier(parent.get());
+    d::directory_barrier(state.get());
 }
 
 /*
@@ -55,7 +95,8 @@ void GenerationManager::ensure_directories() const
  */
 Generation GenerationManager::initialize()
 {
-    ensure_directories();
+    ensure_durable_directories();
+    core::FileLock lock(core::state_lock_path(generations_directory_), core::LockKind::State);
 
     const auto current_file =
         generations_directory_ / "current";
@@ -80,41 +121,11 @@ Generation GenerationManager::initialize()
  */
 std::uint64_t GenerationManager::next_id() const
 {
-    ensure_directories();
-
     std::uint64_t next = 0;
-
-    for (
-        const auto& entry :
-        std::filesystem::directory_iterator(
-            generations_directory_
-        )
-    ) {
-        if (!entry.is_directory()) {
-            continue;
-        }
-
-        try {
-            const auto id =
-                std::stoull(
-                    entry.path().filename().string()
-                );
-
-            if (id >= next) {
-                next = id + 1;
-            }
-        }
-        catch (const std::invalid_argument&) {
-            /*
-             * Ignore non-generation directories.
-             */
-        }
-        catch (const std::out_of_range&) {
-            throw std::runtime_error(
-                "Identificatore di generation fuori intervallo: " +
-                entry.path().string()
-            );
-        }
+    for (const auto id : publication::existing_ids(generations_directory_)) {
+        if (id == publication::max_id)
+            throw std::overflow_error("Generation identifier exhausted");
+        next = std::max(next, id + 1);
     }
 
     return next;
@@ -127,40 +138,8 @@ void GenerationManager::write_generation(
     const Generation& generation
 ) const
 {
-    const auto document = serialize(generation);
-
-    const auto directory =
-        generations_directory_ /
-        std::to_string(generation.id);
-
-    /*
-     * Never overwrite an existing generation. This is the central
-     * immutability guarantee of the generation layer.
-     */
-    if (std::filesystem::exists(directory)) {
-        throw std::runtime_error(
-            "La generation esiste già: " +
-            std::to_string(generation.id)
-        );
-    }
-
-    std::filesystem::create_directories(directory);
-
-    const auto file =
-        directory / "generation.toml";
-
-    std::ofstream output(file);
-
-    if (!output) {
-        throw std::runtime_error(
-            "Impossibile creare la generation: " +
-            file.string()
-        );
-    }
-
-    output << document;
-    output.close();
-    if (!output) throw std::runtime_error("Failed to persist generation");
+    // Caller holds exclusive State; helper does not acquire nested locks.
+    publication::persist(generations_directory_, generation.id, serialize(generation));
 }
 
 /*
@@ -192,22 +171,8 @@ Generation GenerationManager::get(
     std::uint64_t id
 ) const
 {
-    const auto file =
-        generations_directory_ /
-        std::to_string(id) /
-        "generation.toml";
-
-    if (!std::filesystem::exists(file)) {
-        throw std::runtime_error(
-            "Generation non trovata: " +
-            std::to_string(id)
-        );
-    }
-
-    std::ifstream input(file);
-    if (!input) throw std::runtime_error("Failed to read generation: " + file.string());
-    std::string document((std::istreambuf_iterator<char>(input)), {});
-    if (input.bad()) throw std::runtime_error("Failed to read generation: " + file.string());
+    if (id > publication::max_id) throw std::overflow_error("Generation identifier exceeds TOML integer range");
+    const auto document = read_metadata(generations_directory_ / std::to_string(id), "generation.toml");
     auto generation = deserialize_generation(document);
     if (generation.id != id) throw std::runtime_error("Generation identifier mismatch");
     return generation;
@@ -269,30 +234,8 @@ void GenerationManager::discard(
  */
 std::vector<Generation> GenerationManager::list() const
 {
-    ensure_directories();
-
     std::vector<Generation> generations;
-
-    for (
-        const auto& entry :
-        std::filesystem::directory_iterator(
-            generations_directory_
-        )
-    ) {
-        if (!entry.is_directory()) {
-            continue;
-        }
-
-        std::uint64_t id;
-        try {
-            id = std::stoull(entry.path().filename().string());
-        }
-        catch (const std::invalid_argument&) {
-            continue; // Auxiliary directories, never malformed metadata.
-        }
-        catch (const std::out_of_range&) {
-            throw std::runtime_error("Generation identifier out of range: " + entry.path().string());
-        }
+    for (const auto id : publication::existing_ids(generations_directory_)) {
         // Validation errors must propagate: every persisted generation is a GC root.
         generations.push_back(get(id));
     }
@@ -317,8 +260,9 @@ Generation GenerationManager::create(
     const std::vector<installed::PolicyRequirement>& policies
 )
 {
-    ensure_directories();
+    ensure_durable_directories();
 
+    core::FileLock lock(core::state_lock_path(generations_directory_), core::LockKind::State);
     const auto generation = make_generation(next_id(), entries, realizations, policies);
 
     write_generation(generation);
@@ -331,23 +275,7 @@ Generation GenerationManager::create(
  */
 Generation GenerationManager::current() const
 {
-    const auto file =
-        generations_directory_ / "current";
-
-    if (!std::filesystem::exists(file)) {
-        throw std::runtime_error(
-            "Nessuna generation inizializzata."
-        );
-    }
-
-    std::ifstream input(file);
-
-    if (!input) {
-        throw std::runtime_error(
-            "Impossibile leggere la generation corrente: " +
-            file.string()
-        );
-    }
+    std::istringstream input(read_metadata(generations_directory_, "current"));
 
     std::uint64_t id = 0;
 
@@ -356,7 +284,7 @@ Generation GenerationManager::current() const
     if (input.fail()) {
         throw std::runtime_error(
             "Identificatore della generation corrente non valido: " +
-            file.string()
+            (generations_directory_ / "current").string()
         );
     }
 

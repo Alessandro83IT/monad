@@ -56,6 +56,7 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    immutable_publication_test
     locking_test
     durable_filesystem_test
     installed_semantics_regression_test
@@ -164,3 +165,8 @@ endif()
 
 target_link_libraries(locking_test PRIVATE Threads::Threads)
 set_tests_properties(locking_test durable_filesystem_test PROPERTIES TIMEOUT 30)
+
+set_tests_properties(immutable_publication_test PROPERTIES TIMEOUT 60)
+
+add_test(NAME immutable_object_publication_test COMMAND immutable_publication_test objects)
+set_tests_properties(immutable_object_publication_test PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 77)

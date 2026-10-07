@@ -104,12 +104,14 @@ public:
      * If generations already exist, the existing current generation
      * is returned without modifying persistent state.
      */
+    // Acquires exclusive namespace-derived State; caller must not hold authority locks.
     Generation initialize();
 
     /*
      * Create a new immutable generation containing the supplied
      * store references. The new generation is not activated.
      */
+    // Acquires exclusive State across allocation/publication; publication does not select current.
     Generation create(
         const std::vector<GenerationEntry>& entries,
         const std::vector<realization::RealizationRecord>& realizations = {},
@@ -169,7 +171,7 @@ private:
     std::filesystem::path state_directory_;
     std::filesystem::path generations_directory_;
 
-    void ensure_directories() const;
+    void ensure_durable_directories() const;
 
     void write_generation(
         const Generation& generation

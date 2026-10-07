@@ -47,7 +47,7 @@ Publication proceeds as follows:
 2. Scan the caller's private quiescent source with the unchanged v1 scanner,
    normalize and locally derive ArtifactId. Require equality with the claim.
 3. Open/create the namespace with descriptor-relative no-follow operations.
-4. Create an unpredictable mkdtemp `.publish-XXXXXX` container immediately below
+4. Create an unpredictable exclusive mkdirat `.publish-*` container immediately below
    the SHA-256 directory, with mode 0700 and a private `payload` directory.
    This remains private after payload hardening and is on the destination
    filesystem even if the namespace itself is mounted separately.
@@ -59,16 +59,18 @@ Publication proceeds as follows:
    No source metadata is copied. Inherited host metadata is not silently
    accepted: subsequent scanning rejects anything unsupported.
 6. Remove all write bits: root/directories and executable files 0555, other
-   files 0444. Symlinks retain Linux symlink modes. Independently scan/hash the
+   files 0444. Symlinks retain Linux symlink modes. Fsync regular files and
+   directories bottom-up, then the private container. Independently scan/hash the
    hardened private payload and require the expected identity and exact model
    equality with the verified source.
 7. Rename that complete payload using Linux renameat2(RENAME_NOREPLACE) with
    pinned source/destination directory descriptors. There is no check-then-rename
-   or replacing/portable fallback. Unsupported kernels/filesystems fail.
+   or replacing/portable fallback. Synchronize both publication parents after
+   rename. Unsupported kernels/filesystems fail.
 8. Independently scan/hash the authoritative destination, whether this publisher
    won or lost the rename. Require matching identity and exact normalized model
    equality with the source, also rejecting distinct models under a hypothetical
-   digest collision. Clean only
+   digest collision. Synchronize a valid existing winner and its parent too. Clean only
    this invocation's private container, never source or destination.
 
 Concurrent processes share no mutable staging state and need no process-local
@@ -83,11 +85,14 @@ is ExistingObjectVerification. Source mismatch is SourceIdentityMismatch;
 invalid source inspection is InvalidSource. Separate codes cover malformed IDs,
 namespace/private staging/materialization/rename failures, post-publication
 integrity and cleanup. A post-rename inspection or mismatch failure reports
-PostPublicationIntegrity and leaves the authoritative object intact. Later
+OUTCOME UNCERTAIN (with the integrity cause nested) and leaves the authoritative
+object intact. Later
 maintenance tooling must diagnose/quarantine/recover it explicitly; B.5 supplies
 no repair tool. ObjectError retains secondary cleanup diagnostics in
 `cleanup_failure()` while preserving its primary category/message. Unexpected
-exceptions are preserved, with a nested cleanup error if cleanup also fails.
+exceptions are preserved; cleanup never replaces the primary failure. M2.5-A
+PersistenceError retains stage/errno, uncertainty and secondary cleanup detail.
+`publish_durable` additionally distinguishes Published from verified AlreadyExists.
 
 Private cleanup restores write/traversal permissions only inside its own
 container and removes it without following payload links. A crash can leave a
@@ -108,9 +113,12 @@ be quiescent, as required by the scanner. No root-proof or kernel-snapshot
 claim is made. The source is never chmodded, chowned, moved, deleted or rewritten;
 the scanner's documented possible kernel readlink atime accounting still applies.
 
-B.5 guarantees atomic authoritative visibility, not durable publication across
-power loss. It does not fsync files/directories. Filesystem errors or crashes
-may leave private work or require later maintenance. Durability is deferred.
+M2.5-B adds durable immutable publication under the conservative M2.5-A
+filesystem contract (ext family, XFS, Btrfs; tmpfs only for ordering tests).
+Overlayfs remains unsupported. Failed barriers after visibility report OUTCOME
+UNCERTAIN. SIGKILL testing does not qualify power-loss behavior; actual storage
+qualification is M2.5-G. See [the M2.5-B audit](../../docs/m2.5-b-durable-publication.md)
+for generation publication, lock expectations and the deferred legacy limitation.
 
 No persisted manifest or realization metadata is needed for this primitive:
 the full identity is in the namespace, and verification reconstructs the v1

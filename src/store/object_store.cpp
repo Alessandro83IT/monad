@@ -23,6 +23,7 @@
 namespace athena::store {
 namespace {
 namespace fs = std::filesystem;
+namespace durable = core::detail;
 using Code = ObjectErrorCode;
 class Fd {
 public:
@@ -36,6 +37,7 @@ public:
         value_ = std::exchange(other.value_, -1); return *this;
     }
     int get() const { return value_; }
+    int release() noexcept { return std::exchange(value_, -1); }
 private:
     int value_;
 };
@@ -64,8 +66,9 @@ Fd open_directory(const fs::path& path, Code code) {
     }
     return current;
 }
-Fd namespace_directory(const fs::path& root, bool create, bool allow_missing = false) {
+Fd namespace_directory(const fs::path& root, bool create, bool allow_missing = false, const durable::Syscalls& ops = durable::linux_syscalls()) {
     auto current = open_directory(root, Code::StoreDirectory);
+    if (create) durable::require_durable_directory(current.get(), ops);
     for (const char* name : {"objects", "v1", "sha256"}) {
         bool created = false;
         if (create) {
@@ -78,6 +81,11 @@ Fd namespace_directory(const fs::path& root, bool create, bool allow_missing = f
             fail(Code::StoreDirectory, "open object namespace");
         }
         if (created && ::fchmod(next.get(), 0755) != 0) fail(Code::StoreDirectory, "set new namespace permissions");
+        if (create) {
+            durable::require_durable_directory(next.get(), ops);
+            durable::directory_barrier(next.get(), false, ops);
+            durable::directory_barrier(current.get(), false, ops);
+        }
         current = std::move(next);
     }
     return current;
@@ -85,7 +93,7 @@ Fd namespace_directory(const fs::path& root, bool create, bool allow_missing = f
 // Pin every parent and refuse links even after model validation.
 Fd parent(int root, const std::string& path) {
     artifact::validate_path(path);
-    Fd current(::dup(root));
+    Fd current(::fcntl(root, F_DUPFD_CLOEXEC, 0));
     if (current.get() < 0) fail(Code::Materialization, "duplicate private root");
     std::size_t start = 0;
     for (auto end = path.find('/'); end != path.npos; end = path.find('/', start)) {
@@ -133,7 +141,11 @@ void require_same_gc_mount(const struct statx& expected, const struct statx& act
         throw ObjectError(Code::Cleanup, "GC refuses to cross a mount boundary");
 }
 std::string cleanup_private(const fs::path& container) noexcept { return cleanup(container); }
-void materialize(const fs::path& root, const artifact::NormalizedArtifact& model) {
+durable::Fd publication_namespace(const fs::path& root, const durable::Syscalls& ops) {
+    auto directory = namespace_directory(root, true, false, ops);
+    return durable::Fd::adopt(directory.release(), ops);
+}
+void materialize(const fs::path& root, const artifact::NormalizedArtifact& model, const durable::Syscalls& ops) {
     artifact::validate(model);
     auto descriptor = open_directory(root, Code::Materialization);
     for (const auto& entry : model.entries) {
@@ -146,13 +158,11 @@ void materialize(const fs::path& root, const artifact::NormalizedArtifact& model
         } else if (const auto* file = std::get_if<artifact::RegularFile>(&entry.value)) {
             Fd node(::openat(directory.get(), name.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600));
             if (node.get() < 0) fail(Code::Materialization, "create payload file");
-            std::size_t offset = 0;
-            while (offset < file->content.size()) {
-                const auto size = ::write(node.get(), file->content.data() + offset,
-                    std::min<std::size_t>(file->content.size() - offset, 65536));
-                if (size < 0 && errno == EINTR) continue;
-                if (size <= 0) fail(Code::Materialization, "write payload file");
-                offset += static_cast<std::size_t>(size);
+            std::string_view remaining(file->content);
+            while (!remaining.empty()) {
+                const auto size = std::min<std::size_t>(remaining.size(), 65536);
+                durable::complete_write(node.get(), remaining.substr(0, size), ops);
+                remaining.remove_prefix(size);
             }
             if (::fchmod(node.get(), file->executable ? 0755 : 0644) != 0) fail(Code::Materialization, "normalize file mode");
         } else {
@@ -179,6 +189,21 @@ void finalize(const fs::path& root, const artifact::NormalizedArtifact& model) {
     }
     if (::fchmod(descriptor.get(), 0555) != 0) fail(Code::Materialization, "finalize root");
 }
+void synchronize(const fs::path& root, const artifact::NormalizedArtifact& model,
+                 const durable::Syscalls& ops) {
+    artifact::validate(model);
+    auto descriptor = open_directory(root, Code::Materialization);
+    // Reverse canonical order visits every descendant before its directory.
+    for (auto it = model.entries.rbegin(); it != model.entries.rend(); ++it) {
+        if (std::holds_alternative<artifact::SymbolicLink>(it->value)) continue;
+        auto directory = parent(descriptor.get(), it->path);
+        const bool dir = std::holds_alternative<artifact::Directory>(it->value);
+        auto node = durable::open_at(directory.get(), leaf(it->path), O_RDONLY | (dir ? O_DIRECTORY : 0));
+        if (dir) durable::directory_barrier(node.get(), false, ops);
+        else durable::file_barrier(node.get(), ops);
+    }
+    durable::directory_barrier(descriptor.get(), false, ops);
+}
 bool rename_no_replace(int source_parent, const char* source, int destination_parent, const char* destination) {
     if (::syscall(SYS_renameat2, source_parent, source, destination_parent, destination, RENAME_NOREPLACE) == 0) return true;
     if (errno == EEXIST) return false;
@@ -200,7 +225,7 @@ namespace {
 struct CloseDirectory { void operator()(DIR* stream) const { ::closedir(stream); } };
 using DirectoryStream = std::unique_ptr<DIR, CloseDirectory>;
 DirectoryStream directory_stream(int fd) {
-    const int copy = ::dup(fd);
+    const int copy = ::fcntl(fd, F_DUPFD_CLOEXEC, 0);
     if (copy < 0) fail(Code::StoreDirectory, "duplicate directory");
     DIR* stream = ::fdopendir(copy);
     if (!stream) {
@@ -309,7 +334,10 @@ void ObjectStore::verify(const core::ArtifactId& expected) const {
     auto directory = namespace_directory(root_, false);
     check_identity(path, expected, Code::ExistingObjectVerification, Code::CollisionCorruption);
 }
-fs::path ObjectStore::publish(const fs::path& source, const core::ArtifactId& expected) const {
+fs::path ObjectStore::publish(const fs::path& source, const core::ArtifactId& expected, const durable::Syscalls& ops) const {
+    return publish_durable(source, expected, ops).path;
+}
+ObjectPublication ObjectStore::publish_durable(const fs::path& source, const core::ArtifactId& expected, const durable::Syscalls& ops) const {
     const auto destination = object_path(expected); // validate before filesystem effects
     if (source.empty() || source.native().find('\0') != std::string::npos)
         throw ObjectError(Code::InvalidSource, "source locator must be nonempty and NUL-free");
@@ -325,43 +353,57 @@ fs::path ObjectStore::publish(const fs::path& source, const core::ArtifactId& ex
         if (artifact::derive_artifact_id(model) != expected)
             throw ObjectError(Code::SourceIdentityMismatch, "source does not match expected ArtifactId");
     } catch (const artifact::Error& error) { throw ObjectError(Code::InvalidSource, error.what()); }
-    auto directory = namespace_directory(root_, true);
+    auto directory = object_detail::publication_namespace(root_, ops);
     // Container is immediately beneath the destination directory: same fs,
     // including when objects/v1/sha256 is a mount point. Payload is private
     // even after its root is finalized to world-traversable permissions.
-    std::string pattern = (destination.parent_path() / ".publish-XXXXXX").native();
-    if (!::mkdtemp(pattern.data())) fail(Code::PrivateStaging, "mkdtemp publication container");
-    const fs::path container = pattern;
+    durable::require_durable_directory(directory.get(), ops);
+    const auto private_name = durable::private_directory(directory.get(), ops);
+    const fs::path container = destination.parent_path() / private_name;
+    auto result = durable::Publication::AlreadyExists;
     try {
         auto private_directory = open_directory(container, Code::PrivateStaging);
         if (::fchmod(private_directory.get(), 0700) != 0 || ::mkdirat(private_directory.get(), "payload", 0700) != 0)
             fail(Code::PrivateStaging, "create private payload");
         const auto payload = container / "payload";
-        object_detail::materialize(payload, model);
+        object_detail::materialize(payload, model, ops);
         object_detail::finalize(payload, model);
+        object_detail::synchronize(payload, model, ops);
+        durable::directory_barrier(private_directory.get(), false, ops);
         if (check_identity(payload, expected, Code::Materialization, Code::Materialization) != model)
             throw ObjectError(Code::Materialization, "materialized model differs from verified source");
-        const bool won = object_detail::rename_no_replace(private_directory.get(), "payload", directory.get(), digest(expected).c_str());
-        const auto final_model = check_identity(destination, expected,
+        result = durable::publish_tree(private_directory.get(), "payload", directory.get(), digest(expected), ops);
+        const bool won = result == durable::Publication::Published;
+        try {
+            const auto final_model = check_identity(destination, expected,
             won ? Code::PostPublicationIntegrity : Code::ExistingObjectVerification,
             won ? Code::PostPublicationIntegrity : Code::CollisionCorruption);
-        if (final_model != model)
-            throw ObjectError(won ? Code::PostPublicationIntegrity : Code::CollisionCorruption,
+            if (final_model != model)
+                throw ObjectError(won ? Code::PostPublicationIntegrity : Code::CollisionCorruption,
                               "destination model differs from verified source under the same digest");
+            if (!won) {
+                // Also establish durability for valid objects predating M2.5-B.
+                try { object_detail::synchronize(destination, final_model, ops); }
+                catch (const durable::PersistenceError& e) {
+                    throw durable::PersistenceError(e.stage, true, e.error, "existing winner synchronization");
+                }
+                durable::directory_barrier(directory.get(), true, ops);
+            }
+        } catch (...) {
+            if (won) std::throw_with_nested(durable::PersistenceError(durable::PersistenceError::Stage::Publication, true, EIO, "published object verification"));
+            throw;
+        }
+    } catch (durable::PersistenceError& error) {
+        error.cleanup_failure = durable::cleanup_private_tree(directory.get(), private_name, ops);
+        throw;
     } catch (ObjectError& error) {
-        error.record_cleanup_failure(object_detail::cleanup_private(container));
+        error.record_cleanup_failure(durable::cleanup_private_tree(directory.get(), private_name, ops));
         throw;
     } catch (...) {
-        const auto primary = std::current_exception();
-        const auto secondary = object_detail::cleanup_private(container);
-        if (!secondary.empty()) {
-            try { std::rethrow_exception(primary); }
-            catch (...) { std::throw_with_nested(ObjectError(Code::Cleanup, secondary)); }
-        }
-        std::rethrow_exception(primary);
+        durable::cleanup_private_tree(directory.get(), private_name, ops); // Secondary failure cannot replace primary.
+        throw;
     }
-    const auto secondary = object_detail::cleanup_private(container);
-    if (!secondary.empty()) throw ObjectError(Code::Cleanup, secondary);
-    return destination;
+    durable::cleanup_private_tree(directory.get(), private_name, ops); // Best effort after durable success.
+    return {destination, result};
 }
 }

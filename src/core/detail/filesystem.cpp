@@ -12,6 +12,10 @@
 #include <unistd.h>
 #include <utility>
 #include <array>
+#include <dirent.h>
+#include <memory>
+#include <vector>
+#include <algorithm>
 #include <system_error>
 
 namespace athena::core::detail {
@@ -159,6 +163,107 @@ void atomic_replace(int parent, std::string_view destination, std::string_view d
         throw PersistenceError(PersistenceError::Stage::Publication, false, errno, "rename/replacement failure");
     cleanup.active = false;
     directory_barrier(parent, true, ops);
+}
+void require_durable_directory(int fd, const Syscalls& ops) { durable_parent(fd, ops); }
+Fd open_durable_directory(const std::filesystem::path& path) {
+    if (!path.is_absolute()) throw std::invalid_argument("durable directory must be absolute");
+    auto fd = open_directory("/");
+    for (const auto& part : path.relative_path()) {
+        const auto name = part.string(); leaf(name);
+        struct stat s{};
+        if (::fstatat(fd.get(), name.c_str(), &s, AT_SYMLINK_NOFOLLOW) < 0) {
+            if (errno != ENOENT) fail("durable ancestor inspection");
+            require_durable_directory(fd.get()); // Before any mutation.
+            mkdir_at(fd.get(), name);
+            auto next = open_at(fd.get(), name, O_RDONLY | O_DIRECTORY);
+            require_durable_directory(next.get());
+            directory_barrier(next.get()); directory_barrier(fd.get());
+            fd = std::move(next);
+        } else fd = open_at(fd.get(), name, O_RDONLY | O_DIRECTORY);
+    }
+    require_durable_directory(fd.get());
+    return fd;
+}
+std::string private_directory(int parent, const Syscalls& ops) {
+    directory(parent);
+    for (;;) {
+        std::array<unsigned char, 16> bytes{};
+        size_t offset = 0;
+        while (offset < bytes.size()) {
+            auto n = (ops.random ? ops.random : ::getrandom)(bytes.data() + offset, bytes.size() - offset, 0);
+            if (n < 0 && errno == EINTR) continue;
+            if (n <= 0) { if (n == 0) errno = EIO; fail("private directory randomness"); }
+            if (static_cast<size_t>(n) > bytes.size() - offset) throw std::logic_error("random returned invalid count");
+            offset += static_cast<size_t>(n);
+        }
+        std::string name = ".publish-";
+        constexpr char hex[] = "0123456789abcdef";
+        for (auto b : bytes) { name += hex[b >> 4]; name += hex[b & 15]; }
+        if (::mkdirat(parent, name.c_str(), 0700) == 0) return name;
+        if (errno != EEXIST) fail("private mkdirat");
+    }
+}
+namespace {
+void remove_private(int parent, const std::string& name, dev_t device, const Syscalls& ops) {
+    auto node = open_at(parent, name, O_RDONLY | O_DIRECTORY);
+    if (stat_fd(node.get()).st_dev != device) throw std::runtime_error("private cleanup mount crossing");
+    if (::fchmod(node.get(), 0700) < 0) fail("private cleanup chmod");
+    int raw = ::openat(node.get(), ".", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    if (raw < 0) fail("private cleanup directory stream");
+    DIR* stream = ::fdopendir(raw);
+    if (!stream) { ::close(raw); fail("private cleanup fdopendir"); }
+    auto closer = [](DIR* p) { ::closedir(p); };
+    std::unique_ptr<DIR, decltype(closer)> owner(stream, closer);
+    std::vector<std::string> children;
+    for (;;) {
+        errno = 0; auto* entry = ::readdir(stream);
+        if (!entry) { if (errno) fail("private cleanup readdir"); break; }
+        std::string child(entry->d_name);
+        if (child != "." && child != "..") children.push_back(std::move(child));
+    }
+    std::sort(children.begin(), children.end());
+    for (const auto& child : children) {
+        struct stat s{};
+        if (::fstatat(node.get(), child.c_str(), &s, AT_SYMLINK_NOFOLLOW) < 0) fail("private cleanup stat");
+        if (S_ISDIR(s.st_mode)) remove_private(node.get(), child, device, ops);
+        else if ((ops.unlink ? ops.unlink : ::unlinkat)(node.get(), child.c_str(), 0) < 0) fail("private cleanup unlink");
+    }
+    if ((ops.unlink ? ops.unlink : ::unlinkat)(parent, name.c_str(), AT_REMOVEDIR) < 0) fail("private cleanup rmdir");
+}
+}
+std::string cleanup_private_tree(int parent, std::string_view name, const Syscalls& ops) noexcept {
+    try {
+        leaf(name); const std::string private_name(name);
+        struct stat status{};
+        if (::fstatat(parent, private_name.c_str(), &status, AT_SYMLINK_NOFOLLOW) < 0) {
+            if (errno == ENOENT) return {}; // Rename may already have consumed private staging.
+            fail("private cleanup inspection");
+        }
+        remove_private(parent, private_name, stat_fd(parent).st_dev, ops); return {};
+    }
+    catch (const std::exception& e) { return e.what(); }
+    catch (...) { return "private cleanup failed"; }
+}
+Publication publish_tree(int source_parent, std::string_view prepared, int destination_parent,
+                         std::string_view destination, const Syscalls& ops) {
+    durable_parent(source_parent, ops); durable_parent(destination_parent, ops);
+    leaf(prepared); leaf(destination);
+    if (stat_fd(source_parent).st_dev != stat_fd(destination_parent).st_dev)
+        throw PersistenceError(PersistenceError::Stage::Publication, false, EXDEV, "cross-filesystem publication");
+    const std::string source(prepared), dest(destination);
+    auto node = open_at(source_parent, prepared, O_RDONLY | O_DIRECTORY);
+    if (ops.rename(source_parent, source.c_str(), destination_parent, dest.c_str(), RENAME_NOREPLACE) < 0) {
+        const int e = errno;
+        if (e == EEXIST) {
+            // Confirm the winner's namespace barrier too, before convergence.
+            directory_barrier(destination_parent, true, ops);
+            return Publication::AlreadyExists;
+        }
+        throw PersistenceError(PersistenceError::Stage::Publication, false, e, "rename/tree publication failure");
+    }
+    directory_barrier(destination_parent, true, ops);
+    directory_barrier(source_parent, true, ops);
+    return Publication::Published;
 }
 Publication publish_noreplace(int parent, std::string_view prepared, std::string_view destination, const Syscalls& ops) {
     durable_parent(parent, ops); leaf(prepared); leaf(destination);

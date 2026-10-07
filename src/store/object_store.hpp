@@ -3,6 +3,7 @@
 
 #pragma once
 #include <athena/core/types.hpp>
+#include "../core/detail/filesystem.hpp"
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -26,6 +27,11 @@ private:
     std::string cleanup_failure_;
 };
 
+struct ObjectPublication {
+    std::filesystem::path path;
+    core::detail::Publication result; // Published means barriers completed; AlreadyExists means verified winner.
+};
+
 // Internal Linux v1 payload store. Root must already exist and be managed by
 // Athena, with no hostile namespace writers. Sources must be quiescent.
 // GC deletion is selected by ArtifactId only; no arbitrary-path removal.
@@ -45,7 +51,12 @@ public:
     bool remove_if_present(const core::ArtifactId& id) const;
 
     std::filesystem::path publish(const std::filesystem::path& staging_root,
-                                  const core::ArtifactId& expected) const;
+                                  const core::ArtifactId& expected,
+                                  const core::detail::Syscalls& ops = core::detail::linux_syscalls()) const;
+    // No authority locks acquired: concurrent immutable publishers converge by NOREPLACE.
+    // Does not coordinate existing GC; transaction pins/store-GC protocol are M2.5-C.
+    ObjectPublication publish_durable(const std::filesystem::path&, const core::ArtifactId&,
+                                     const core::detail::Syscalls& = core::detail::linux_syscalls()) const;
     void verify(const core::ArtifactId& expected) const;
 private:
     std::filesystem::path root_;

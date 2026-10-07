@@ -1,6 +1,6 @@
-# Generation membership and activation (M2.4)
+# Generation membership, publication and activation (M2.5-B)
 
-A Generation retains its independent monotonically allocated numeric ID.
+A Generation retains its independently allocated numeric ID (max retained ID + 1).
 It is immutable once persisted. Generation identity is neither CandidateIdentity,
 ArtifactId nor BuildInputId. Membership does not derive the generation ID.
 
@@ -48,7 +48,14 @@ offline compatibility; decoding never invents missing old information.
 Unknown fields, incorrect types, missing tags, unknown kinds, and cross-kind
 fields are rejected. Historical documents may omit entries for an empty state.
 A present malformed entries field is rejected rather than silently made empty.
-Generation IDs must be nonnegative and fit TOML's signed 64-bit integer range.
+Generation IDs must be nonnegative and fit TOML's signed 64-bit integer range
+(`0` through `INT64_MAX`). Numeric directory names must be canonical decimal:
+`0` or digits without a leading zero. Signed names, leading-zero aliases and
+nonnumeric auxiliary directories are ignored; symlink entries are not roots.
+Canonical numeric directories above `INT64_MAX` fail closed during enumeration
+and allocation. Allocation after `INT64_MAX` fails without publishing a new ID.
+There is no persisted lifetime allocation counter: discarding the highest retained
+generation can permit that ID to be allocated again, as before this phase.
 
 Legacy package/store values preserve historical string semantics, including
 relative paths, empty strings and duplicate packages, which the old reader did
@@ -83,10 +90,55 @@ make_generation(id, legacy, realizations) is a pure validated construction API.
 Generation::validate, serialize and deserialize_generation perform no filesystem
 I/O. GenerationManager::create(legacy, realizations) allocates the independent ID
 and persists metadata without activation. get/list/current use the dual reader;
-list remains sorted by generation ID. Serialization validates before creation
-of the generation directory; output close failures are reported. Persistence
-retains the existing directory/no-overwrite approach; C.2 adds no atomic-write,
-fsync or power-loss durability guarantee.
+list remains sorted by generation ID.
+
+M2.5-B binds the configured authority to an absolute path once at construction.
+Both constructors accept ordinary `./` components and trailing slashes; only
+those components are removed. Parent traversal (`..`) is rejected, never
+lexically collapsed across a potential symlink. Actual directory traversal
+opens every component without following links. Later cwd changes cannot redirect
+the manager's reads, allocation, publication or State-lock authority.
+
+initialize/create prepare the durable namespace using the M2.5-A filesystem
+preflight, safe directory creation and parent barriers. They then acquire an
+exclusive namespace-derived State lock covering allocation and publication.
+The fully validated serialized document is written with checked complete writes
+to an exclusive `generation.toml` in a random private directory. Publication
+orders file fsync, private-directory fsync, same-parent
+`renameat2(RENAME_NOREPLACE)` to the final numeric name, and generation-parent
+fsync. Collisions never overwrite. A failure after successful rename reports
+OUTCOME UNCERTAIN and cleanup never removes the final generation. Callers must
+not already hold an authority lock when invoking initialize/create.
+
+Read-only enumeration opens existing directories without mutation, fsync or
+durable-filesystem preflight. A missing namespace returns an empty list without
+creating it. Unsafe authority traversal, inspection failures, out-of-range
+canonical numeric directories and malformed metadata in a numeric directory
+propagate errors. get/current also inspect existing metadata without initializing
+the namespace and reject symlink traversal. GC root discovery uses this reader;
+it does not initialize durable state merely to enumerate roots.
+
+Publication does **not** select current. Every published numeric generation,
+including an unselected one, is visible through list/get, protects its legacy
+stores and ArtifactIds as GC roots, and participates in max-ID allocation.
+CLI `generation list` displays it when current is readable; that command still
+fails if the namespace exists but current is missing or corrupt. The list/get
+API itself does not require current. Installed-package `list` and `info` inspect
+only current, so unselected memberships do not appear as installed packages.
+It is a switch candidate subject to the existing membership/integrity checks.
+CLI rollback chooses the highest retained ID below current, regardless of whether
+that ID was ever selected; an unselected ID above current is not the immediate
+rollback choice but can become one after a larger ID is selected. There is no
+persisted selected-history or separate commit marker. initialize separately
+selects generation 0, and switch separately writes the unchanged textual current
+pointer after activation. Neither operation makes that pointer crash-durable.
+Publication versus transaction commitment and interrupted initialization recovery
+remain M2.5-E/F integration concerns, not guarantees of this phase.
+
+The immutable-publication ordering depends on M2.5-A's supported local filesystem,
+durable-ancestor and honest-storage assumptions. tmpfs and SIGKILL tests prove
+ordering and process-death behavior, not power-loss durability. Crash recovery
+and actual storage/power-loss qualification remain later M2.5 phases.
 
 ArtifactId is a typed content identity, never an arbitrary path. The immutable
 object locator is derived by RealizationRecord::object_reference() relative to
@@ -94,6 +146,14 @@ the configured store root; no extra path is persisted. Structural validation
 is not proof of object existence, verification or continuing integrity. Future
 producers must publish/verify through ObjectStore before asserting the record's
 authoritative association, as required by C.1.
+
+Durable generation publication guarantees its metadata, not the durability of
+an arbitrary referenced payload. It does not upgrade legacy `store::install`,
+whose entry creation and metadata writes can still expose partial nondurable
+state. The modern realization path publishes through ObjectStore and records
+ArtifactId memberships; its artifact guarantee does not depend on that legacy
+publication path. Legacy and mixed generations retain their existing reference
+semantics without claiming new legacy payload durability.
 
 ## Phase boundaries
 
@@ -174,7 +234,9 @@ Historical pre-M2.4 generations
 remain readable/switchable under their original integrity contract; preserving
 unknown realization dependency state in a new semantic operation fails explicitly.
 See [installed semantics](../installed/README.md) for the legacy compatibility policy.
-No locking, crash-recovery or persistence atomicity guarantees are added.
+M2.5-B adds the immutable publication and allocation lock described above.
+It does not add whole-transaction locking, durable current selection, activation
+reconciliation or startup crash recovery.
 
 ## C.3 verification coverage
 
