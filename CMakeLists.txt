@@ -56,6 +56,7 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    activation_projection_fs_test
     activation_current_test
     activation_schema_test
     activation_digest_test
@@ -190,3 +191,5 @@ set_tests_properties(transaction_gc_fault_test PROPERTIES TIMEOUT 60)
 set_tests_properties(activation_current_test activation_digest_test PROPERTIES TIMEOUT 60)
 # Schema stress coverage parses complete 65,536-entry documents in Debug too.
 set_tests_properties(activation_schema_test PROPERTIES TIMEOUT 180)
+
+set_tests_properties(activation_projection_fs_test PROPERTIES TIMEOUT 60)
