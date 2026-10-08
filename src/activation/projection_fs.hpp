@@ -44,6 +44,7 @@ public:
     explicit ProjectionState(std::string generation_authority);
     const std::string& generations() const { return generations_; }
 private:
+    friend class LegacyAccess;
     friend class ProjectionContext;
     std::string generations_;
     core::detail::Fd generation_;
@@ -67,6 +68,7 @@ public:
         const WitnessReference& old_witness, const WitnessReference& successor);
 private:
     ProjectionContext(ProjectionBinding, ProjectionIo);
+    friend class LegacyAccess;
     using Fd = core::detail::Fd;
     ProjectionBinding binding_;
     ProjectionIo io_;

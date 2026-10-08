@@ -56,6 +56,7 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    legacy_d3_test
     activation_projection_fs_test
     activation_current_test
     activation_schema_test
@@ -193,3 +194,6 @@ set_tests_properties(activation_current_test activation_digest_test PROPERTIES T
 set_tests_properties(activation_schema_test PROPERTIES TIMEOUT 180)
 
 set_tests_properties(activation_projection_fs_test PROPERTIES TIMEOUT 60)
+set_tests_properties(legacy_d3_test PROPERTIES TIMEOUT 60)
+add_test(NAME legacy_d3_scanner_test COMMAND legacy_d3_test scanner)
+set_tests_properties(legacy_d3_scanner_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 180)

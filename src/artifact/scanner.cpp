@@ -185,7 +185,8 @@ Descriptor open_root(const std::filesystem::path& root)
     return readable;
 }
 
-std::vector<std::string> names(int fd, const std::string& path)
+std::vector<std::string> names(int fd, const std::string& path,
+                              std::size_t bound = SIZE_MAX)
 {
     Descriptor duplicate(::openat(fd, ".", O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW | O_NOATIME));
     if (duplicate.get() < 0) system_error(ErrorCode::InspectionFailure, path, "open enumeration descriptor");
@@ -209,7 +210,11 @@ std::vector<std::string> names(int fd, const std::string& path)
             break;
         }
         std::string name(entry->d_name);
-        if (name != "." && name != "..") result.push_back(std::move(name));
+        if (name != "." && name != "..") {
+            if (result.size() >= bound)
+                throw Error(ErrorCode::LengthOverflow, path, "directory entry bound");
+            result.push_back(std::move(name));
+        }
     }
     std::sort(result.begin(), result.end(), path_bytes_less);
     if (std::adjacent_find(result.begin(), result.end()) != result.end())
@@ -222,9 +227,20 @@ struct Observation {
     struct stat status;
 };
 struct Scan {
+    const ScanLimits* limits = nullptr;
+    std::uint64_t mount = 0;
+    std::size_t count = 0, bytes = 0;
     NormalizedArtifact model;
     std::vector<Observation> observations;
     std::optional<std::string> unverified_attributes;
+
+    void placement(int fd, const std::string& path) const {
+        if (!limits) return;
+        struct statx s{};
+        if (::statx(fd, "", AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW,
+                    STATX_MNT_ID, &s) || !(s.stx_mask & STATX_MNT_ID) || s.stx_mnt_id != mount)
+            throw Error(ErrorCode::InvalidRoot, path, "missing mount identity or mount crossing");
+    }
 
     void metadata(int fd, const std::string& path, const std::string* locator)
     {
@@ -242,17 +258,32 @@ struct Scan {
     void directory(int fd, const std::string& path)
     {
         const auto before = inspect(fd, path);
+        placement(fd, path);
         raw_semantics(before, path);
         metadata(fd, path, nullptr);
         flags(fd, false, path);
         observations.push_back({path, before});
-        const auto children = names(fd, path);
+        // Reserve the whole enumeration against the global budget before
+        // recursion. Pending sibling names across ancestor frames must not each
+        // receive an independent full entry budget.
+        const auto children = names(fd, path, limits ? limits->entries - count : SIZE_MAX);
+        if (limits) count += children.size();
         for (const auto& name : children) {
             const std::string relative = path.empty() ? name : path + '/' + name;
+            if (limits && (name.size() > limits->component ||
+                relative.size() > limits->path ||
+                static_cast<std::size_t>(std::count(relative.begin(), relative.end(), '/')) >= limits->depth))
+                throw Error(ErrorCode::LengthOverflow, relative, "inventory path/entry bound");
+            if (limits) {
+                if (relative.size() > limits->bytes - bytes)
+                    throw Error(ErrorCode::LengthOverflow, relative, "inventory path byte bound");
+                bytes += relative.size();
+            }
             validate_path(relative);
             Descriptor node(::openat(fd, name.c_str(), O_PATH | O_NOFOLLOW | O_CLOEXEC));
             if (node.get() < 0) system_error(ErrorCode::InspectionFailure, relative, "open no-follow node");
             const auto status = inspect(node.get(), relative);
+            placement(node.get(), relative);
             raw_semantics(status, relative);
             if (S_ISLNK(status.st_mode)) {
                 // llistxattr must operate on the actual link, not the proc fd
@@ -268,9 +299,18 @@ struct Scan {
                         target.resize(static_cast<std::size_t>(length));
                         break;
                     }
+                    if (limits && target.size() >= limits->path + 1)
+                        throw Error(ErrorCode::LengthOverflow, relative, "symlink target bound");
                     if (target.size() > target.max_size() / 2)
                         throw Error(ErrorCode::ReadFailure, relative, "link target exceeds local resource limit");
-                    target.resize(target.size() * 2);
+                    target.resize(limits ? std::min(target.size() * 2, limits->path + 1) : target.size() * 2);
+                }
+                if (limits && target.size() > limits->path)
+                    throw Error(ErrorCode::LengthOverflow, relative, "symlink target bound");
+                if (limits) {
+                    if (target.size() > limits->bytes - bytes)
+                        throw Error(ErrorCode::LengthOverflow, relative, "inventory target byte bound");
+                    bytes += target.size();
                 }
                 model.entries.push_back({relative, SymbolicLink{std::move(target)}});
                 observations.push_back({relative, status});
@@ -287,6 +327,8 @@ struct Scan {
                     metadata(readable.get(), relative, nullptr);
                     flags(readable.get(), false, relative);
                     std::string content;
+                    if (limits && (status.st_size < 0 || static_cast<std::uint64_t>(status.st_size) > limits->bytes - bytes))
+                        throw Error(ErrorCode::LengthOverflow, relative, "inventory byte bound");
                     char buffer[65536];
                     for (;;) {
                         const auto length = ::read(readable.get(), buffer, sizeof(buffer));
@@ -295,6 +337,9 @@ struct Scan {
                             system_error(ErrorCode::ReadFailure, relative, "read payload");
                         }
                         if (!length) break;
+                        if (limits && static_cast<std::size_t>(length) > limits->bytes - bytes)
+                            throw Error(ErrorCode::LengthOverflow, relative, "inventory byte bound");
+                        if (limits) bytes += static_cast<std::size_t>(length);
                         content.append(buffer, static_cast<std::size_t>(length));
                         if (status.st_size < 0 || content.size() > static_cast<std::uintmax_t>(status.st_size))
                             throw Error(ErrorCode::ChangedTree, relative, "file grew while reading");
@@ -312,11 +357,58 @@ struct Scan {
                 system_error(ErrorCode::InspectionFailure, relative, "recheck named node");
             unchanged(status, named, relative);
         }
-        if (children != names(fd, path))
+        if (children != names(fd, path, limits ? children.size() : SIZE_MAX))
             throw Error(ErrorCode::ChangedTree, path, "directory membership changed");
         unchanged(before, inspect(fd, path), path);
     }
 };
+}
+
+void validate_alias_metadata(int parent, std::string_view leaf)
+{
+    validate_path(leaf);
+    if (leaf.find('/') != leaf.npos || leaf.size() > 255)
+        throw Error(ErrorCode::InvalidPath, std::string(leaf), "alias leaf required");
+    const std::string name(leaf);
+    Descriptor fd(::openat(parent, name.c_str(), O_PATH | O_NOFOLLOW | O_CLOEXEC));
+    if (fd.get() < 0) system_error(ErrorCode::InspectionFailure, name, "open alias inode");
+    const auto before = inspect(fd.get(), name); raw_semantics(before, name);
+    if (!S_ISLNK(before.st_mode)) throw Error(ErrorCode::UnsupportedFileType, name, "alias must be symlink");
+    const std::string locator = "/proc/self/fd/" + std::to_string(parent) + '/' + name;
+    if (!attributes(fd.get(), name, &locator))
+        throw Error(ErrorCode::InspectionFailure, name, "cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required");
+    flags(fd.get(), true, name);
+    unchanged(before, inspect(fd.get(), name), name);
+    struct stat named{};
+    if (::fstatat(parent, name.c_str(), &named, AT_SYMLINK_NOFOLLOW)) system_error(ErrorCode::InspectionFailure, name, "recheck alias");
+    unchanged(before, named, name);
+}
+
+NormalizedArtifact scan_bounded(int root, const ScanLimits& limits, std::vector<ScanObservation>* observations)
+{
+    if (!limits.entries || !limits.path || !limits.component || !limits.depth ||
+        limits.path > 4095 || limits.component > 255 || limits.depth > 128 ||
+        limits.entries > 65536 || limits.bytes > 64 * 1024 * 1024)
+        throw Error(ErrorCode::LengthOverflow, {}, "invalid bounded scan limits");
+    struct statx s{};
+    if (::statx(root, "", AT_EMPTY_PATH, STATX_MNT_ID, &s) || !(s.stx_mask & STATX_MNT_ID))
+        throw Error(ErrorCode::InvalidRoot, {}, "missing root mount identity");
+    Scan first; first.limits = &limits; first.mount = s.stx_mnt_id;
+    first.directory(root, {}); first.require_complete_metadata(); normalize(first.model);
+    Scan second; second.limits = &limits; second.mount = s.stx_mnt_id;
+    second.directory(root, {}); second.require_complete_metadata(); normalize(second.model);
+    if (first.observations.size() != second.observations.size() || first.model != second.model)
+        throw Error(ErrorCode::ChangedTree, {}, "bounded inventory changed");
+    for (std::size_t i = 0; i < first.observations.size(); ++i) {
+        if (first.observations[i].path != second.observations[i].path)
+            throw Error(ErrorCode::ChangedTree, {}, "bounded membership changed");
+        unchanged(first.observations[i].status, second.observations[i].status, first.observations[i].path);
+    }
+    if (observations) {
+        observations->clear(); observations->reserve(first.observations.size());
+        for (const auto& o : first.observations) observations->push_back({o.path, o.status});
+    }
+    return std::move(first.model);
 }
 
 NormalizedArtifact scan(const std::filesystem::path& root)

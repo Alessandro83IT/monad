@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "projection_fs.hpp"
 #include "codec_detail.hpp"
+#include "legacy.hpp"
 #include "../store/transaction_pins.hpp"
 #include <fcntl.h>
 #include <linux/fs.h>
@@ -147,8 +148,11 @@ std::string ProjectionContext::record(int parent, std::string_view name) const {
     unchanged(parent, name, fd.get()); return bytes;
 }
 void ProjectionContext::namespace_shape() const try {
-    if (a::entries(admin_.get()) != std::vector<std::string>{"authority.toml", "witnesses", "work"})
-        fail(ProjectionCause::ProjectionConflict, "Unexpected administration entries (adoptions reserved for D3)");
+    const auto shape = a::entries(admin_.get());
+    if (shape != std::vector<std::string>{"authority.toml", "witnesses", "work"} &&
+        shape != std::vector<std::string>{"adoptions", "authority.toml", "witnesses", "work"})
+        fail(ProjectionCause::ProjectionConflict, "Unexpected administration entries");
+    if (shape.size() == 4) LegacyAccess::namespace_shape(*this);
     for (int root : {witnesses_.get(), work_.get()}) {
         for (const auto& id : a::entries(root)) {
             ActivationId check(id);
@@ -340,6 +344,26 @@ void ProjectionContext::link_identity(int parent, std::string_view name, std::st
         fail(ProjectionCause::OwnershipMismatch, "Symlink substituted during validation");
 }
 void ProjectionContext::validate_owned_symlink(std::string_view path, std::string_view target, const WitnessReference& witness) const {
+    if (std::holds_alternative<AdoptionId>(witness.owner)) try {
+        validate_projection_path(path); target_bytes(target); revalidate();
+        auto dir = LegacyAccess::resolve(*this, path, target, witness);
+        const auto name = std::to_string(witness.entry_id);
+        auto [destination, leaf] = parent(path);
+        link_identity(dir.get(), name, target, ProjectionCause::MissingWitness);
+        link_identity(destination.get(), leaf, target, ProjectionCause::MissingManaged);
+        if (!inode(identity(dir.get(), name, false), identity(destination.get(), leaf, false)))
+            fail(ProjectionCause::OwnershipMismatch, "Adoption witness and managed inode differ");
+        auto [again, ignored] = parent(path);
+        if (!inode(identity(again.get()), identity(destination.get())))
+            fail(ProjectionCause::UnsafeAncestor, "Adopted parent substituted");
+        auto checked_witnesses = LegacyAccess::resolve(*this, path, target, witness);
+        if (!inode(identity(checked_witnesses.get()), identity(dir.get())))
+            fail(ProjectionCause::OwnershipMismatch, "Adoption witness directory substituted");
+        return;
+    } catch (const LegacyError& e) {
+        fail(e.cause == LegacyCause::Durability ? ProjectionCause::DurabilityFailure : ProjectionCause::OwnershipMismatch,
+             e.what(), e.error, e.outcome);
+    }
     validate_projection_path(path); target_bytes(target); (void)witness_name(witness); revalidate();
     auto dir = container(witnesses_.get(), witness, false); const auto name = witness_name(witness);
     auto [destination, leaf] = parent(path);
