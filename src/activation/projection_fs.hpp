@@ -6,6 +6,7 @@
 #include "../store/object_store.hpp"
 #include <athena/core/locking.hpp>
 #include <functional>
+#include <dirent.h>
 #include <linux/openat2.h>
 #include <linux/stat.h>
 namespace athena::activation {
@@ -34,6 +35,10 @@ struct ProjectionIo {
     std::function<int(int, const char*, int, const char*, unsigned)> rename;
     std::function<int(int, const char*, mode_t)> mkdir;
     std::function<int(int, const char*, int)> unlink;
+    // D4 bounded reads/enumerations, owned by this context. errno conventions;
+    // callbacks never throw. Enumeration uses a fresh open-file description.
+    std::function<ssize_t(int, void*, size_t, off_t)> pread;
+    std::function<struct dirent*(DIR*)> readdir;
     ProjectionIo();
 };
 void validate_projection_path(std::string_view);
@@ -69,6 +74,7 @@ public:
 private:
     ProjectionContext(ProjectionBinding, ProjectionIo);
     friend class LegacyAccess;
+    friend class PlanAccess;
     using Fd = core::detail::Fd;
     ProjectionBinding binding_;
     ProjectionIo io_;
@@ -82,7 +88,8 @@ private:
     void unchanged(int, std::string_view, int) const;
     void private_directory(int) const;
     std::string record(int, std::string_view) const;
-    void namespace_shape() const;
+    void namespace_shape(bool d4_errors = false) const;
+    void revalidate_impl(bool d4_errors) const;
     std::pair<Fd, std::string> parent(std::string_view) const;
     Fd container(int, const WitnessReference&, bool create, bool* created = nullptr) const;
     std::string witness_name(const WitnessReference&) const;

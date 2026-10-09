@@ -2,12 +2,14 @@
 #include "projection_fs.hpp"
 #include "codec_detail.hpp"
 #include "legacy.hpp"
+#include "plan_persistence.hpp"
 #include "../store/transaction_pins.hpp"
 #include <fcntl.h>
 #include <linux/fs.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <cerrno>
+#include <algorithm>
 #include <cstring>
 
 namespace athena::activation {
@@ -37,7 +39,8 @@ ProjectionIo::ProjectionIo()
       stat([](int fd, const char* name, int flags, unsigned mask, struct statx* out) {
         return static_cast<int>(::syscall(SYS_statx, fd, name, flags, mask, out)); }),
       symlink(::symlinkat), link(::linkat), readlink(::readlinkat), fsync(::fsync),
-      rename(d::linux_syscalls().rename), mkdir(::mkdirat), unlink(::unlinkat) {}
+      rename(d::linux_syscalls().rename), mkdir(::mkdirat), unlink(::unlinkat),
+      pread(::pread), readdir(::readdir) {}
 void validate_projection_path(std::string_view path) {
     validate_relative_path(path);
     if (path == ".athena-activation" || path.starts_with(".athena-activation/"))
@@ -147,12 +150,14 @@ std::string ProjectionContext::record(int parent, std::string_view name) const {
     }
     unchanged(parent, name, fd.get()); return bytes;
 }
-void ProjectionContext::namespace_shape() const try {
-    const auto shape = a::entries(admin_.get());
-    if (shape != std::vector<std::string>{"authority.toml", "witnesses", "work"} &&
-        shape != std::vector<std::string>{"adoptions", "authority.toml", "witnesses", "work"})
+void ProjectionContext::namespace_shape(bool d4_errors) const try {
+    auto shape = PlanAccess::administration_entries(*this);
+    const bool adoptions = std::find(shape.begin(), shape.end(), "adoptions") != shape.end();
+    PlanAccess::namespace_shape(*this);
+    std::erase(shape, "plans"); std::erase(shape, ".plans-bootstrap"); std::erase(shape, "adoptions");
+    if (shape != std::vector<std::string>{"authority.toml", "witnesses", "work"})
         fail(ProjectionCause::ProjectionConflict, "Unexpected administration entries");
-    if (shape.size() == 4) LegacyAccess::namespace_shape(*this);
+    if (adoptions) LegacyAccess::namespace_shape(*this);
     for (int root : {witnesses_.get(), work_.get()}) {
         for (const auto& id : a::entries(root)) {
             ActivationId check(id);
@@ -166,6 +171,17 @@ void ProjectionContext::namespace_shape() const try {
         }
     }
 } catch (const ProjectionError&) { throw; }
+catch (const PlanPersistenceError& e) {
+    if (d4_errors) throw;
+    auto cause = e.cause == PlanPersistenceCause::AuthorityMismatch ? ProjectionCause::BindingConflict :
+        e.cause == PlanPersistenceCause::Durability ? ProjectionCause::DurabilityFailure :
+        e.cause == PlanPersistenceCause::Io || e.cause == PlanPersistenceCause::UnsupportedFilesystem ?
+            ProjectionCause::IoFailure : ProjectionCause::ProjectionConflict;
+    if (e.underlying) try { std::rethrow_exception(e.underlying); }
+    catch (const ProjectionError& original) { cause = original.cause; }
+    catch (...) { /* D1 or persistence diagnostics retain the category above. */ }
+    fail(cause, e.what(), e.error, e.outcome);
+}
 catch (const SchemaError& e) { fail(ProjectionCause::ProjectionConflict, e.what()); }
 catch (const std::exception& e) { fail(ProjectionCause::IoFailure, e.what()); }
 ProjectionContext ProjectionContext::open(const ProjectionBinding& binding, const store::ObjectStore& store, ProjectionIo io) {
@@ -183,7 +199,8 @@ ProjectionContext ProjectionContext::open(const ProjectionBinding& binding, cons
     }
     context.revalidate(); return context;
 }
-void ProjectionContext::revalidate() const {
+void ProjectionContext::revalidate() const { revalidate_impl(false); }
+void ProjectionContext::revalidate_impl(bool d4_errors) const {
     // Reopening only authority roots validates that their canonical durable locators
     // still name the pinned objects; all projection operations use retained fds.
     for (const auto& pair : {std::pair{binding_.generation_authority, generation_.get()},
@@ -202,7 +219,7 @@ void ProjectionContext::revalidate() const {
             parse_projection_binding(record(admin_.get(), "authority.toml")) != binding_)
             fail(ProjectionCause::BindingConflict, "Two-sided projection binding disagreement");
     } catch (const SchemaError& e) { fail(ProjectionCause::BindingConflict, e.what()); }
-    namespace_shape();
+    namespace_shape(d4_errors);
 }
 void ProjectionContext::barrier(int fd, bool mutated) const {
     struct stat s{};
