@@ -50,6 +50,9 @@ struct PersistenceError : std::runtime_error {
     std::string cleanup_failure; // Secondary detail never changes stage/errno/outcome.
     PersistenceError(Stage, bool, int, std::string_view);
 };
+// Failed filesystem syscalls throw std::system_error with the saved errno.
+// Logical validation failures remain runtime_error/invalid_argument; persistence
+// stages retain PersistenceError. Fd destruction never replaces a primary error.
 // Single leaf names only; no slash, dot, or dot-dot. Directory traversal never follows symlinks.
 void leaf(std::string_view);
 struct stat stat_fd(int);

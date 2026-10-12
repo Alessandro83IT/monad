@@ -369,6 +369,9 @@ struct PlanAccess::Operation {
     void preflight() const {
         context();
         try { d::require_durable_directory(p.root_.get(), p.io_.durable); }
+        catch (const std::system_error& e) {
+            throw PlanPersistenceError(Cause::Io, outcome(), e.code().value(), e.what(), std::current_exception());
+        }
         catch (const std::exception& e) {
             throw PlanPersistenceError(Cause::UnsupportedFilesystem, outcome(), 0, e.what(), std::current_exception());
         }
@@ -577,10 +580,18 @@ struct PlanAccess::Operation {
             } else {
                 auto reopened = [&] {
                     try { return d::open_directory(object.name); }
-                    catch (const std::exception& error) {
-                        const int number = errno;
+                    catch (const std::system_error& error) {
+                        // Descriptor adoption closes its raw fd before throwing.
+                        // Unwinding traversal owners can change errno as well.
+                        // Preserve the structured code rather than a later errno.
+                        const int number = error.code().value();
                         throw PlanPersistenceError(number == ENOENT || number == ENOTDIR || number == ELOOP ?
                             Cause::Substituted : Cause::Io, outcome(), number, error.what(), std::current_exception());
+                    }
+                    catch (const std::exception& error) {
+                        // Logical traversal errors have no syscall code. Global errno
+                        // may describe a secondary close during unwinding.
+                        throw PlanPersistenceError(Cause::Io, outcome(), 0, error.what(), std::current_exception());
                     }
                 }();
                 named = evidence_stat(reopened.get());

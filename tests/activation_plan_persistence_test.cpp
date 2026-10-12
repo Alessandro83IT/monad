@@ -1,4 +1,98 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// Build this branch only as the isolated CTest LD_PRELOAD provider. It exercises
+// native locator traversal (which uses the default Syscalls), not a throwing
+// ProjectionIo callback. No hook is linked into Athena's production library.
+#ifdef ATHENA_D4_LOCATOR_FAULT_LIBRARY
+#include <cerrno>
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+#include <fcntl.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+namespace {
+thread_local bool locator_active = false;
+thread_local char locator_path[4096];
+thread_local unsigned locator_hits = 0, locator_syncs = 0, locator_closes = 0;
+thread_local int locator_failed_fd = -1;
+thread_local bool locator_open_fault = false, locator_close_fault = false;
+thread_local unsigned locator_stage = 1, locator_secondary_closes = 0;
+thread_local int locator_errno = EACCES;
+}
+extern "C" void athena_d4_locator_arm(const char* path) {
+    std::snprintf(locator_path,sizeof(locator_path),"%s",path);
+    locator_hits = locator_syncs = locator_closes = 0; locator_failed_fd = -1;
+    locator_open_fault = locator_close_fault = false;
+    locator_stage = 1; locator_secondary_closes = 0; locator_errno = EACCES; locator_active = true;
+}
+extern "C" void athena_d4_filesystem_arm(const char* path,unsigned stage,int number,bool secondary) {
+    athena_d4_locator_arm(path); locator_open_fault = true;
+    locator_stage = stage; locator_errno = number; locator_close_fault = secondary;
+}
+extern "C" unsigned athena_d4_filesystem_secondary_closes() { return locator_secondary_closes; }
+extern "C" void athena_d4_locator_disarm(unsigned* counts,int* failed_fd) {
+    locator_active = false;
+    counts[0] = locator_hits; counts[1] = locator_syncs; counts[2] = locator_closes;
+    *failed_fd = locator_failed_fd;
+}
+extern "C" int close(int fd) {
+    const auto rc = static_cast<int>(::syscall(SYS_close,fd));
+    // errno after successful close is not an error channel. Deliberately change
+    // it to expose code that incorrectly reads it after exception unwinding.
+    if (locator_active && rc == 0) {
+        ++locator_closes; errno = EIO;
+        if (locator_close_fault && locator_hits) { ++locator_secondary_closes; return -1; } // fd consumed once
+    }
+    return rc;
+}
+extern "C" int fsync(int fd) {
+    const auto rc = static_cast<int>(::syscall(SYS_fsync,fd));
+    if (locator_active && rc == 0) ++locator_syncs;
+    return rc;
+}
+extern "C" int openat(int fd,const char* name,int flags,...) {
+    mode_t mode = 0;
+    if (flags & O_CREAT) {
+        va_list args; va_start(args,flags); mode = va_arg(args,int); va_end(args);
+    }
+    if (locator_active && locator_open_fault && !locator_hits && locator_syncs >= locator_stage) {
+        char link[64], path[4096];
+        std::snprintf(link,sizeof(link),"/proc/self/fd/%d",fd);
+        const auto n = ::readlink(link,path,sizeof(path)-1);
+        if (n >= 0) {
+            path[n] = 0; const auto length = static_cast<std::size_t>(n);
+            std::snprintf(path+length,sizeof(path)-length,"/%s",name);
+            if (!std::strcmp(path,locator_path)) { ++locator_hits; errno = locator_errno; return -1; }
+        }
+    }
+    return static_cast<int>(::syscall(SYS_openat,fd,name,flags,mode));
+}
+extern "C" int fcntl(int fd,int command,...) {
+    unsigned long argument = 0;
+    switch (command) {
+    case F_GETFD: case F_GETFL: case F_GETOWN: case F_GETSIG:
+    case F_GETLEASE: case F_GETPIPE_SZ: case F_GET_SEALS: break;
+    case F_DUPFD: case F_DUPFD_CLOEXEC: case F_SETFD: case F_SETFL:
+    case F_SETOWN: case F_SETSIG: case F_SETLEASE: case F_SETPIPE_SZ: case F_ADD_SEALS: {
+        va_list args; va_start(args,command); argument = va_arg(args,int); va_end(args); break;
+    }
+    default: {
+        va_list args; va_start(args,command);
+        argument = reinterpret_cast<unsigned long>(va_arg(args,void*)); va_end(args); break;
+    }
+    }
+    if (locator_active && !locator_open_fault && !locator_hits && locator_syncs == 1 && command == F_SETFD) {
+        char link[64], path[4096];
+        std::snprintf(link,sizeof(link),"/proc/self/fd/%d",fd);
+        const auto n = ::readlink(link,path,sizeof(path));
+        if (n >= 0 && static_cast<std::size_t>(n) == std::strlen(locator_path) &&
+            !std::memcmp(path,locator_path,static_cast<std::size_t>(n))) {
+            ++locator_hits; locator_failed_fd = fd; errno = EACCES; return -1;
+        }
+    }
+    return static_cast<int>(::syscall(SYS_fcntl,fd,command,argument));
+}
+#else
 #include "activation/plan_persistence.hpp"
 #include "activation/legacy.hpp"
 #include "activation_schema_support.hpp"
@@ -11,6 +105,7 @@
 #include <map>
 #include <set>
 #include <system_error>
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <linux/fs.h>
 #include <sys/mount.h>
@@ -1293,6 +1388,121 @@ void recovery_cloexec_errors() {
       std::cout << "R2-B4.1 non-CLOEXEC: Io/ENOSPC/NotMutated; IdentityMismatch/0/NotMutated; no leak\n";
     }
 }
+void locator_cloexec_error() {
+    using E = plan_detail::OperationEvidence;
+    auto arm = reinterpret_cast<void(*)(const char*)>(::dlsym(RTLD_DEFAULT,"athena_d4_locator_arm"));
+    auto disarm = reinterpret_cast<void(*)(unsigned*,int*)>(::dlsym(RTLD_DEFAULT,"athena_d4_locator_disarm"));
+    require(arm && disarm,"locator test requires its CTest-only provider");
+    Fixture f; f.publish(); auto p = f.open(); const auto baseline = descriptor_count();
+    const auto before = inode(f.published()); E e; unsigned counts[3]{}; int failed_fd = -1;
+    struct Disarm {
+        decltype(disarm) release; unsigned* counts; int* fd;
+        ~Disarm() { release(counts,fd); }
+    };
+    PlanPersistenceError rejected = [&] {
+        Disarm guard{disarm,counts,&failed_fd}; arm(f.binding.generation_authority.c_str());
+        return error([&] { PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e); },C::Io,O::OutcomeUncertain);
+    }();
+    require(counts[0] == 1 && counts[1] == 1 && counts[2] != 0 && rejected.error == EACCES,
+        "actual default-provider locator CLOEXEC errno survives successful closes changing errno");
+    require(::fcntl(failed_fd,F_GETFD) == -1 && errno == EBADF,"failed locator adoption descriptor closed");
+    require(e.barriers.empty() && e.pins.size() == 11 && descriptor_count() == baseline+11,
+        "no invalid first-barrier certificate or parallel ownership");
+    require(rejected.underlying != nullptr,"locator keeps typed diagnostic");
+    try { std::rethrow_exception(rejected.underlying); }
+    catch (const std::system_error& x) { require(x.code() == std::error_code(EACCES,std::generic_category()),"original locator error code"); }
+    e = E{}; require(descriptor_count() == baseline && inode(f.published()) == before,"locator exception RAII and namespace unchanged");
+    const auto result = PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e);
+    require(result.publication == PlanPublication::AlreadyPublished && result.outcome == O::NotMutated && e.barriers.size() == 7,
+        "fresh recovery after locator failure completes its real barriers");
+    e = E{}; require(descriptor_count() == baseline,"locator retry no leak"); f.pristine();
+    std::cout << "R3 locator CLOEXEC: injection=1, successful fsync=1, changing closes=" << counts[2]
+        << ", Io/EACCES/OutcomeUncertain, registry=0, no leak; retry=7\n";
+}
+// Function-pointer filesystem seam: real failed fstatfs, before acquisition/arm.
+int filesystem_error_number = 0;
+unsigned filesystem_query_calls = 0;
+int filesystem_query(int fd,struct statfs* out) {
+    ++filesystem_query_calls;
+    if (filesystem_error_number) { errno = filesystem_error_number; return -1; }
+    return ::fstatfs(fd,out);
+}
+std::vector<std::string> residue(const Fixture&,bool);
+void filesystem_error_integrity() {
+    using E = plan_detail::OperationEvidence;
+    auto arm = reinterpret_cast<void(*)(const char*,unsigned,int,bool)>(::dlsym(RTLD_DEFAULT,"athena_d4_filesystem_arm"));
+    auto disarm = reinterpret_cast<void(*)(unsigned*,int*)>(::dlsym(RTLD_DEFAULT,"athena_d4_locator_disarm"));
+    auto secondary = reinterpret_cast<unsigned(*)()>(::dlsym(RTLD_DEFAULT,"athena_d4_filesystem_secondary_closes"));
+    require(arm && disarm && secondary,"filesystem error test requires isolated native provider");
+    // Every D4 public entry uses the same preflight, before any mutation/arm.
+    for (int number : {EIO,EBADF,EACCES}) for (int api = 0; api < 4; ++api) {
+        Fixture f; f.publish(); ProjectionIo io; io.durable.fstatfs = filesystem_query;
+        auto p = f.open(io); const auto baseline = descriptor_count(); const auto before = residue(f,true);
+        filesystem_query_calls = 0; filesystem_error_number = number;
+        struct Reset { ~Reset() { filesystem_error_number = 0; } } reset;
+        E e;
+        const auto rejected = error([&] {
+            if (api == 0) inspect_activation_plan(p,*f.state,f.intent().activation_id);
+            else if (api == 1) ensure_plan_namespace(p,*f.state);
+            else if (api == 2) PlanEvidenceTestAccess::publish(p,*f.state,f.intent(),d1_test::plan(),e);
+            else PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e);
+        },C::Io,O::NotMutated);
+        require(rejected.error == number && filesystem_query_calls == 1 && e.barriers.empty() && e.pins.empty(),
+            "fstatfs original errno, unarmed ledger and no certificate");
+        require(rejected.underlying != nullptr,"fstatfs typed primary diagnostic");
+        try { std::rethrow_exception(rejected.underlying); }
+        catch (const std::system_error& x) { require(x.code() == std::error_code(number,std::generic_category()),"fstatfs typed code"); }
+        filesystem_error_number = 0;
+        require(descriptor_count() == baseline && residue(f,true) == before,"fstatfs no leak/mutation");
+        const auto result = PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e);
+        require(result.outcome == O::NotMutated && result.publication == PlanPublication::AlreadyPublished && e.barriers.size() == 7,
+            "fstatfs retry seven valid barriers");
+        e = E{}; require(descriptor_count() == baseline,"fstatfs retry RAII"); f.pristine();
+        std::cout << "R3-G fstatfs api=" << api << " Io/" << number << "/NotMutated registry=0; retry=7\n";
+    }
+    // Native locator traversal before arm, and after fsync 1/3/7. Error after
+    // fsync n invalidates that certificate, retaining the earlier n-1 only.
+    for (unsigned stage : {0u,1u,3u,7u}) for (int number : {EIO,EACCES,EBADF,ENOENT,ENOTDIR,ELOOP}) {
+        Fixture f; f.publish(); auto p = f.open(); const auto baseline = descriptor_count(); const auto before = residue(f,true);
+        E e; unsigned counts[3]{}; int ignored;
+        struct Disarm { decltype(disarm) release; unsigned* counts; int* fd; ~Disarm() { release(counts,fd); } };
+        const auto cause = stage && (number == ENOENT || number == ENOTDIR || number == ELOOP) ? C::Substituted : C::Io;
+        const auto rejected = [&] {
+            Disarm guard{disarm,counts,&ignored};
+            arm(f.binding.generation_authority.c_str(),stage,number,true);
+            return error([&] { PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e); },cause,
+                stage ? O::OutcomeUncertain : O::NotMutated);
+        }();
+        require(counts[0] == 1 && counts[1] == stage && counts[2] != 0 && secondary() != 0 && rejected.error == number,
+            "actual openat primary errno survives secondary failing close");
+        require(rejected.underlying != nullptr,"locator typed primary diagnostic");
+        try { std::rethrow_exception(rejected.underlying); }
+        catch (const std::system_error& x) { require(x.code() == std::error_code(number,std::generic_category()),"locator primary exception retained"); }
+        require(e.barriers.size() == (stage ? stage-1 : 0),"locator preserves completed registry, not failed validation");
+        for (std::size_t n = 0; n < e.barriers.size(); ++n) {
+            const auto& b = e.barriers[n];
+            require(b.phase == E::Phase::Recovery && e.objects.at(b.object).name ==
+                (n == 0 ? "intent.toml" : n == 1 ? "plan.toml" : n == 2 ? f.intent().activation_id.value() : n == 3 ? "plans" : n == 4 ? ".preparations" : ".athena-activation"),
+                "locator real ordered Recovery prefix");
+        }
+        e = E{}; require(descriptor_count() == baseline && residue(f,true) == before,"locator unwind no leak/mutation");
+        const auto result = PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e);
+        require(result.outcome == O::NotMutated && result.publication == PlanPublication::AlreadyPublished && e.barriers.size() == 7,"locator fresh retry");
+        e = E{}; require(descriptor_count() == baseline,"locator retry RAII"); f.pristine();
+        std::cout << "R3-G openat after=" << stage << " Cause=" << static_cast<int>(rejected.cause) << " errno=" << rejected.error
+            << " Outcome=" << static_cast<int>(rejected.outcome) << " registry=" << (stage ? stage-1 : 0) << " secondary close failures=" << secondary() << " primary retained; retry=7\n";
+    }
+    // system_error remains catch-compatible with runtime_error, while logical
+    // errors and unsupported types carry no invented syscall errno.
+    bool caught = false;
+    try { athena::core::detail::stat_fd(-1); }
+    catch (const std::runtime_error& x) {
+        const auto* typed = dynamic_cast<const std::system_error*>(&x);
+        require(typed && typed->code().value() == EBADF,"filesystem runtime_error caller compatibility"); caught = true;
+    }
+    require(caught,"actual fstat EBADF");
+    std::cout << "R3-G fstatfs after arm: NOT APPLICABLE (preflight only); 12 query failures + 24 native openat/unwind failures\n";
+}
 void recovery_capacity() {
     using E = plan_detail::OperationEvidence;
     for (bool target_first : {false,true}) {
@@ -2154,10 +2364,22 @@ int worker(int argc, char** argv) {
     ProjectionBinding binding{i.projection_id, i.generation_authority, i.store_authority, i.projection_root};
     athena::store::ObjectStore store(base / "store"); ProjectionIo io;
     int calls = 0;
-    if (action == "kill") {
-        if (kind == "fsync") io.fsync = [&](int fd) { const int rc = ::fsync(fd); if (++calls == at) notify_and_wait(report, gate); return rc; };
+    if (action == "kill" || action == "kill-recovery") {
+        if (kind == "fsync" || kind == "fsync-before") io.fsync = [&](int fd) {
+            ++calls;
+            if (kind == "fsync-before" && calls == at) notify_and_wait(report, gate);
+            const int rc = ::fsync(fd);
+            require(rc == 0,"real barrier before crash notification");
+            if (kind == "fsync" && calls == at) notify_and_wait(report, gate);
+            return rc;
+        };
         if (kind == "mkdir") { const auto direct = io.mkdir;
             io.mkdir = [&, direct](int fd, const char* name, mode_t mode) { const int rc = direct(fd, name, mode); if (++calls == at) notify_and_wait(report, gate); return rc; }; }
+        if (kind == "mkdir-before") { const auto direct = io.mkdir;
+            io.mkdir = [&, direct](int fd, const char* name, mode_t mode) {
+                if (++calls == at) notify_and_wait(report,gate);
+                return direct(fd,name,mode);
+            }; }
         if (kind == "rename-before" || kind == "rename-after") { const auto direct = io.rename;
             io.rename = [&, direct](int a, const char* n, int b, const char* m, unsigned flags) {
                 ++calls; if (kind == "rename-before" && calls == at) notify_and_wait(report, gate);
@@ -2176,7 +2398,19 @@ int worker(int argc, char** argv) {
         }
     }
     auto p = ProjectionContext::open(binding, store, io);
-    try { publish_activation_plan(p, state, i, plan); return 0; }
+    if (action == "kill-recovery" || action == "retry-recovery") {
+        const PlanIdentity expected{i.activation_id,derive_plan_digest(i,plan)};
+        const auto result = recover_activation_plan(p,state,expected);
+        require(result.publication == PlanPublication::AlreadyPublished && result.outcome == O::NotMutated &&
+            result.document.digest == expected.digest,"fresh exec recovery uses independent request identity");
+        if (action == "kill-recovery" && kind == "complete") notify_and_wait(report,gate);
+        return 0;
+    }
+    try {
+        publish_activation_plan(p, state, i, plan);
+        if (action == "kill" && kind == "complete") notify_and_wait(report,gate);
+        return 0;
+    }
     catch (const PlanPersistenceError& e) {
         if (e.cause == C::PreparationConflict || e.cause == C::BootstrapConflict) return 20;
         if (e.cause == C::PublicationConflict) return 21;
@@ -2198,10 +2432,14 @@ pid_t spawn_worker(const Fixture& f, std::string kind, int at, int report, int g
 int wait_worker(pid_t pid) { int status = 0; require(::waitpid(pid, &status, 0) == pid && WIFEXITED(status), "worker normal exit"); return WEXITSTATUS(status); }
 void kills() {
     std::vector<std::pair<std::string, int>> events;
-    for (int n = 1; n <= 22; ++n) events.emplace_back("fsync", n);
+    events.emplace_back("mkdir-before",1);
+    for (int n = 1; n <= 22; ++n) {
+        events.emplace_back("fsync-before",n); events.emplace_back("fsync", n);
+    }
     for (int n = 1; n <= 3; ++n) events.emplace_back("mkdir", n);
     for (int n = 1; n <= 2; ++n) { events.emplace_back("rename-before", n); events.emplace_back("rename-after", n); }
     events.emplace_back("partial", 1);
+    events.emplace_back("complete",0);
     for (const auto& [kind, at] : events) {
         Fixture f; f.state.reset(); // No inherited State open-file description.
         int report[2], gate[2]; require(::pipe(report) == 0 && ::pipe(gate) == 0, "kill pipes");
@@ -2211,16 +2449,54 @@ void kills() {
         require(::kill(pid, SIGKILL) == 0, "SIGKILL worker"); int status;
         require(::waitpid(pid, &status, 0) == pid && WIFSIGNALED(status) && WTERMSIG(status) == SIGKILL, "killed independently locked worker");
         ::close(report[0]); ::close(gate[1]);
+        const auto original = residue(f,true);
+        const auto target = fs::exists(f.prepared()) ? f.prepared() : f.published();
+        const auto target_inode = fs::exists(target) ? std::optional<ino_t>{inode(target)} : std::nullopt;
         const auto retry = spawn_worker(f, "none", 0, -1, -1, "same", "retry");
-        const bool incomplete = (kind == "mkdir" && at != 2) || kind == "partial" || (kind == "fsync" && at == 9);
+        const bool incomplete = (kind == "mkdir" && at != 2) || kind == "partial" ||
+            ((kind == "fsync" || kind == "fsync-before") && at == 9);
         require(wait_worker(retry) == (incomplete ? 20 : 0), "fresh exec retry classifies actual residue");
         f.state = std::make_unique<ProjectionState>(f.binding.generation_authority);
         auto p = f.open();
         if (!incomplete) require(recover_activation_plan(p, *f.state, f.expected()).outcome == O::NotMutated, "fresh recovery after process death");
         else require(!fs::exists(f.published()), "incomplete state never published");
+        if (incomplete) require(residue(f,true) == original,"failed crash retry preserves incomplete instances and bytes");
+        else if (target_inode) require(inode(f.published()) == *target_inode,"successful crash retry preserves the container inode");
         f.pristine();
     }
-    std::cout << "SIGKILL qualifies process-death mechanics, not reboot/power-loss durability\n";
+    std::cout << "R3: " << events.size() << " publication SIGKILL points; independent exec State, residue and container identity; process-death mechanics, not reboot/power-loss durability\n";
+}
+// N: process death only, not power loss. Workers exec and acquire their own
+// State descriptions; the parent releases its lock before starting each worker.
+void recovery_kills() {
+    std::vector<std::pair<std::string,int>> events;
+    for (int n = 1; n <= 7; ++n) {
+        events.emplace_back("fsync-before",n); events.emplace_back("fsync",n);
+    }
+    events.emplace_back("complete",0);
+    for (const auto& [kind,at] : events) {
+        Fixture f; f.publish(); const auto original = residue(f,true); f.state.reset();
+        int report[2], gate[2]; require(::pipe(report) == 0 && ::pipe(gate) == 0,"recovery kill pipes");
+        const auto pid = spawn_worker(f,kind,at,report[1],gate[0],"same","kill-recovery");
+        ::close(report[1]); ::close(gate[0]); char reached;
+        require(::read(report[0],&reached,1) == 1,"recovery reached actual barrier/completion");
+        require(::kill(pid,SIGKILL) == 0,"kill independently locked recovery"); int status;
+        require(::waitpid(pid,&status,0) == pid && WIFSIGNALED(status) && WTERMSIG(status) == SIGKILL,"recovery SIGKILL confirmed");
+        ::close(report[0]); ::close(gate[1]);
+        require(residue(f,true) == original,"recovery crash preserves all D4 names/instances/bytes"); f.pristine();
+        require(wait_worker(spawn_worker(f,"none",0,-1,-1,"same","retry-recovery")) == 0,"fresh exec recovery after kill");
+        f.state = std::make_unique<ProjectionState>(f.binding.generation_authority);
+        ProjectionIo io; std::vector<std::string> order;
+        io.fsync = [&](int fd) { const auto rc = ::fsync(fd); if (!rc) order.push_back(relative(f,fd)); return rc; };
+        auto p = f.open(io); const auto baseline = descriptor_count();
+        for (int retry = 0; retry < 2; ++retry) {
+            order.clear(); const auto result = recover_activation_plan(p,*f.state,f.expected());
+            require(result.publication == PlanPublication::AlreadyPublished && result.outcome == O::NotMutated &&
+                order == recovery_order && descriptor_count() == baseline,"idempotent recovery completes seven real barriers without leaks");
+        }
+        require(residue(f,true) == original,"retry retains original publication and document identities"); f.pristine();
+    }
+    std::cout << "R3: 15 recovery SIGKILL points (before/after all seven fsyncs, after completion); fresh exec State, exact residue, ordered idempotent retries, no leaks\n";
 }
 void processes() {
     for (auto variant : {"same", "different-pair", "different-id", "capacity-same", "capacity-different-id"}) {
@@ -2264,6 +2540,9 @@ int main(int argc, char** argv) {
         const std::string mode = argc > 1 ? argv[1] : "ordinary";
         if (mode == "ordinary") ordinary();
         else if (mode == "recovery-cloexec") recovery_cloexec_errors();
+        else if (mode == "locator-cloexec") locator_cloexec_error();
+        else if (mode == "filesystem-errors") filesystem_error_integrity();
+        else if (mode == "recovery-kills") recovery_kills();
         else if (mode == "recovery-evidence") { recovery_evidence(); recovery_substitutions(); }
         else if (mode == "recovery-capacity") recovery_capacity();
         else if (mode == "recovery-targeted") { recovery_evidence(); recovery_substitutions(); substitutions(); final_read_substitutions(); late_binding_changes(true); eof_inventory_changes(); concluding_callback_changes(); boundaries("recovery-targeted"); }
@@ -2292,3 +2571,5 @@ int main(int argc, char** argv) {
         else throw std::runtime_error("unknown test mode");
     });
 }
+
+#endif // ATHENA_D4_LOCATOR_FAULT_LIBRARY

@@ -20,8 +20,9 @@
 
 namespace athena::core::detail {
 namespace {
-[[noreturn]] void fail(const std::string& context) {
-    throw std::runtime_error(context + ": " + std::strerror(errno));
+[[noreturn]] void fail(std::string_view context, int error) {
+    // Capture the syscall error before allocating diagnostics or unwinding Fds.
+    throw std::system_error(error, std::generic_category(), std::string(context));
 }
 int rename_linux(int a, const char* x, int b, const char* y, unsigned flags) {
     return flags ? static_cast<int>(::syscall(SYS_renameat2, a, x, b, y, flags)) : ::renameat(a, x, b, y);
@@ -31,7 +32,7 @@ const Syscalls direct{::write, ::fsync, rename_linux, ::flock, ::fstat, ::getran
 void durable_parent(int fd, const Syscalls& ops) {
     directory(fd);
     struct statfs fs{};
-    if (ops.fstatfs(fd, &fs) < 0) fail("durability filesystem validation");
+    if (ops.fstatfs(fd, &fs) < 0) fail("durability filesystem validation", errno);
     switch (fs.f_type) {
     case EXT4_SUPER_MAGIC: case XFS_SUPER_MAGIC: case BTRFS_SUPER_MAGIC:
     case TMPFS_MAGIC: return;
@@ -69,7 +70,7 @@ void leaf(std::string_view name) {
     if (name.empty() || name == "." || name == ".." || name.find('/') != name.npos || name.find('\0') != name.npos)
         throw std::invalid_argument("unsafe directory-relative leaf");
 }
-struct stat stat_fd(int fd) { struct stat s{}; if (::fstat(fd, &s) < 0) fail("fstat descriptor"); return s; }
+struct stat stat_fd(int fd) { struct stat s{}; if (::fstat(fd, &s) < 0) fail("fstat descriptor", errno); return s; }
 void regular(int fd) { if (!S_ISREG(stat_fd(fd).st_mode)) throw std::runtime_error("descriptor is not a regular file"); }
 void directory(int fd) { if (!S_ISDIR(stat_fd(fd).st_mode)) throw std::runtime_error("descriptor is not a directory"); }
 Fd open_at(int parent, std::string_view name, int flags, mode_t mode) {
@@ -77,18 +78,18 @@ Fd open_at(int parent, std::string_view name, int flags, mode_t mode) {
     if (flags & O_PATH) throw std::invalid_argument("openat O_PATH is unsupported by owned file/directory primitives");
     const std::string n(name);
     int fd = ::openat(parent, n.c_str(), flags | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK, mode);
-    if (fd < 0) fail("openat " + n);
+    if (fd < 0) { const int error = errno; fail("openat " + n, error); }
     return Fd::adopt(fd);
 }
 void mkdir_at(int parent, std::string_view name, mode_t mode) {
     directory(parent); leaf(name); const std::string n(name);
-    if (::mkdirat(parent, n.c_str(), mode) < 0 && errno != EEXIST) fail("mkdirat " + n);
+    if (::mkdirat(parent, n.c_str(), mode) < 0 && errno != EEXIST) { const int error = errno; fail("mkdirat " + n, error); }
     auto fd = open_at(parent, name, O_RDONLY | O_DIRECTORY); directory(fd.get());
 }
 Fd open_directory(const std::filesystem::path& path, bool create, bool trusted_ancestry) {
     if (!path.is_absolute()) throw std::invalid_argument("directory path must be absolute");
     int root_fd = ::open("/", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
-    if (root_fd < 0) fail("open root directory");
+    if (root_fd < 0) fail("open root directory", errno);
     auto fd = Fd::adopt(root_fd);
     // Namespace-visible root ownership may be mapped (including an overflow uid).
     const uid_t root_owner = stat_fd(fd.get()).st_uid;
@@ -110,7 +111,7 @@ Fd open_directory(const std::filesystem::path& path, bool create, bool trusted_a
 }
 void unlink_at(int parent, std::string_view name, bool is_directory) {
     directory(parent); leaf(name); const std::string n(name);
-    if (::unlinkat(parent, n.c_str(), is_directory ? AT_REMOVEDIR : 0) < 0) fail("unlinkat " + n);
+    if (::unlinkat(parent, n.c_str(), is_directory ? AT_REMOVEDIR : 0) < 0) { const int error = errno; fail("unlinkat " + n, error); }
 }
 void complete_write(int fd, std::string_view data, const Syscalls& ops) {
     while (!data.empty()) {
@@ -148,7 +149,7 @@ void atomic_replace(int parent, std::string_view destination, std::string_view d
         while (offset < random.size()) {
             const auto count = (ops.random ? ops.random : ::getrandom)(random.data() + offset, random.size() - offset, 0);
             if (count < 0 && errno == EINTR) continue;
-            if (count <= 0) { if (count == 0) errno = EIO; fail("temporary name randomness"); }
+            if (count <= 0) { if (count == 0) errno = EIO; fail("temporary name randomness", errno); }
             if (static_cast<size_t>(count) > random.size() - offset) throw std::logic_error("random returned invalid count");
             offset += static_cast<size_t>(count);
         }
@@ -158,7 +159,7 @@ void atomic_replace(int parent, std::string_view destination, std::string_view d
         if (temp == dest) continue;
         int raw = ::openat(parent, temp.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
         if (raw >= 0) { cleanup.active = true; fd = Fd::adopt(raw, ops); break; }
-        if (errno != EEXIST) fail("create temporary");
+        if (errno != EEXIST) fail("create temporary", errno);
     }
     complete_write(fd.get(), data, ops); file_barrier(fd.get(), ops);
     if (ops.rename(parent, temp.c_str(), parent, dest.c_str(), 0) < 0)
@@ -174,7 +175,7 @@ Fd open_durable_directory(const std::filesystem::path& path) {
         const auto name = part.string(); leaf(name);
         struct stat s{};
         if (::fstatat(fd.get(), name.c_str(), &s, AT_SYMLINK_NOFOLLOW) < 0) {
-            if (errno != ENOENT) fail("durable ancestor inspection");
+            if (errno != ENOENT) fail("durable ancestor inspection", errno);
             require_durable_directory(fd.get()); // Before any mutation.
             mkdir_at(fd.get(), name);
             auto next = open_at(fd.get(), name, O_RDONLY | O_DIRECTORY);
@@ -194,7 +195,7 @@ std::string private_directory(int parent, const Syscalls& ops) {
         while (offset < bytes.size()) {
             auto n = (ops.random ? ops.random : ::getrandom)(bytes.data() + offset, bytes.size() - offset, 0);
             if (n < 0 && errno == EINTR) continue;
-            if (n <= 0) { if (n == 0) errno = EIO; fail("private directory randomness"); }
+            if (n <= 0) { if (n == 0) errno = EIO; fail("private directory randomness", errno); }
             if (static_cast<size_t>(n) > bytes.size() - offset) throw std::logic_error("random returned invalid count");
             offset += static_cast<size_t>(n);
         }
@@ -202,35 +203,35 @@ std::string private_directory(int parent, const Syscalls& ops) {
         constexpr char hex[] = "0123456789abcdef";
         for (auto b : bytes) { name += hex[b >> 4]; name += hex[b & 15]; }
         if ((ops.mkdir ? ops.mkdir : ::mkdirat)(parent, name.c_str(), 0700) == 0) return name;
-        if (errno != EEXIST) fail("private mkdirat");
+        if (errno != EEXIST) fail("private mkdirat", errno);
     }
 }
 namespace {
 void remove_private(int parent, const std::string& name, dev_t device, const Syscalls& ops) {
     auto node = open_at(parent, name, O_RDONLY | O_DIRECTORY);
     if (stat_fd(node.get()).st_dev != device) throw std::runtime_error("private cleanup mount crossing");
-    if ((ops.chmod ? ops.chmod : ::fchmod)(node.get(), 0700) < 0) fail("private cleanup chmod");
+    if ((ops.chmod ? ops.chmod : ::fchmod)(node.get(), 0700) < 0) fail("private cleanup chmod", errno);
     int raw = ::openat(node.get(), ".", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
-    if (raw < 0) fail("private cleanup directory stream");
+    if (raw < 0) fail("private cleanup directory stream", errno);
     DIR* stream = ::fdopendir(raw);
-    if (!stream) { ::close(raw); fail("private cleanup fdopendir"); }
+    if (!stream) { const int error = errno; ::close(raw); fail("private cleanup fdopendir", error); }
     auto closer = [](DIR* p) { ::closedir(p); };
     std::unique_ptr<DIR, decltype(closer)> owner(stream, closer);
     std::vector<std::string> children;
     for (;;) {
         errno = 0; auto* entry = ::readdir(stream);
-        if (!entry) { if (errno) fail("private cleanup readdir"); break; }
+        if (!entry) { if (errno) fail("private cleanup readdir", errno); break; }
         std::string child(entry->d_name);
         if (child != "." && child != "..") children.push_back(std::move(child));
     }
     std::sort(children.begin(), children.end());
     for (const auto& child : children) {
         struct stat s{};
-        if (::fstatat(node.get(), child.c_str(), &s, AT_SYMLINK_NOFOLLOW) < 0) fail("private cleanup stat");
+        if (::fstatat(node.get(), child.c_str(), &s, AT_SYMLINK_NOFOLLOW) < 0) fail("private cleanup stat", errno);
         if (S_ISDIR(s.st_mode)) remove_private(node.get(), child, device, ops);
-        else if ((ops.unlink ? ops.unlink : ::unlinkat)(node.get(), child.c_str(), 0) < 0) fail("private cleanup unlink");
+        else if ((ops.unlink ? ops.unlink : ::unlinkat)(node.get(), child.c_str(), 0) < 0) fail("private cleanup unlink", errno);
     }
-    if ((ops.unlink ? ops.unlink : ::unlinkat)(parent, name.c_str(), AT_REMOVEDIR) < 0) fail("private cleanup rmdir");
+    if ((ops.unlink ? ops.unlink : ::unlinkat)(parent, name.c_str(), AT_REMOVEDIR) < 0) fail("private cleanup rmdir", errno);
 }
 }
 std::string cleanup_private_tree(int parent, std::string_view name, const Syscalls& ops) noexcept {
@@ -239,7 +240,7 @@ std::string cleanup_private_tree(int parent, std::string_view name, const Syscal
         struct stat status{};
         if (::fstatat(parent, private_name.c_str(), &status, AT_SYMLINK_NOFOLLOW) < 0) {
             if (errno == ENOENT) return {}; // Rename may already have consumed private staging.
-            fail("private cleanup inspection");
+            fail("private cleanup inspection", errno);
         }
         remove_private(parent, private_name, stat_fd(parent).st_dev, ops); return {};
     }
@@ -272,7 +273,7 @@ Publication publish_noreplace(int parent, std::string_view prepared, std::string
     const std::string source(prepared), dest(destination);
     if (source == dest) throw std::invalid_argument("publication source equals destination");
     struct stat s{};
-    if (::fstatat(parent, source.c_str(), &s, AT_SYMLINK_NOFOLLOW) < 0) fail("prepared entry validation");
+    if (::fstatat(parent, source.c_str(), &s, AT_SYMLINK_NOFOLLOW) < 0) fail("prepared entry validation", errno);
     if (!S_ISREG(s.st_mode) && !S_ISDIR(s.st_mode)) throw std::runtime_error("unsafe prepared entry type");
     if (ops.rename(parent, source.c_str(), parent, dest.c_str(), RENAME_NOREPLACE) < 0) {
         const int e = errno;

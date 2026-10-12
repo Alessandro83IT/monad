@@ -196,7 +196,21 @@ set_tests_properties(activation_schema_test PROPERTIES TIMEOUT 180)
 
 set_tests_properties(activation_projection_fs_test PROPERTIES TIMEOUT 60)
 set_tests_properties(activation_plan_persistence_test PROPERTIES TIMEOUT 120)
-foreach(mode IN ITEMS faults limits bounds kills processes privileged publication-capacity recovery-capacity recovery-cloexec)
+# Native locator adoption uses the default filesystem provider. Keep its fault
+# provider confined to this one CTest process; it is never linked into Athena.
+add_library(athena_d4_locator_fault SHARED tests/activation_plan_persistence_test.cpp)
+target_compile_definitions(athena_d4_locator_fault PRIVATE ATHENA_D4_LOCATOR_FAULT_LIBRARY)
+target_link_libraries(activation_plan_persistence_test PRIVATE ${CMAKE_DL_LIBS})
+add_dependencies(activation_plan_persistence_test athena_d4_locator_fault)
+add_test(NAME activation_plan_persistence_locator-cloexec_test
+    COMMAND ${CMAKE_COMMAND} -E env "LD_PRELOAD=$<TARGET_FILE:athena_d4_locator_fault>"
+        $<TARGET_FILE:activation_plan_persistence_test> locator-cloexec)
+set_tests_properties(activation_plan_persistence_locator-cloexec_test PROPERTIES TIMEOUT 180)
+add_test(NAME activation_plan_persistence_filesystem-errors_test
+    COMMAND ${CMAKE_COMMAND} -E env "LD_PRELOAD=$<TARGET_FILE:athena_d4_locator_fault>"
+        $<TARGET_FILE:activation_plan_persistence_test> filesystem-errors)
+set_tests_properties(activation_plan_persistence_filesystem-errors_test PROPERTIES TIMEOUT 180)
+foreach(mode IN ITEMS faults limits bounds kills processes privileged publication-capacity recovery-capacity recovery-cloexec recovery-kills)
     add_test(NAME activation_plan_persistence_${mode}_test COMMAND activation_plan_persistence_test ${mode})
     set_tests_properties(activation_plan_persistence_${mode}_test PROPERTIES TIMEOUT 180)
 endforeach()
