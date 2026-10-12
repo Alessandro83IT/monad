@@ -715,7 +715,19 @@ void evidence_structural() {
             // Contents of private foreign residue remain deliberately opaque.
             write(path/"opaque", "private residue");
         } else if (perturbation == 1) {
-            write(path/"plan.toml", "invalid but foreign"); // Same inode and bytes; changed file observations.
+            const auto file = path / "plan.toml";
+            struct stat before{};
+            require(::stat(file.c_str(), &before) == 0,
+                    "stat foreign plan before rewrite");
+
+            write(file, "invalid but foreign"); // Preserve inode, size and bytes.
+
+            const timespec times[2] = {
+                {0, UTIME_OMIT},
+                {before.st_mtim.tv_sec + 1, before.st_mtim.tv_nsec}
+            };
+            require(::utimensat(AT_FDCWD, file.c_str(), times, 0) == 0,
+                    "force deterministic foreign plan mtime change");
         } else if (perturbation == 2) {
             require(::rename(path.c_str(), (f.base/"retired-foreign").c_str()) == 0, "retain original foreign container inode");
             directory(path); write(path/"intent.toml", "invalid but foreign"); write(path/"plan.toml", "invalid but foreign");
@@ -856,7 +868,22 @@ void inspection_evidence() {
                     require(::rename(f.plans().c_str(), (f.base/"retired-plans").c_str()) == 0, "retain plans predecessor");
                     fs::copy(f.base/"retired-plans", f.plans(), fs::copy_options::recursive); changed = true;
                 } else if (scenario == "foreign-insertion") { write(foreign/"status.toml", "injected"); changed = true; }
-                else if (scenario == "foreign-file") { write(foreign/"plan.toml", "changed foreign bytes"); changed = true; }
+                else if (scenario == "foreign-file") {
+                    const auto file = foreign / "plan.toml";
+                    struct stat before{};
+                    require(::stat(file.c_str(), &before) == 0,
+                            "stat foreign file before inspection mutation");
+
+                    write(file, "changed foreign bytes");
+
+                    const timespec times[2] = {
+                        {0, UTIME_OMIT},
+                        {before.st_mtim.tv_sec + 1, before.st_mtim.tv_nsec}
+                    };
+                    require(::utimensat(AT_FDCWD, file.c_str(), times, 0) == 0,
+                            "force foreign inspection mtime change");
+                    changed = true;
+                }
             }
             return direct_read(fd,bytes,size,offset);
         };
