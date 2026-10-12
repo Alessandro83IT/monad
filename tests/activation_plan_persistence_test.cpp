@@ -161,6 +161,7 @@ struct Fixture {
     athena::store::ObjectStore store;
     std::unique_ptr<ProjectionState> state;
     std::map<fs::path, struct stat> protected_files;
+    bool preserve_on_cleanup = false;
     static fs::path temporary() { char b[] = "/tmp/athena-d4-XXXXXX"; auto p = ::mkdtemp(b); require(p, "mkdtemp"); return p; }
     Fixture() : base(temporary()), binding{d1_test::projection_id, (base / "generations").native(),
         (base / "store").native(), (base / "projection").native()}, store(base / "store") {
@@ -176,7 +177,7 @@ struct Fixture {
             struct stat s{}; require(::lstat(path.c_str(), &s) == 0, "protected fixture observation"); protected_files.emplace(path, s);
         }
     }
-    ~Fixture() { state.reset(); fs::remove_all(base); }
+    ~Fixture() { state.reset(); if (!preserve_on_cleanup) fs::remove_all(base); }
     fs::path admin() const { return base / "projection/.athena-activation"; }
     fs::path plans() const { return admin() / "plans"; }
     fs::path published() const { return plans() / d1_test::id.value(); }
@@ -2554,11 +2555,32 @@ int privileged() {
     projection_error([&] { p.revalidate(); }, ProjectionCause::ProjectionConflict);
     require(::chown(file.c_str(), 0, -1) == 0, "restore qualification fixture");
     directory(f.base / "mount-source");
-    if (::mount((f.base / "mount-source").c_str(), (f.plans() / ".preparations").c_str(), nullptr, MS_BIND, nullptr) < 0) {
+    struct MountGuard {
+        Fixture& fixture;
+        fs::path target;
+        bool mounted = false;
+        ~MountGuard() noexcept {
+            if (mounted && ::umount(target.c_str()) != 0) {
+                const int number = errno;
+                // Leave the fixture on disk rather than let remove_all traverse
+                // a mount that could not be detached.
+                fixture.preserve_on_cleanup = true;
+                std::fprintf(stderr, "ERROR: umount '%s' during cleanup failed: %s (errno %d); preserving fixture '%s'\n",
+                    target.c_str(), std::strerror(number), number, fixture.base.c_str());
+            }
+        }
+        void unmount() {
+            if (::umount(target.c_str()) != 0)
+                throw std::system_error(errno, std::generic_category(), "unmount fixture");
+            mounted = false;
+        }
+    } mount_guard{f, f.plans() / ".preparations"};
+    if (::mount((f.base / "mount-source").c_str(), mount_guard.target.c_str(), nullptr, MS_BIND, nullptr) < 0) {
         std::cout << "SKIP: real owner case executed; CAP_SYS_ADMIN unavailable for bind-mount qualification\n"; return 77;
     }
+    mount_guard.mounted = true;
     rejects([&] { p.revalidate(); });
-    require(::umount((f.plans() / ".preparations").c_str()) == 0, "unmount fixture");
+    mount_guard.unmount();
     return 0;
 }
 }
