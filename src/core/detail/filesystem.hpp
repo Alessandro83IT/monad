@@ -27,7 +27,9 @@ const Syscalls& linux_syscalls();
 class Fd {
 public:
     Fd() noexcept = default;
-    static Fd adopt(int fd, const Syscalls& = linux_syscalls()); // Explicit ownership transfer; enforces CLOEXEC.
+    // Explicit ownership transfer; enforces CLOEXEC. On CLOEXEC failure, closes
+    // the descriptor once and throws std::system_error with the saved errno.
+    static Fd adopt(int fd, const Syscalls& = linux_syscalls());
     ~Fd();
     Fd(const Fd&) = delete;
     Fd& operator=(const Fd&) = delete;

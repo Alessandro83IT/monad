@@ -49,7 +49,9 @@ const Syscalls& linux_syscalls() { return direct; }
 Fd Fd::adopt(int fd, const Syscalls& ops) {
     if (fd < 0) throw std::invalid_argument("cannot adopt invalid descriptor");
     if ((ops.cloexec ? ops.cloexec(fd) : cloexec_linux(fd)) < 0) {
-        const int error = errno; ::close(fd); errno = error; fail("descriptor CLOEXEC");
+        const int error = errno;
+        ::close(fd); // Adoption failed: no Fd owns this descriptor.
+        throw std::system_error(error, std::generic_category(), "descriptor CLOEXEC");
     }
     return Fd(fd);
 }

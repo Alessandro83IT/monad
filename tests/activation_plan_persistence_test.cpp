@@ -10,6 +10,7 @@
 #include <memory>
 #include <map>
 #include <set>
+#include <system_error>
 #include <fcntl.h>
 #include <linux/fs.h>
 #include <sys/mount.h>
@@ -24,6 +25,10 @@ struct PlanEvidenceTestAccess {
     static auto publish(ProjectionContext& p, const ProjectionState& s,
                         const ActivationIntent& i, const ActivationPlan& a, plan_detail::OperationEvidence& e) {
         return PlanAccess::publish_with_evidence(p, s, i, a, &e);
+    }
+    static auto recover(ProjectionContext& p, const ProjectionState& s,
+                        const PlanIdentity& expected, plan_detail::OperationEvidence& e) {
+        return PlanAccess::recover_with_evidence(p, s, expected, &e);
     }
     static auto acquire(const ProjectionContext& p, const ProjectionState& s,
                         std::optional<ActivationId> target = {}) {
@@ -1062,7 +1067,292 @@ void publication_registry_faults() {
     }
     std::cout << "R2-B3: 24 mandatory-field/registry regressions, 4 rename error transitions, durable-bootstrap ledger, 3 EMFILE cases\n";
 }
-void ordinary() { publication_evidence(); publication_registry_faults(); evidence_foundation(); evidence_structural(); evidence_statx_fields(); inspection_evidence(); bootstrap(); bootstrap_evidence(); mechanics(); residues(); identity_errors(); validation_scope(); adoption_coexistence(); security(); error_boundaries(); }
+// N/P: the real standalone recovery runner exports evidence only after exit.
+void recovery_evidence() {
+    using E = plan_detail::OperationEvidence;
+    for (unsigned failure = 0; failure <= 7; ++failure) {
+        Fixture f; f.publish();
+        ProjectionIo io; auto sync = io.fsync; auto open = io.open; auto stat = io.stat;
+        bool active = false; std::size_t peak = 0;
+        auto measure = [&] { if (active) peak = std::max(peak,descriptor_count()); };
+        io.open = [&](int fd,const char* leaf,const open_how& how) { auto rc = open(fd,leaf,how); measure(); return rc; };
+        io.stat = [&](int fd,const char* leaf,int flags,unsigned mask,struct statx* out) { measure(); return stat(fd,leaf,flags,mask,out); };
+        std::vector<struct statx> actual; std::vector<std::string> paths; unsigned calls = 0;
+        io.mkdir = [](int, const char*, mode_t) { throw std::runtime_error("recovery mkdir"); return -1; };
+        io.rename = [](int, const char*, int, const char*, unsigned) { throw std::runtime_error("recovery rename"); return -1; };
+        io.durable.write = [](int, const void*, size_t) -> ssize_t { throw std::runtime_error("recovery write"); };
+        io.fsync = [&](int fd) {
+            if (++calls == failure) { errno = EIO; return -1; }
+            struct statx v{}; require(::statx(fd, "", AT_EMPTY_PATH, STATX_BASIC_STATS|STATX_MNT_ID, &v) == 0, "recovery oracle stat");
+            auto rc = sync(fd); if (!rc) { actual.push_back(v); paths.push_back(relative(f,fd)); } return rc;
+        };
+        auto p = f.open(io); const auto baseline = descriptor_count(); E e; active = true;
+        if (failure) {
+            auto rejected = error([&] { PlanEvidenceTestAccess::recover(p, *f.state, f.expected(), e); }, C::Durability, O::OutcomeUncertain);
+            require(rejected.error == EIO && calls == failure && e.barriers.size() == failure-1, "recovery partial registry");
+        } else {
+            auto result = PlanEvidenceTestAccess::recover(p, *f.state, f.expected(), e);
+            require(result.publication == PlanPublication::AlreadyPublished && result.outcome == O::NotMutated && calls == 7, "recovery disposition");
+        }
+        require(e.target && e.target->independent_expected && e.target->independent_expected->digest == f.expected().digest &&
+            e.pins.size() == 11 && e.transitions.empty() && e.inventories.size() == 4, "one recovery owner and original batches");
+        require(std::all_of(e.inventories.begin(),e.inventories.end(),[&](const auto& b) { return b.phase == E::Phase::Recovery && b.scope == e.scope; }), "recovery batch phase/scope");
+        require(actual.size() == e.barriers.size() && std::equal(paths.begin(),paths.end(),recovery_order.begin()), "recovery real order");
+        const auto root = *e.find({},f.binding.projection_root), admin = *e.find(root,".athena-activation");
+        const auto plans = *e.find(admin,"plans"), prep = *e.find(plans,".preparations");
+        const std::vector<E::ObjectId> order{e.target->intent,e.target->plan,e.target->container,plans,prep,admin,root};
+        for (std::size_t n = 0; n < actual.size(); ++n) {
+            const auto& b = e.barriers[n];
+            require(b.phase == E::Phase::Recovery && b.object == order[n] && E::same_identity(actual[n],b.instance) &&
+                E::same_identity(b.instance,e.objects[b.object].metadata), "recovery registry actual inode/object/phase");
+        }
+        require(peak-baseline <= 15,"recovery success/fsync-failure fixed fd bound");
+        active = false;
+        auto moved = std::move(e); require(descriptor_count() == baseline+11 && moved.inventories.front().scope == moved.scope, "move after success/error retains pins and provenance");
+        e = std::move(moved); e = E{}; require(descriptor_count() == baseline, "recovery RAII after move");
+        auto fresh = f.open();
+        require(recover_activation_plan(fresh, *f.state, f.expected()).outcome == O::NotMutated, "fresh idempotent retry after interruption");
+        f.pristine();
+    }
+    // Missing public target never adopts private documents, including malformed ones.
+    for (int state = 0; state < 9; ++state) {
+        Fixture f;
+        if (state) { auto q = f.open(); ensure_plan_namespace(q,*f.state); }
+        if (state == 2 || state == 3) { directory(f.prepared()); write(f.prepared()/"intent.toml",state == 2 ? "opaque partial" : serialize(f.intent()));
+            if (state == 3) write(f.prepared()/"plan.toml",serialize(d1_test::plan())); }
+        if (state >= 4) f.publish();
+        ProjectionIo io; const auto read = io.pread;
+        io.pread = [&](int fd,void* b,size_t n,off_t at) -> ssize_t {
+            require(fs::path(fdpath(fd)).parent_path() != f.prepared(),"recovery leaves private document bytes opaque");
+            return read(fd,b,n,at);
+        };
+        auto p = f.open(io);
+        if (state == 5) { directory(f.admin()/".plans-bootstrap"); directory(f.admin()/".plans-bootstrap/.preparations"); }
+        if (state == 6) directory(f.prepared());
+        if (state == 7) require(fs::remove(f.published()/"plan.toml"),"incomplete publication fixture");
+        if (state == 8) require(::chmod((f.published()/"intent.toml").c_str(),0644) == 0,"unsafe publication fixture");
+        auto expected = f.expected(); if (state == 4) expected.digest = PlanDigest(d1_test::digest('c'));
+        E e; const auto baseline = descriptor_count();
+        auto rejected = error([&] { PlanEvidenceTestAccess::recover(p,*f.state,expected,e); },
+            state < 4 ? C::MissingPlan : state == 4 ? C::IdentityMismatch : state == 5 ? C::BootstrapConflict : state == 6 ? C::PreparationConflict : state == 7 ? C::NamespaceIncomplete : C::UnsafeEntry, O::NotMutated);
+        require(rejected.error == 0 && e.barriers.empty() && e.transitions.empty(), "recovery state classification before barriers");
+        e = E{}; require(descriptor_count() == baseline,"state rejection RAII"); f.pristine();
+    }
+    // All required bits, named and held, exposed before and after the first sync.
+    for (unsigned bit : {STATX_TYPE,STATX_MODE,STATX_UID,STATX_INO,STATX_NLINK,STATX_MNT_ID,STATX_SIZE,STATX_MTIME,STATX_CTIME})
+    for (bool named : {false,true}) for (bool after : {false,true}) for (bool directory_target : {false,true}) {
+        Fixture f; f.publish(); ProjectionIo io; auto stat = io.stat; auto read = io.pread; auto sync = io.fsync;
+        bool reading = false; unsigned calls = 0, omissions = 0, named_checks = 0;
+        const auto target_path = directory_target ? f.plans()/".preparations" : f.published()/"intent.toml";
+        io.pread = [&](int fd,void* b,size_t n,off_t at) -> ssize_t { if (fdpath(fd) == f.published()/"intent.toml") reading = true; return read(fd,b,n,at); };
+        io.fsync = [&](int fd) { ++calls; return sync(fd); };
+        io.stat = [&](int fd,const char* leaf,int flags,unsigned mask,struct statx* out) {
+            auto rc = stat(fd,leaf,flags,mask,out);
+            const auto path = flags & AT_EMPTY_PATH ? fs::path(fdpath(fd)) : fs::path(fdpath(fd))/leaf;
+            if (!rc && !omissions && reading && calls == unsigned(after) && path == target_path && named == !(flags&AT_EMPTY_PATH)) {
+                if (!named || ++named_checks == 2) { out->stx_mask &= ~bit; ++omissions; }
+            }
+            return rc;
+        };
+        auto p = f.open(io); const auto baseline = descriptor_count(); E e;
+        error([&] { PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e); }, C::UnsafeEntry, after ? O::OutcomeUncertain : O::NotMutated);
+        require(omissions == 1 && calls == unsigned(after) && e.barriers.empty(),"recovery incomplete mask has no barrier certificate");
+        require(std::all_of(e.inventories.begin(),e.inventories.end(),[](const auto& b) { return b.phase == E::Phase::Recovery; }),"partial acquisition retains Recovery inventory phase");
+        e = E{}; require(descriptor_count() == baseline,"mask RAII"); f.pristine();
+    }
+    // EMFILE in acquisition and after the final sync's concluding enumeration.
+    for (bool late : {false,true}) {
+        Fixture f; f.publish(); ProjectionIo io; auto open = io.open; auto sync = io.fsync;
+        bool active = false; unsigned calls = 0, failures = 0; std::size_t baseline = 0;
+        io.fsync = [&](int fd) { ++calls; return sync(fd); };
+        io.open = [&](int fd,const char* leaf,const open_how& how) {
+            if (active && !failures && calls == (late ? 7u : 0u) && (late || descriptor_count() >= baseline+8) && std::string(leaf) == "." && fdpath(fd) == f.plans()) {
+                ++failures; errno = EMFILE; return -1;
+            }
+            return open(fd,leaf,how);
+        };
+        auto p = f.open(io); baseline = descriptor_count(); E e; active = true;
+        auto rejected = error([&] { PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e); }, C::Io,late ? O::OutcomeUncertain : O::NotMutated);
+        require(rejected.error == EMFILE && failures == 1 && e.barriers.size() == (late ? 7u : 0u),"recovery EMFILE registry/outcome");
+        require(std::all_of(e.inventories.begin(),e.inventories.end(),[](const auto& b) { return b.phase == E::Phase::Recovery; }),"EMFILE preserves acquired inventory phase");
+        e = E{}; require(descriptor_count() == baseline,"EMFILE RAII"); f.pristine();
+    }
+    std::cout << "R2-B4: seven recovery fsync faults, nine states, 72 file/directory statx omissions, two EMFILE cases; move/RAII/registry verified\n";
+}
+void recovery_substitutions() {
+    using E = plan_detail::OperationEvidence;
+    for (const auto target : {"generation", "store", "root", "generation-binding", "admin-binding", "foreign", "foreign-intent", "foreign-plan"}) {
+        Fixture f; f.publish(); const auto foreign = f.plans()/std::string(32,'0');
+        directory(foreign); write(foreign/"intent.toml","opaque intent"); write(foreign/"plan.toml","opaque plan");
+        fs::path path;
+        const std::string kind(target);
+        if (kind == "generation") path = f.base/"generations";
+        else if (kind == "store") path = f.base/"store";
+        else if (kind == "root") path = f.base/"projection";
+        else if (kind == "generation-binding") path = f.base/"generations/.athena-projection-authority.toml";
+        else if (kind == "admin-binding") path = f.admin()/"authority.toml";
+        else if (kind == "foreign") path = foreign;
+        else path = foreign/(kind == "foreign-intent" ? "intent.toml" : "plan.toml");
+        const auto original = inode(path); const auto retired = f.base/"retired-recovery";
+        ProjectionIo io; auto sync = io.fsync; auto read = io.pread; bool changed = false; unsigned calls = 0;
+        io.pread = [&](int fd,void* b,size_t n,off_t at) -> ssize_t {
+            require(fs::path(fdpath(fd)).parent_path() != foreign,"recovery never reads foreign substitution bytes"); return read(fd,b,n,at);
+        };
+        io.fsync = [&](int fd) {
+            if (++calls == 1) {
+                fs::rename(path,retired); fs::copy(retired,path,fs::copy_options::recursive);
+                require(inode(path) != original,"replacement has distinct instance"); changed = true;
+                // Fixture injection replaces protected objects; observe the injected
+                // instances, then prove the recovery never changes them again.
+                for (auto& [protected_path, observation] : f.protected_files)
+                    require(::lstat(protected_path.c_str(),&observation) == 0,"injected protected observation");
+            }
+            return sync(fd);
+        };
+        auto p = f.open(io); const auto baseline = descriptor_count(); E e;
+        const auto rejected = error([&] { PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e); },
+            kind.ends_with("binding") ? C::AuthorityMismatch : C::Substituted,O::OutcomeUncertain);
+        require(rejected.error == 0 && changed && inode(retired) == original && e.transitions.empty(),"substitution retains original and injected residue");
+        const auto object = std::find_if(e.objects.begin(),e.objects.end(),[&](const auto& o) { return o.metadata.stx_ino == original; });
+        require(object != e.objects.end(),"recovery original anchor survives rejection");
+        for (const auto& b : e.barriers) require(E::same_identity(b.instance,e.objects[b.object].metadata),"substitution cannot borrow retired barrier");
+        e = E{}; require(descriptor_count() == baseline,"substitution RAII"); f.pristine();
+    }
+    std::cout << "R2-B4: eight authority/binding/foreign substitutions; original anchors, opaque bytes and residue retained\n";
+}
+// Function-pointer syscall injection is scoped to the actual invocation.
+struct CloexecFailure {
+    std::string path;
+    bool active = false;
+    unsigned syncs = 0, after = 0, hits = 0;
+    int failed_fd = -1, number = EIO;
+    static thread_local CloexecFailure* current;
+    CloexecFailure() { require(!current,"no nested CLOEXEC injection"); current = this; }
+    ~CloexecFailure() { current = nullptr; }
+    static int inject(int fd) {
+        auto* s = current;
+        if (s && s->active && s->syncs >= s->after && !s->hits) {
+            char link[64], path[4096];
+            std::snprintf(link,sizeof(link),"/proc/self/fd/%d",fd);
+            const auto n = ::readlink(link,path,sizeof(path));
+            if (n >= 0 && static_cast<std::size_t>(n) == s->path.size() &&
+                !std::memcmp(path,s->path.data(),static_cast<std::size_t>(n))) {
+                ++s->hits; s->failed_fd = fd; errno = s->number; return -1;
+            }
+        }
+        return ::fcntl(fd,F_SETFD,FD_CLOEXEC);
+    }
+};
+thread_local CloexecFailure* CloexecFailure::current = nullptr;
+void recovery_cloexec_errors() {
+    using E = plan_detail::OperationEvidence;
+    for (const auto [late, number] : {std::pair{false,EIO},std::pair{true,EIO},std::pair{false,EACCES}}) {
+        Fixture f; f.publish(); CloexecFailure injection;
+        injection.path = (late ? f.admin()/"authority.toml" : f.base/"generations").native();
+        injection.after = late ? 1 : 0; injection.number = number;
+        ProjectionIo io; io.durable.cloexec = CloexecFailure::inject;
+        std::vector<std::string> synced; auto sync = io.fsync;
+        io.fsync = [&](int fd) { const auto rc = sync(fd); if (!rc) { ++injection.syncs; synced.push_back(relative(f,fd)); } return rc; };
+        auto p = f.open(io); const auto baseline = descriptor_count(); E e; injection.active = true;
+        const auto rejected = error([&] { PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e); },
+            C::Io,late ? O::OutcomeUncertain : O::NotMutated);
+        injection.active = false;
+        require(injection.hits == 1 && rejected.error == number,"actual CLOEXEC failure preserves structured errno");
+        require(::fcntl(injection.failed_fd,F_GETFD) == -1 && errno == EBADF,"failed adoption closes its raw descriptor");
+        require(rejected.underlying != nullptr,"typed adoption diagnostic retained");
+        try { std::rethrow_exception(rejected.underlying); }
+        catch (const std::system_error& x) {
+            require(x.code() == std::error_code(number,std::generic_category()),"saved errno in system_error");
+        }
+        require(injection.syncs == (late ? 1u : 0u) && e.barriers.empty(),"no barrier registered after failed post-fsync validation");
+        require(!late || synced == std::vector<std::string>{recovery_order.front()},"only intent fsync succeeded");
+        require(e.pins.size() == (late ? 11u : 0u) && descriptor_count() == baseline+e.pins.size(),"exception retains only owned descriptors");
+        e = E{}; require(descriptor_count() == baseline,"CLOEXEC error releases all ownership");
+        synced.clear(); injection.syncs = 0;
+        const auto result = PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e);
+        require(result.publication == PlanPublication::AlreadyPublished && result.outcome == O::NotMutated &&
+            e.barriers.size() == 7 && synced == recovery_order,"clean retry completes seven ordered recovery barriers");
+        e = E{}; require(descriptor_count() == baseline,"retry releases all descriptors"); f.pristine();
+        std::cout << "R2-B4.1 CLOEXEC " << (late ? "post-fsync1" : "authority") << ": Cause=Io errno=" << number
+            << " Outcome=" << (late ? "OutcomeUncertain" : "NotMutated") << " registry=0 injection=1 no leak; retry=7\n";
+    }
+    { Fixture f; f.publish(); ProjectionIo io; auto open = io.open; bool active = false; unsigned hits = 0;
+      io.open = [&](int fd,const char* leaf,const open_how& how) {
+          if (active && !hits && std::string_view(leaf) == "intent.toml" && fdpath(fd) == f.published()) {
+              ++hits; errno = ENOSPC; return -1;
+          }
+          return open(fd,leaf,how);
+      };
+      auto p = f.open(io); const auto baseline = descriptor_count(); active = true; E e;
+      const auto rejected = error([&] { PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e); },C::Io,O::NotMutated);
+      require(hits == 1 && rejected.error == ENOSPC && e.barriers.empty(),"non-CLOEXEC open errno and classification unchanged");
+      e = E{}; require(descriptor_count() == baseline,"non-CLOEXEC no leak"); active = false;
+      auto wrong = f.expected(); wrong.digest = PlanDigest(d1_test::digest('c')); errno = EIO;
+      const auto mismatch = error([&] { recover_activation_plan(p,*f.state,wrong); },C::IdentityMismatch,O::NotMutated);
+      require(mismatch.error == 0 && descriptor_count() == baseline,"semantic error never borrows stale errno"); f.pristine();
+      std::cout << "R2-B4.1 non-CLOEXEC: Io/ENOSPC/NotMutated; IdentityMismatch/0/NotMutated; no leak\n";
+    }
+}
+void recovery_capacity() {
+    using E = plan_detail::OperationEvidence;
+    for (bool target_first : {false,true}) {
+        Fixture f;
+        { auto p = f.open(); ensure_plan_namespace(p,*f.state); }
+        for (std::size_t n = 0; n < 4095; ++n) {
+            char name[33]; std::snprintf(name,sizeof(name),"%032zx",n);
+            directory(f.plans()/name); write(f.plans()/name/"intent.toml","opaque intent"); write(f.plans()/name/"plan.toml","opaque plan");
+        }
+        f.publish(); // Target created after the foreign containers.
+        ProjectionIo io; auto open = io.open; auto stat = io.stat; auto read = io.pread;
+        bool active = false; std::size_t peak = 0, reads = 0;
+        // Readdir order is unspecified. Replay the real entries in both orders to
+        // make the retained-target plus foreign scratch peak independent of the FS.
+        struct Enumeration { std::vector<struct dirent> entries; std::size_t next = 0; int error = 0; };
+        std::map<DIR*,Enumeration> enumerations; auto readdir = io.readdir;
+        io.readdir = [&](DIR* dir) -> struct dirent* {
+            if (!active || fdpath(::dirfd(dir)) != f.plans()) return readdir(dir);
+            auto [it, fresh] = enumerations.try_emplace(dir);
+            auto& batch = it->second;
+            if (fresh) {
+                for (;;) {
+                    errno = 0; auto* entry = readdir(dir);
+                    if (!entry) { batch.error = errno; break; }
+                    // Native records have variable d_reclen; copy the fields
+                    // and name without reading sizeof(dirent) past the record.
+                    batch.entries.emplace_back(); auto& copy = batch.entries.back();
+                    copy.d_ino = entry->d_ino; copy.d_off = entry->d_off;
+                    copy.d_reclen = sizeof(copy); copy.d_type = entry->d_type;
+                    std::strncpy(copy.d_name,entry->d_name,sizeof(copy.d_name)-1);
+                }
+                std::stable_sort(batch.entries.begin(),batch.entries.end(),[&](const auto& a,const auto& b) {
+                    const bool at = std::string_view(a.d_name) == d1_test::id.value();
+                    const bool bt = std::string_view(b.d_name) == d1_test::id.value();
+                    return target_first ? at > bt : at < bt;
+                });
+            }
+            if (batch.next != batch.entries.size()) { errno = 0; return &batch.entries[batch.next++]; }
+            const int saved = batch.error; enumerations.erase(it); errno = saved; return nullptr;
+        };
+        auto measure = [&] { if (active) peak = std::max(peak,descriptor_count()); };
+        io.open = [&](int fd,const char* leaf,const open_how& how) { auto rc = open(fd,leaf,how); measure(); return rc; };
+        io.stat = [&](int fd,const char* leaf,int flags,unsigned mask,struct statx* out) { measure(); return stat(fd,leaf,flags,mask,out); };
+        io.pread = [&](int fd,void* b,size_t n,off_t at) -> ssize_t { if (active && fs::path(fdpath(fd)).parent_path() != f.published()) ++reads; return read(fd,b,n,at); };
+        auto p = f.open(io); const auto baseline = descriptor_count(); active = true;
+        { E e; const auto result = PlanEvidenceTestAccess::recover(p,*f.state,f.expected(),e);
+          require(result.outcome == O::NotMutated && result.publication == PlanPublication::AlreadyPublished && e.pins.size() == 11 &&
+              e.barriers.size() == 7 && e.foreign.size() == 4095 && peak-baseline <= 15 && !reads,"full recovery capacity/foreign opacity/fd bound");
+          require(!target_first || peak-baseline == 15,"worst-order acquisition reaches exactly 15/15 fd");
+          require(descriptor_count() == baseline+11,"capacity retains exactly 11 descriptors"); }
+        require(descriptor_count() == baseline,"capacity recovery RAII");
+        const auto extra = f.plans()/".preparations"/std::string(32,'e'); directory(extra);
+        error([&] { recover_activation_plan(p,*f.state,f.expected()); },C::AdministrativeLimit,O::NotMutated);
+        require(fs::is_empty(extra) && descriptor_count() == baseline,"4097th preserved, no leak");
+        active = false; f.pristine();
+        std::cout << "R2-B4.1: 4096 containers, target acquired " << (target_first ? "before" : "after")
+            << " foreign containers, recovery pins 11, additional fd peak " << peak-baseline << "/15, foreign reads " << reads << "; 4097th rejected, no leak/current change\n";
+    }
+}
+void ordinary() { recovery_evidence(); recovery_substitutions(); publication_evidence(); publication_registry_faults(); evidence_foundation(); evidence_structural(); evidence_statx_fields(); inspection_evidence(); bootstrap(); bootstrap_evidence(); mechanics(); residues(); identity_errors(); validation_scope(); adoption_coexistence(); security(); error_boundaries(); }
 void barrier_faults() {
     std::vector<std::string> successful;
     { Fixture f; ProjectionIo io; io.fsync = [&](int fd) { successful.push_back(relative(f, fd)); return ::fsync(fd); };
@@ -1395,68 +1685,26 @@ std::vector<O> boundary_outcomes(const std::vector<BoundaryPoint>& points, std::
         }
         return result;
     }
-    // Observable boundary between completed ensure and targeted access. It is
-    // the first namespace_open inventory, independent of ledger/helper outcomes.
-    std::size_t namespace_open = points.size();
-    const std::vector<std::pair<std::string, std::string>> opening{
-        {"stat", "plans"}, {"stat", ".plans-bootstrap"}, {"stat", "plans"}, {"stat", "plans"}, {"open", "plans"}};
-    const auto required_infrastructure_barriers = path == "recovery" ? 0 : path == "fresh" || path == "bootstrap" ? 8 : 4;
-    int barriers = 0;
-    for (std::size_t n = 0; n < points.size(); ++n) {
-        if (points[n].kind == "fsync") ++barriers;
-        if (barriers >= required_infrastructure_barriers && match(n, opening)) { namespace_open = n; break; }
-    }
-    require(namespace_open < points.size(), "completed bootstrap checkpoint identified");
-    auto checks = [](const std::string& root) {
-        std::vector<std::pair<std::string, std::string>> sequence;
-        for (const auto& name : {root, root + "/.preparations"})
-            for (int n = 0; n < 3; ++n) sequence.emplace_back("stat", name);
-        return sequence;
-    };
-    // Recognize the entire named root/admin chain, not a coincidental sequence
-    // of child stats from global shape validation or retained observations.
-    const std::vector<std::pair<std::string, std::string>> authority{
-        {"stat", ".."}, {"stat", ".."}, {"stat", "."}, {"stat", "."}, {"stat", "."}};
-    std::vector<std::size_t> infrastructure_checks, pair_checks;
-    for (std::size_t n = 0; n < points.size(); ++n) {
-        const std::vector<std::pair<std::string, std::string>> bootstrap_check{
-            {"stat", "../../generations"}, {"stat", "../../generations"},
-            {"stat", "../../generations"}, {"stat", "../../generations"},
-            {"stat", "../../generations/.athena-projection-authority.toml"}};
-        // State's two observations followed by the retained/named binding-parent
-        // observations mark shared checks. The first is the unarmed conclusion;
-        // the second starts the first barrier's already-armed checks.
-        if (n < namespace_open && match(n, bootstrap_check)) infrastructure_checks.push_back(n);
-        if (n > namespace_open && match(n, authority) && match(n + authority.size(), checks("plans"))) pair_checks.push_back(n);
-    }
-    require((path == "recovery" || infrastructure_checks.size() >= 2) && pair_checks.size() >= 5,
-        "full named-chain phase checkpoints identified");
-    // Bootstrap has one initial conclusion before its armed barrier conclusions;
-    // each legacy pair validation has an additional chain after document rereads.
-    // The next validation begins the first armed barrier, before ANY of its I/O.
-    const auto infrastructure_barrier = path == "recovery" ? points.size() : infrastructure_checks[1];
-    const auto pair_barrier = pair_checks[4];
-    auto private_mkdir = points.size(), first_mkdir = points.size();
-    for (std::size_t n = 0; n < points.size(); ++n) if (points[n].kind == "mkdir") {
-        first_mkdir = std::min(first_mkdir, n);
-        if (n > namespace_open) private_mkdir = n;
-    }
-    std::vector<O> result;
-    for (std::size_t n = 0; n < points.size(); ++n) {
-        O expected = O::NotMutated;
-        if (n < namespace_open) {
-            if (n >= infrastructure_barrier || (path == "fresh" && n > first_mkdir)) expected = O::OutcomeUncertain;
-        } else {
-            if (path == "fresh" || path == "bootstrap") expected = O::MutatedDurably;
-            if (n >= pair_barrier || n > private_mkdir) expected = O::OutcomeUncertain;
-        }
-        result.push_back(expected);
-    }
+    // The two unarmed named checks surround the initial conclusion. The
+    // third begins the first barrier validator, after uncertainty was armed.
+    // Identify this from State/binding I/O, independently of the production ledger.
+    const std::vector<std::pair<std::string, std::string>> binding_check{
+        {"stat", "../../generations"}, {"stat", "../../generations"},
+        {"stat", "../../generations"}, {"stat", "../../generations"},
+        {"stat", "../../generations/.athena-projection-authority.toml"}};
+    std::vector<std::size_t> checks;
+    for (std::size_t n = 0; n < points.size(); ++n) if (match(n, binding_check)) checks.push_back(n);
+    require(checks.size() >= 3, "recovery unarmed/armed evidence checkpoints identified");
+    const auto armed = checks[2];
+    const auto first_sync = std::find_if(points.begin(), points.end(), [](const auto& point) { return point.kind == "fsync"; });
+    require(first_sync != points.end() && armed < static_cast<std::size_t>(first_sync-points.begin()), "recovery arms before first fsync");
+    std::vector<O> result(points.size(), O::NotMutated);
+    std::fill(result.begin()+armed, result.end(), O::OutcomeUncertain);
     return result;
 }
 void boundaries(std::string_view only = {}, std::size_t first = 1, std::size_t last = static_cast<std::size_t>(-1)) {
     for (const std::string path : {"fresh", "bootstrap", "reused", "published", "recovery"}) {
-        if (!only.empty() && only != path && !(only == "published" && path == "recovery")) continue;
+        if (!only.empty() && only != path && !(only == "published" && path == "recovery") && !(only == "recovery-targeted" && path == "recovery")) continue;
         auto prepare = [&](Fixture& f) {
             if (path == "bootstrap") { directory(f.admin() / ".plans-bootstrap"); directory(f.admin() / ".plans-bootstrap/.preparations"); }
             if (path == "reused" || path == "published" || path == "recovery") {
@@ -1475,7 +1723,15 @@ void boundaries(std::string_view only = {}, std::size_t first = 1, std::size_t l
         const auto end = std::min(last, points.size());
         require(first >= 1 && first <= end, "valid nonempty boundary shard");
         std::cout << path << ": inventory=" << points.size() << ", checking inclusive interval " << first << ".." << end << std::endl;
+        std::size_t checked = 0;
         for (std::size_t at = first - 1; at < end; ++at) {
+            if (only == "recovery-targeted") {
+                const auto armed = std::find(outcomes.begin(), outcomes.end(), O::OutcomeUncertain)-outcomes.begin();
+                const bool near_arm = at+1 == static_cast<std::size_t>(armed) || at == static_cast<std::size_t>(armed);
+                const bool near_sync = points[at].kind == "fsync" || (at && points[at-1].kind == "fsync");
+                if (at != 0 && at+1 != end && !near_arm && !near_sync) continue;
+            }
+            ++checked;
             Fixture f; prepare(f); BoundaryIo seams{f}; seams.fail_at = at + 1; auto p = f.open(seams.io()); seams.active = true;
             try {
                 const auto failure = error([&] {
@@ -1492,7 +1748,7 @@ void boundaries(std::string_view only = {}, std::size_t first = 1, std::size_t l
             }
         }
         std::cout << path << ": interval " << first << ".." << end << " of " << points.size()
-            << ": cause/errno/outcome/residue/protected state verified" << std::endl;
+            << ": " << checked << " selected faults; cause/errno/outcome/residue/protected state verified" << std::endl;
     }
 }
 void final_read_substitutions() {
@@ -2007,6 +2263,10 @@ int main(int argc, char** argv) {
     return d1_test::run([&]() {
         const std::string mode = argc > 1 ? argv[1] : "ordinary";
         if (mode == "ordinary") ordinary();
+        else if (mode == "recovery-cloexec") recovery_cloexec_errors();
+        else if (mode == "recovery-evidence") { recovery_evidence(); recovery_substitutions(); }
+        else if (mode == "recovery-capacity") recovery_capacity();
+        else if (mode == "recovery-targeted") { recovery_evidence(); recovery_substitutions(); substitutions(); final_read_substitutions(); late_binding_changes(true); eof_inventory_changes(); concluding_callback_changes(); boundaries("recovery-targeted"); }
         else if (mode == "publication-evidence") { publication_evidence(); publication_registry_faults(); }
         else if (mode == "publication-capacity") publication_capacity();
         else if (mode == "publication-registry") publication_registry_faults();

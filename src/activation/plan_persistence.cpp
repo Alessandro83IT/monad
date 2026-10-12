@@ -8,6 +8,7 @@
 #include <linux/fs.h>
 #include <memory>
 #include <set>
+#include <system_error>
 #include <unistd.h>
 
 namespace athena::activation {
@@ -181,6 +182,8 @@ struct PlanAccess::Operation {
         } catch (const d::PersistenceError& e) {
             throw PlanPersistenceError(e.stage == d::PersistenceError::Stage::Write ? Cause::Io : Cause::Durability,
                 outcome(), e.error, e.what(), std::current_exception());
+        } catch (const std::system_error& e) {
+            throw PlanPersistenceError(Cause::Io, outcome(), e.code().value(), e.what(), std::current_exception());
         } catch (const std::exception& e) {
             throw PlanPersistenceError(Cause::Io, outcome(), 0, e.what(), std::current_exception());
         }
@@ -260,35 +263,6 @@ struct PlanAccess::Operation {
         if (!observation(directory.initial, directory_observation(directory.fd)))
             fail(Cause::Substituted, "D4 inventory changed during validation");
     }
-    // A bounded observation interval, never an atomic snapshot against hostile
-    // writers. Callers keep these directory fds alive until finish(). Changes
-    // made by D4 itself occur outside this read-only validation interval.
-    struct Conclusion {
-        const Operation& op;
-        std::vector<DirectoryObservation> directories;
-        std::vector<Node> records;
-        Conclusion(const Operation& operation, std::initializer_list<const Node*> nodes) : op(operation) {
-            for (int fd : {op.p.root_.get(), op.p.admin_.get()})
-                directories.push_back({fd, op.directory_observation(fd)});
-            for (const auto* node : nodes)
-                directories.push_back({node->fd.get(), op.directory_observation(node->fd.get())});
-            records.push_back(op.binding_record(op.p.generation_.get(), ".athena-projection-authority.toml"));
-            records.push_back(op.binding_record(op.p.admin_.get(), "authority.toml"));
-        }
-        void finish(const std::function<void()>& chain) const {
-            // First reject retired ancestry, preserving Substituted rather than
-            // misclassifying a replaced admin as a binding content disagreement.
-            chain();
-            for (const auto& record : records) op.binding_contents(record);
-            // Binding reads themselves have callbacks. Check both retained
-            // records only after BOTH reads, then inventories and named ancestry.
-            for (const auto& record : records) op.check_binding(record);
-            for (const auto& directory : directories) op.unchanged_directory(directory);
-            chain();
-            for (const auto& record : records) op.check_binding(record);
-            for (const auto& directory : directories) op.unchanged_directory(directory);
-        }
-    };
     Node binding_record(int parent, const char* name) const {
         open_how how{}; how.flags = O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK;
         how.resolve = RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_MAGICLINKS | RESOLVE_NO_XDEV;
@@ -387,29 +361,6 @@ struct PlanAccess::Operation {
             reserve(name); auto container = open(prep.fd.get(), name);
         });
         check(prep); check(plans); return ids.size();
-    }
-    void authority_chain() const {
-        // Reopen the durable locator, then walk from the retained root to admin.
-        // Descendant checks alone could all succeed through retired parent fds.
-        auto root = [&] {
-            try { return d::open_directory(p.binding_.projection_root); }
-            catch (const std::exception& e) {
-                const int error = errno;
-                const auto cause = error == ENOENT || error == ENOTDIR || error == ELOOP ?
-                    pending ? Cause::Substituted : Cause::AuthorityMismatch : Cause::Io;
-                throw PlanPersistenceError(cause, outcome(), error, e.what(), std::current_exception());
-            }
-        }();
-        const auto named_root = stat(root.get()), held_root = stat(p.root_.get());
-        if (!inode(named_root, held_root) || !inode(held_root, p.mount_))
-            fail(pending ? Cause::Substituted : Cause::AuthorityMismatch, "D4 projection root substituted");
-        if (!S_ISDIR(named_root.stx_mode) || named_root.stx_mode != held_root.stx_mode ||
-            named_root.stx_uid != held_root.stx_uid)
-            fail(Cause::UnsafeEntry, "Unsafe D4 projection root observations");
-        if (!exists(p.root_.get(), ".athena-activation")) fail(Cause::Substituted, "D4 retained administration disappeared");
-        const auto admin = stat(p.root_.get(), ".athena-activation", false), held_admin = stat(p.admin_.get());
-        if (!inode(admin, held_admin)) fail(Cause::Substituted, "D4 retained administration substituted");
-        metadata(admin, false); metadata(held_admin, false);
     }
     void context() const {
         if (state) p.state(*state);
@@ -717,38 +668,6 @@ struct PlanAccess::Operation {
         return {std::move(container), std::move(intent), std::move(plan), std::move(ib), std::move(pb),
             {std::move(i), std::move(a), std::move(digest)}};
     }
-    void validate_pair(Pair& pair, Namespace& ns, bool published) const {
-        auto chain = [&] {
-            authority_chain();
-            check(ns.plans); check(ns.preparations); check(pair.container); check(pair.intent); check(pair.plan);
-        };
-        chain();
-        if (pair.document.intent.activation_id.value() != pair.container.name ||
-            pair.document.plan.activation_id.value() != pair.container.name)
-            fail(Cause::IdentityMismatch, "D4 document/container identity changed");
-        Conclusion conclusion(*this, {&ns.plans, &ns.preparations, &pair.container});
-        exact_pair(pair.container.fd.get(), Cause::PreparationConflict);
-        if (read(pair.intent) != pair.intent_bytes || read(pair.plan) != pair.plan_bytes)
-            fail(Cause::Substituted, "D4 document bytes changed");
-        // One global structural validation, after targeted rereads. Its binding
-        // checks are supplemented by Conclusion after its enumeration callbacks.
-        chain(); context();
-        bound(pair.document.intent);
-        if (exists(published ? ns.preparations.fd.get() : ns.plans.fd.get(), pair.container.name))
-            fail(Cause::PreparationConflict, "D4 opposite ID location present");
-        conclusion.finish(chain);
-    }
-    void recovery(Pair& pair, Namespace& ns) {
-        phase = Phase::Recovery;
-        auto validate = [&] { validate_pair(pair, ns, true); };
-        validate();
-        for (int fd : {pair.intent.fd.get(), pair.plan.fd.get(), pair.container.fd.get(),
-                ns.plans.fd.get(), ns.preparations.fd.get(), p.admin_.get(), p.root_.get()}) barrier(fd, validate);
-        validate();
-        if (derive_plan_digest(pair.document.intent, pair.document.plan) != pair.document.digest)
-            fail(Cause::IdentityMismatch, "D4 final recovery digest mismatch");
-        complete();
-    }
     std::string evidence_read(const Evidence& e, Evidence::ObjectId id) const {
         evidence_chain(e, id);
         const int fd = evidence_fd(e, id); const auto before = evidence_stat(fd);
@@ -823,10 +742,14 @@ struct PlanAccess::Operation {
         if (target.document.intent.activation_id != id || target.document.plan.activation_id != id)
             fail(Cause::IdentityMismatch, "Inspection final ID mismatch");
     }
-    void acquire_evidence(const std::optional<ActivationId>& target, bool inspection = false, bool bootstrap_operation = false) {
+    enum class Acquisition { General, PublishedRecovery };
+    void acquire_evidence(const std::optional<ActivationId>& target, bool inspection = false, bool bootstrap_operation = false,
+                          Acquisition acquisition = Acquisition::General) {
+        const bool recovery = acquisition == Acquisition::PublishedRecovery;
+        const bool published_only = inspection || recovery;
         preflight();
         using E = plan_detail::OperationEvidence;
-        if (inspection && !exists(p.admin_.get(), "plans")) fail(Cause::MissingPlan, "No published inspection namespace");
+        if (published_only && !exists(p.admin_.get(), "plans")) fail(Cause::MissingPlan, "No published inspection namespace");
         auto& evidence = this->evidence;
         auto pin = [&](int fd) {
             const int copy = ::fcntl(fd, F_DUPFD_CLOEXEC, 0);
@@ -849,9 +772,11 @@ struct PlanAccess::Operation {
         // All enumeration descriptions and foreign child descriptors are scratch.
         // Objects are stored by stable indexes; no foreign fd survives this loop.
         auto inventory = [&](int fd, E::ObjectId id, std::size_t limit, const auto& visit) {
-            return evidence_inventory(evidence, fd, id, limit, visit);
+            auto batch = evidence_inventory(evidence, fd, id, limit, visit);
+            if (recovery) batch.phase = E::Phase::Recovery;
+            return batch;
         };
-        if (inspection || bootstrap_operation) {
+        if (published_only || bootstrap_operation) {
             auto batch = inventory(evidence_fd(evidence, admin), admin, 6, [&](const auto& name) {
                 if (auto id = evidence.find(admin, name)) return *id;
                 auto value = evidence_stat(evidence_fd(evidence, admin), name, false);
@@ -879,10 +804,21 @@ struct PlanAccess::Operation {
             }
             return;
         }
-        auto ns = namespace_open(inspection || bootstrap_operation);
-        evidence_object(evidence, admin, "plans", ns.plans.initial);
-        const auto plans = evidence.add(admin, "plans", ns.plans.initial, std::move(ns.plans.fd));
-        const auto prep = evidence.add(plans, ".preparations", ns.preparations.initial, std::move(ns.preparations.fd));
+        E::ObjectId plans, prep;
+        if (recovery) {
+            // Recovery acquires directly into its sole owner; no parallel Namespace.
+            if (exists(p.admin_.get(), ".plans-bootstrap")) fail(Cause::BootstrapConflict, "Ambiguous bootstrap during recovery");
+            auto node = open(evidence_fd(evidence, admin), "plans", false, Cause::NamespaceIncomplete, true);
+            evidence_object(evidence, admin, "plans", node.initial);
+            plans = evidence.add(admin, "plans", node.initial, std::move(node.fd));
+            auto child = open(evidence_fd(evidence, plans), ".preparations", false, Cause::NamespaceIncomplete, true);
+            prep = evidence.add(plans, ".preparations", child.initial, std::move(child.fd));
+        } else {
+            auto ns = namespace_open(published_only || bootstrap_operation);
+            evidence_object(evidence, admin, "plans", ns.plans.initial);
+            plans = evidence.add(admin, "plans", ns.plans.initial, std::move(ns.plans.fd));
+            prep = evidence.add(plans, ".preparations", ns.preparations.initial, std::move(ns.preparations.fd));
+        }
         const int plans_fd = evidence.pins[*evidence.objects[plans].pin].get();
         const int prep_fd = evidence.pins[*evidence.objects[prep].pin].get();
         std::set<std::string> ids;
@@ -890,14 +826,14 @@ struct PlanAccess::Operation {
             id_name(name);
             if (ids.size() == capacity) fail(Cause::AdministrativeLimit, "Evidence combined capacity");
             if (!ids.insert(name).second) fail(Cause::PreparationConflict, "Duplicate evidence container");
-            if (target && target->value() == name && (!inspection || published)) {
-                if (inspection) {
-                    auto node = open(parent, name);
+            if (target && target->value() == name && (!published_only || published)) {
+                if (published_only) {
+                    auto node = open(parent, name, false, Cause::MissingPlan, true);
                     const auto c = evidence.add(parent_id, name, node.initial, std::move(node.fd));
                     const int fd = evidence_fd(evidence, c);
                     auto batch = inventory(fd, c, 2, [&](const auto& leaf) {
                         if (leaf != "intent.toml" && leaf != "plan.toml") fail(Cause::NamespaceIncomplete, "Inspection target shape");
-                        auto file = open(fd, leaf, true);
+                        auto file = open(fd, leaf, true, Cause::NamespaceIncomplete, true);
                         return evidence.add(c, leaf, file.initial, std::move(file.fd));
                     });
                     if (batch.entries.size() != 2) fail(Cause::NamespaceIncomplete, "Incomplete inspection pair");
@@ -1002,7 +938,10 @@ struct PlanAccess::Operation {
         publication_named_checks();
         const auto ib = evidence_read(e, target.intent), pb = evidence_read(e, target.plan);
         if (ib != target.intent_bytes || pb != target.plan_bytes) fail(Cause::Substituted, "Publication target bytes changed");
-        if (digest_plan_documents(ib, pb) != target.document.digest) fail(Cause::IdentityMismatch, "Publication target digest changed");
+        const auto digest = digest_plan_documents(ib, pb);
+        if (digest != target.document.digest) fail(Cause::IdentityMismatch, "Publication target digest changed");
+        if (target.independent_expected && digest != target.independent_expected->digest)
+            fail(Cause::IdentityMismatch, "Independent concluding target digest mismatch");
         bound(parse_activation_intent(ib));
         for (const auto index : phase_inventories) {
             const auto& original = e.inventories.at(index);
@@ -1184,13 +1123,48 @@ InspectedActivationPlan PlanAccess::inspect(const ProjectionContext& p, const Pr
     });
 }
 PlanPersistenceResult PlanAccess::recover(ProjectionContext& p, const ProjectionState& state, const PlanIdentity& expected) {
-    Operation op{p, &state}; return op.run([&] {
-        op.preflight(); auto ns = op.namespace_open();
-        auto pair = op.pair(ns.plans.fd.get(), expected.activation_id, false);
-        if (pair.document.digest != expected.digest) op.fail(Cause::IdentityMismatch, "Independent expected D4 digest mismatch");
-        op.recovery(pair, ns);
-        return PlanPersistenceResult{pair.document, PlanPublication::AlreadyPublished, op.outcome()};
-    });
+    return recover_with_evidence(p, state, expected, nullptr);
+}
+PlanPersistenceResult PlanAccess::recover_with_evidence(ProjectionContext& p, const ProjectionState& state,
+    const PlanIdentity& expected, plan_detail::OperationEvidence* observed) {
+    if (observed && (!observed->objects.empty() || !observed->pins.empty()))
+        throw std::logic_error("Recovery evidence output must be empty");
+    Operation op{p, &state};
+    try {
+        auto result = op.run([&] {
+            using E = plan_detail::OperationEvidence;
+            op.phase = Operation::Phase::Recovery;
+            op.acquire_evidence(expected.activation_id, false, false, Operation::Acquisition::PublishedRecovery);
+            auto& e = op.evidence;
+            if (!e.target) op.fail(Cause::MissingPlan, "No published recovery target");
+            e.target->independent_expected = expected;
+            if (e.target->document.digest != expected.digest)
+                op.fail(Cause::IdentityMismatch, "Independent expected D4 digest mismatch");
+            for (std::size_t n = 0; n < e.inventories.size(); ++n) op.phase_inventories.push_back(n);
+            auto validate = [&] {
+                op.validate_publication();
+                if (e.target->document.intent.activation_id != expected.activation_id ||
+                    e.target->document.plan.activation_id != expected.activation_id ||
+                    e.target->document.digest != e.target->independent_expected->digest)
+                    op.fail(Cause::IdentityMismatch, "Independent final recovery identity mismatch");
+            };
+            const auto root = *e.find({}, p.binding_.projection_root), admin = *e.find(root, ".athena-activation");
+            const auto plans = *e.find(admin, "plans"), prep = *e.find(plans, ".preparations");
+            const auto container = e.target->container, intent = e.target->intent, plan = e.target->plan;
+            validate();
+            for (auto id : {intent, plan, container, plans, prep, admin, root})
+                op.evidence_barrier(e, E::Phase::Recovery, id, [&] { op.publication_barrier_checks(); });
+            validate();
+            op.verify_barrier_sequence(0, E::Phase::Recovery, {intent, plan, container, plans, prep, admin, root});
+            op.complete();
+            return PlanPersistenceResult{e.target->document, PlanPublication::AlreadyPublished, op.outcome()};
+        });
+        if (observed) *observed = std::move(op.evidence);
+        return result;
+    } catch (...) {
+        if (observed) *observed = std::move(op.evidence);
+        throw;
+    }
 }
 PlanPersistenceResult PlanAccess::publish(ProjectionContext& p, const ProjectionState& state,
     const ActivationIntent& intent, const ActivationPlan& plan) {

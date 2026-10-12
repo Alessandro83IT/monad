@@ -196,7 +196,7 @@ set_tests_properties(activation_schema_test PROPERTIES TIMEOUT 180)
 
 set_tests_properties(activation_projection_fs_test PROPERTIES TIMEOUT 60)
 set_tests_properties(activation_plan_persistence_test PROPERTIES TIMEOUT 120)
-foreach(mode IN ITEMS faults limits bounds kills processes privileged)
+foreach(mode IN ITEMS faults limits bounds kills processes privileged publication-capacity recovery-capacity recovery-cloexec)
     add_test(NAME activation_plan_persistence_${mode}_test COMMAND activation_plan_persistence_test ${mode})
     set_tests_properties(activation_plan_persistence_${mode}_test PROPERTIES TIMEOUT 180)
 endforeach()

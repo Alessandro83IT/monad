@@ -147,6 +147,8 @@ private:
         plan_detail::OperationEvidence&, plan_detail::OperationEvidence::TransitionKind,
         plan_detail::OperationEvidence::Phase, plan_detail::OperationEvidence::ObjectId,
         plan_detail::OperationEvidence::ObjectId, std::string);
+    static PlanPersistenceResult recover_with_evidence(ProjectionContext&, const ProjectionState&,
+        const PlanIdentity&, plan_detail::OperationEvidence*);
     static PlanPersistenceResult publish_with_evidence(ProjectionContext&, const ProjectionState&,
         const ActivationIntent&, const ActivationPlan&, plan_detail::OperationEvidence*);
     struct Operation;
