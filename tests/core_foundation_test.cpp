@@ -4,6 +4,8 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+#include "temporary_directory.hpp"
+
 #include <athena/core/api.hpp>
 #include <athena/core/config.hpp>
 #include <athena/core/locking.hpp>
@@ -25,10 +27,8 @@
 
 namespace {
 struct TempRoot {
-    std::filesystem::path path = std::filesystem::temp_directory_path() /
-        ("athena-m0-" + std::to_string(std::filesystem::file_time_type::clock::now().time_since_epoch().count()));
-    TempRoot() { std::filesystem::create_directories(path); }
-    ~TempRoot() { std::error_code ec; std::filesystem::remove_all(path, ec); }
+    athena::test::TemporaryDirectory owned{"athena-m0"};
+    std::filesystem::path path = owned.path();
 };
 
 void write_config(const std::filesystem::path& path, const std::filesystem::path& root)

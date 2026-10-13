@@ -119,11 +119,22 @@ Snapshot roots(const AuthorityContext& authority, const std::filesystem::path& l
     Snapshot result{pins.artifacts, {}, pins.transactions};
     const auto plans = activation::scan_plan_references(authority.generations(), state, authority.store());
     result.artifacts.insert(plans.artifacts.begin(), plans.artifacts.end());
+    const auto root = normalize_path(legacy_locator);
+    auto retain_legacy = [&](std::filesystem::path path) {
+        path = normalize_path(path);
+        const auto relative = path.lexically_relative(root);
+        if (relative.empty() || relative == "." || relative.is_absolute() || *relative.begin() == "..")
+            throw std::runtime_error("generation/plan legacy path outside bound store");
+        // GC detaches only top-level candidates. Protect the containing candidate
+        // from persisted references, without inferring ownership or expanding all
+        // ancestors (which could make long documents quadratic in space).
+        result.legacy.insert(path.string());
+        result.legacy.insert((root / *relative.begin()).string());
+    };
     // Translate canonical bound-store paths into the historical display locator.
     // This preserves C's explicitly bound legacy-only symlink compatibility.
     for (const auto& path : plans.legacy)
-        result.legacy.insert((legacy_locator / std::filesystem::path(path).lexically_relative(authority.store())).string());
-    const auto root = normalize_path(legacy_locator);
+        retain_legacy(legacy_locator / std::filesystem::path(path).lexically_relative(authority.store()));
     std::error_code object_namespace_error;
     const auto object_namespace = std::filesystem::canonical(authority.objects(), object_namespace_error);
     for (const auto& generation : generations) {
@@ -135,7 +146,7 @@ Snapshot roots(const AuthorityContext& authority, const std::filesystem::path& l
             const auto path = normalize_path(entry.store_path), relative = path.lexically_relative(root);
             if (relative.empty() || relative == "." || relative.is_absolute() || *relative.begin() == "..")
                 throw std::runtime_error("generation legacy path outside bound store");
-            result.legacy.insert(path.string());
+            retain_legacy(path);
             // A legacy locator may intentionally be a symlink to an ArtifactId
             // directory. Preserve that historical alias behavior while also
             // retaining the underlying object as a G root.

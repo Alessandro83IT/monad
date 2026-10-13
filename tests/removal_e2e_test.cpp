@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "temporary_directory.hpp"
+
 #include "../src/generation/generation.hpp"
 #include "../src/install/remover.hpp"
 #include "../src/paths/paths.hpp"
@@ -68,13 +70,10 @@ void create_package_store(
 
 int main()
 {
-    const auto root =
-        std::filesystem::temp_directory_path() /
-        "athena-removal-e2e";
+    athena::test::TemporaryDirectory fixture("athena-removal-e2e");
+    const auto root = fixture.path();
 
     const auto target_root = root / "target";
-
-    std::filesystem::remove_all(root);
 
     try {
         athena::paths::set_root(root / "state");
@@ -231,14 +230,12 @@ int main()
         );
 
         athena::paths::reset_root();
-        std::filesystem::remove_all(root);
 
         std::cout << "removal_e2e_test passed\n";
         return 0;
     }
     catch (const std::exception& error) {
         athena::paths::reset_root();
-        std::filesystem::remove_all(root);
 
         std::cerr
             << "removal_e2e_test failed: "

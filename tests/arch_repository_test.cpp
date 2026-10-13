@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "temporary_directory.hpp"
+
 #include "../src/repository/arch_repository.hpp"
 
 #include <cassert>
@@ -38,11 +40,8 @@ int run_command(const std::string& command)
 
 int main()
 {
-    const auto root =
-        std::filesystem::temp_directory_path() /
-        "athena-arch-repository-test";
-
-    std::filesystem::remove_all(root);
+    athena::test::TemporaryDirectory fixture("athena-arch-repository-test");
+    const auto root = fixture.path();
 
     const auto package_a =
         root / "openssl-3.5.2-1";
@@ -223,8 +222,6 @@ int main()
     assert(
         libressl[0].provides.capabilities.size() == 2
     );
-
-    std::filesystem::remove_all(root);
 
     std::cout
         << "Arch repository tests passed.\n";

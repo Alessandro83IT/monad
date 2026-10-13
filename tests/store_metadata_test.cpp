@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "temporary_directory.hpp"
+
 #include "../src/dependency/parser.hpp"
 #include "../src/dependency/serializer.hpp"
 #include "../src/package/package.hpp"
@@ -27,11 +29,8 @@ void require(bool condition, const std::string& message)
 
 int main()
 {
-    const std::filesystem::path test_root =
-        "/tmp/athena-store-metadata-test";
-
-    std::filesystem::remove_all(test_root);
-    std::filesystem::create_directories(test_root);
+    athena::test::TemporaryDirectory fixture("athena-store-metadata-test");
+    const auto test_root = fixture.path();
 
     /*
      * Keep the test isolated from the real Athena installation.
@@ -263,7 +262,6 @@ int main()
         );
 
         athena::paths::reset_root();
-        std::filesystem::remove_all(test_root);
 
         std::cout
             << "store_metadata_test: OK\n";
@@ -272,7 +270,7 @@ int main()
     }
     catch (...) {
         athena::paths::reset_root();
-        std::filesystem::remove_all(test_root);
+
         throw;
     }
 }

@@ -129,8 +129,8 @@ ExecutionAccess::Authorized ExecutionAccess::authorize(ProjectionContext& p, con
         if (base_doc->generation.id == 0 && (!base_doc->generation.entries.empty() || !base_doc->generation.realizations.empty()))
             reject(ExecutionCause::MembershipMismatch, "Base generation 0 must have empty payload membership");
         if (std::holds_alternative<EmptyOwnership>(base->ownership) &&
-            (base_doc->generation.id != 0 || !base_doc->generation.entries.empty() || !base_doc->generation.realizations.empty()))
-            reject(ExecutionCause::MembershipMismatch, "Empty ownership is only valid for empty generation 0");
+            (!base_doc->generation.entries.empty() || !base_doc->generation.realizations.empty()))
+            reject(ExecutionCause::MembershipMismatch, "Empty ownership requires empty membership");
     } else if (target_doc.generation.id != 0 || !target_doc.generation.entries.empty() ||
                !target_doc.generation.realizations.empty() || !doc.plan.sources.empty() || !doc.plan.operations.empty())
         reject(ExecutionCause::MembershipMismatch, "Absent selection requires empty generation 0 bootstrap");

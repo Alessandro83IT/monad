@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "temporary_directory.hpp"
+
 #include "../src/repository/repository.hpp"
 
 #include <cassert>
@@ -38,12 +40,8 @@ void write_package(
 
 int main()
 {
-    const auto root =
-        std::filesystem::temp_directory_path() /
-        "athena-repository-test";
-
-    std::filesystem::remove_all(root);
-    std::filesystem::create_directories(root);
+    athena::test::TemporaryDirectory fixture("athena-repository-test");
+    const auto root = fixture.path();
 
     /*
      * Create the parent directory for the nested package definition.
@@ -97,8 +95,6 @@ int main()
     assert(all_versions[1].version == "1.3.2");
 
     assert(repository.index().contains("zlib"));
-
-    std::filesystem::remove_all(root);
 
     std::cout
         << "Repository tests passed.\n";

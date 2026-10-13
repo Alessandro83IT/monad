@@ -24,6 +24,7 @@ void rename_detach(int, std::string_view, int, std::string_view,
     const core::detail::Syscalls& = core::detail::linux_syscalls());
 }
 // Explicit binding to the exact generation namespace, never a state-parent guess.
+class StoreGcLock;
 class AuthorityContext {
 public:
     AuthorityContext(std::filesystem::path store, std::filesystem::path generations);
@@ -32,7 +33,13 @@ public:
     std::filesystem::path objects() const { return store_ / "objects/v1/sha256"; }
     std::filesystem::path registry() const { return objects() / ".athena-transactions"; }
     // Requires StoreGc. Creation is permitted only at explicit registration/publication boundaries.
+    // Read-only inspection before initial selection. Absent BOTH records is unbound;
+    // every partial, unsafe or discordant binding fails closed. No current/pins needed.
+    bool inspect_binding(const StoreGcLock&) const;
     void validate_binding(bool create, const core::detail::Syscalls& = core::detail::linux_syscalls()) const;
+    // Same binding protocol; initial activation opts into preserving uncertain residue.
+    void validate_binding(bool create, const core::detail::Syscalls&,
+        core::detail::ReplacementFailure) const;
 private:
     std::filesystem::path store_, generations_;
 };

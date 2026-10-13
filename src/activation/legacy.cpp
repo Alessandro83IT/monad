@@ -133,8 +133,9 @@ LegacyInventory LegacyAccess::inspect_impl(ProjectionContext& p, const Projectio
         const std::string prefix = p.binding_.store_authority + '/';
         if (!locator.starts_with(prefix)) bad(LegacyCause::UnsafeSource, "Legacy source outside bound store");
         const std::string relative(locator.substr(prefix.size())); validate_relative_path(relative);
-        if (relative == "objects" || relative.starts_with("objects/"))
-            bad(LegacyCause::UnsafeSource, "Legacy source inside modern namespace");
+        const auto first = relative.substr(0, relative.find('/'));
+        if (first == "objects" || first == ".athena-gc-trash" || first == ".athena-locks")
+            bad(LegacyCause::UnsafeSource, "Legacy source inside store administrative namespace");
         const auto doc = generation_document(p, generation_id);
         std::string package;
         unsigned memberships = 0;

@@ -133,7 +133,55 @@ std::string binding_document(const AuthorityContext& authority) {
     std::ostringstream out; out << table << '\n'; return out.str();
 }
 }
+bool AuthorityContext::inspect_binding(const StoreGcLock& lock) const {
+    if (lock.store() != store_) throw std::invalid_argument("binding inspection lock mismatch");
+    auto generations = d::open_directory(generations_, false, true);
+    auto present = [](int parent, const char* name) {
+        struct stat st{};
+        if (::fstatat(parent, name, &st, AT_SYMLINK_NOFOLLOW) == 0) return true;
+        if (errno == ENOENT) return false;
+        throw std::system_error(errno, std::generic_category(), "inspect authority binding");
+    };
+    if (present(generations.get(), "generations"))
+        throw std::runtime_error("ambiguous generation authority directory");
+    const bool reverse = present(generations.get(), ".athena-store-authority.toml");
+    auto objects = d::open_directory(store_, false, true);
+    for (const char* part : {"objects", "v1", "sha256"}) {
+        if (!present(objects.get(), part)) {
+            if (reverse) throw std::runtime_error("bound object namespace missing");
+            return false;
+        }
+        auto child = d::open_at(objects.get(), part, O_RDONLY | O_DIRECTORY);
+        const auto status = d::stat_fd(child.get());
+        if (status.st_uid != ::geteuid() || (status.st_mode & 07022))
+            throw std::runtime_error("unsafe object namespace authority");
+        a::same_mount(objects.get(), child.get()); a::unchanged(objects.get(), part, child.get());
+        objects = std::move(child);
+    }
+    if (!present(objects.get(), ".athena-transactions")) {
+        if (reverse) throw std::runtime_error("bound transaction registry missing");
+        return false;
+    }
+    auto registry = d::open_at(objects.get(), ".athena-transactions", O_RDONLY | O_DIRECTORY);
+    a::private_directory(registry.get()); a::same_mount(objects.get(), registry.get());
+    if (!reverse || !present(registry.get(), "authority.toml"))
+        throw std::runtime_error("partial store/generation binding; recovery required");
+    auto matches = [&](std::string_view document) {
+        const auto table = toml::parse(document);
+        return table.size() == 3 && table["schema_version"].is_integer() &&
+            table["schema_version"].value<int64_t>() == 1 &&
+            table["store_authority"].value<std::string>() == store_.string() &&
+            table["generation_authority"].value<std::string>() == generations_.string();
+    };
+    if (!matches(a::read_file(registry.get(), "authority.toml")) ||
+        !matches(a::read_file(generations.get(), ".athena-store-authority.toml")))
+        throw std::runtime_error("store/generation authority binding mismatch");
+    return true;
+}
 void AuthorityContext::validate_binding(bool create, const d::Syscalls& ops) const {
+    validate_binding(create, ops, d::ReplacementFailure::CleanupPrivate);
+}
+void AuthorityContext::validate_binding(bool create, const d::Syscalls& ops, d::ReplacementFailure failure) const {
     // A reverse record detects loss of the entire store-local registry. Without
     // this witness, a missing pin registry could be mistaken for a fresh store.
     auto generations = d::open_directory(generations_, false, true);
@@ -178,7 +226,7 @@ void AuthorityContext::validate_binding(bool create, const d::Syscalls& ops) con
     if (::fstatat(registry.get(), "authority.toml", &status, AT_SYMLINK_NOFOLLOW) < 0) {
         if (errno != ENOENT || !create || reverse) throw std::runtime_error("missing authority binding");
         if (!a::entries(registry.get()).empty()) throw std::runtime_error("ambiguous unbound transaction registry");
-        d::atomic_replace(registry.get(), "authority.toml", expected, ops);
+        d::atomic_replace(registry.get(), "authority.toml", expected, ops, failure);
     }
     if (!matches(a::read_file(registry.get(), "authority.toml")))
         throw std::runtime_error("store/generation authority binding mismatch");
@@ -186,7 +234,7 @@ void AuthorityContext::validate_binding(bool create, const d::Syscalls& ops) con
         if (!create || a::entries(registry.get()) != std::vector<std::string>{"authority.toml"})
             throw std::runtime_error("generation binding missing; recovery required");
         d::require_durable_directory(generations.get(), ops);
-        d::atomic_replace(generations.get(), ".athena-store-authority.toml", expected, ops);
+        d::atomic_replace(generations.get(), ".athena-store-authority.toml", expected, ops, failure);
         auto parent = d::open_directory(generations_.parent_path(), false, true);
         d::directory_barrier(parent.get(), true, ops);
     }

@@ -52,10 +52,15 @@ function(add_athena_test name)
     add_executable(${name} tests/${name}.cpp)
     target_link_libraries(${name} PRIVATE Athena::Core)
     target_include_directories(${name} PRIVATE "${PROJECT_SOURCE_DIR}/src")
+    # Historical tests use assert for verification (and occasionally fixture setup).
+    # Keep these checks active in Release without changing production build flags.
+    target_compile_options(${name} PRIVATE
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-UNDEBUG>)
     add_test(NAME ${name} COMMAND ${name})
 endfunction()
 
 set(ATHENA_TESTS
+    initial_activation_test
     operational_activation_test
     operational_plan_test
     activation_reconciliation_test
@@ -269,3 +274,7 @@ add_test(NAME activation_plan_persistence_qualification_cleanup_test
 set_tests_properties(activation_plan_persistence_qualification_cleanup_test PROPERTIES TIMEOUT 30)
 
 set_tests_properties(operational_activation_test PROPERTIES TIMEOUT 30)
+
+set_tests_properties(initial_activation_test PROPERTIES TIMEOUT 30)
+add_test(NAME initial_activation_migration_test COMMAND initial_activation_test migration)
+set_tests_properties(initial_activation_migration_test PROPERTIES LABELS "privileged" TIMEOUT 180)

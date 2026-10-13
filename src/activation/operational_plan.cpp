@@ -202,8 +202,8 @@ OperationalPlanResult build_operational_plan(const OperationalPlanInput& input) 
                       !desired.links.empty() || !desired.directories.empty()))
         reject(SchemaErrorCode::Reference, "Absent base permits only empty generation zero");
     if (selected && std::holds_alternative<EmptyOwnership>(selected->ownership) &&
-        (input.base_generation->id != 0 || !input.base_generation->sources.empty()))
-        reject(SchemaErrorCode::Reference, "Empty ownership requires empty generation zero");
+        !input.base_generation->sources.empty())
+        reject(SchemaErrorCode::Reference, "Empty ownership requires empty membership");
 
     std::map<std::string, WitnessReference, ByteLess> witnesses;
     std::set<std::string> witness_ids;

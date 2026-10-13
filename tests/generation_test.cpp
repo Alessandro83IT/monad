@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "temporary_directory.hpp"
+
 #include "../src/generation/generation.hpp"
 #include "../src/store/manifest.hpp"
 #include "../src/store/metadata.hpp"
@@ -17,11 +19,8 @@ int main()
      * Use an isolated temporary state directory so the generation
      * tests never modify Athena's real system state.
      */
-    const auto test_root =
-        std::filesystem::temp_directory_path() /
-        "athena-generation-test";
-
-    std::filesystem::remove_all(test_root);
+    athena::test::TemporaryDirectory fixture("athena-generation-test");
+    const auto test_root = fixture.path();
 
     /*
      * The generation manager owns only generation metadata.
@@ -631,7 +630,6 @@ int main()
         )
     );
 
-
     /*
      * Verify explicit disposal of a generation that belongs to a
      * failed or otherwise abandoned transaction.
@@ -749,8 +747,6 @@ int main()
         ).id ==
         transition_generation_b.id
     );
-
-    std::filesystem::remove_all(test_root);
 
     std::cout
         << "Generation tests passed.\n";

@@ -101,6 +101,12 @@ void unsafe_sources() {
     Fixture f; auto p = f.open();
     rejected([&] { seal_legacy(p, *f.state, 1, f.binding.generation_authority); });
     rejected([&] { seal_legacy(p, *f.state, 1, f.binding.projection_root); });
+    for (const auto& locator : {f.binding.store_authority + "/.athena-gc-trash/payload",
+                                f.binding.store_authority + "/.athena-locks/payload"}) {
+        auto e = rejected([&] { seal_legacy(p, *f.state, 1, locator); });
+        require(e.cause == LegacyCause::UnsafeSource && e.outcome == ProjectionOutcome::NotMutated,
+                "Store administrative data cannot become adopted legacy ownership");
+    }
     for (auto locator : {"../demo", "/store/../demo", "/outside/demo", "/a//b"})
         rejected([&] { seal_legacy(p, *f.state, 1, locator); });
     fs::rename(f.source(), f.base / "saved"); fs::create_directory_symlink(f.base / "saved", f.source());

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "temporary_directory.hpp"
+
 #include <athena/core/api.hpp>
 
 #include <cassert>
@@ -15,15 +17,8 @@ using namespace athena::core;
 namespace {
 
 struct TempDirectory {
-    std::filesystem::path path;
-    TempDirectory()
-    {
-        const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
-        path = std::filesystem::temp_directory_path() /
-            ("athena-m14-" + std::to_string(stamp));
-        std::filesystem::create_directories(path);
-    }
-    ~TempDirectory() { std::error_code ec; std::filesystem::remove_all(path, ec); }
+    athena::test::TemporaryDirectory owned{"athena-m14"};
+    std::filesystem::path path = owned.path();
 };
 
 void write_package(const std::filesystem::path& path, const std::string& version,

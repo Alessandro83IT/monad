@@ -59,6 +59,13 @@ ProjectionState::ProjectionState(std::string generations)
     if (pinned.st_dev != named.st_dev || pinned.st_ino != named.st_ino)
         fail(ProjectionCause::BindingConflict, "State authority substituted during acquisition");
 }
+void ProjectionState::revalidate() const {
+    auto fresh = d::open_directory(generations_, false, true);
+    a::same_mount(generation_.get(), fresh.get());
+    const auto pinned = d::stat_fd(generation_.get()), named = d::stat_fd(fresh.get());
+    if (!state_.owns_lock() || pinned.st_dev != named.st_dev || pinned.st_ino != named.st_ino)
+        fail(ProjectionCause::BindingConflict, "Held State authority substituted");
+}
 void ProjectionContext::state(const ProjectionState& session) const {
     if (session.generations() != binding_.generation_authority || !session.state_.owns_lock() ||
         !inode(identity(generation_.get()), identity(session.generation_.get())))

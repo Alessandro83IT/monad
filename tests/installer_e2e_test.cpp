@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "temporary_directory.hpp"
+
 #include "../src/install/installer.hpp"
 #include "../src/paths/paths.hpp"
 #include "../src/store/store.hpp"
@@ -208,12 +210,8 @@ void assert_generation_contains(
 
 int main()
 {
-    const auto test_root =
-        std::filesystem::temp_directory_path() /
-        "athena-installer-e2e-test";
-
-    std::filesystem::remove_all(test_root);
-    std::filesystem::create_directories(test_root);
+    athena::test::TemporaryDirectory fixture("athena-installer-e2e-test");
+    const auto test_root = fixture.path();
 
     /*
      * Redirect every Athena-managed path into the temporary test
@@ -530,7 +528,6 @@ int main()
         assert(std::filesystem::is_directory(store_b1));
         assert(std::filesystem::is_directory(store_c1));
 
-
         /*
          * Verify the complete failed-install transaction.
          *
@@ -667,7 +664,6 @@ int main()
             assert(!contents.empty());
         }
 
-        std::filesystem::remove_all(test_root);
         athena::paths::reset_root();
 
         return 0;
@@ -677,7 +673,7 @@ int main()
          * Always restore the global path override before propagating
          * the failure so the test cannot contaminate later tests.
          */
-        std::filesystem::remove_all(test_root);
+
         athena::paths::reset_root();
         throw;
     }

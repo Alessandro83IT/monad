@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "temporary_directory.hpp"
+
 #include "../src/generation/generation.hpp"
 #include "../src/store/gc.hpp"
 #include "../src/store/object_store.hpp"
@@ -53,14 +55,8 @@ static athena::realization::RealizationRecord realization_record(
 
 int main()
 {
-    const auto test_root =
-        std::filesystem::path(
-            "/tmp/athena-gc-test"
-        );
-
-    std::filesystem::remove_all(
-        test_root
-    );
+    athena::test::TemporaryDirectory fixture("athena-gc-test");
+    const auto test_root = fixture.path();
 
     const auto state_directory =
         test_root / "state";
@@ -483,10 +479,6 @@ int main()
 
     assert(
         invalid_path_rejected
-    );
-
-    std::filesystem::remove_all(
-        test_root
     );
 
     std::cout

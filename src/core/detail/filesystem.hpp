@@ -71,8 +71,13 @@ void acquire_flock(int, int, const Syscalls& = linux_syscalls());
 // Overlayfs and unknown filesystem types are rejected before mutation.
 // Honest storage barriers remain a deployment prerequisite.
 // Parent must be a private/trusted directory: concurrent untrusted entry mutation is unsupported.
+// Initial authority protocols preserve even private residue after uncertain IO.
+// Existing callers retain their established private-temporary cleanup behavior.
+enum class ReplacementFailure { CleanupPrivate, Preserve };
 void atomic_replace(int parent, std::string_view destination, std::string_view data,
                     const Syscalls& = linux_syscalls());
+void atomic_replace(int parent, std::string_view destination, std::string_view data,
+                    const Syscalls&, ReplacementFailure);
 void require_durable_directory(int, const Syscalls& = linux_syscalls());
 // Exclusive random private directory; parent must pass durability preflight first.
 std::string private_directory(int, const Syscalls& = linux_syscalls());

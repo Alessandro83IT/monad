@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "temporary_directory.hpp"
+
 #include "../src/activation/activation.hpp"
 #include "../src/store/manifest.hpp"
 
@@ -16,9 +18,8 @@ int main()
      * Use a dedicated temporary directory so the activation test
      * never touches the real filesystem outside its test area.
      */
-    const auto test_root =
-        std::filesystem::temp_directory_path() /
-        "athena-activation-test";
+    athena::test::TemporaryDirectory fixture("athena-activation-test");
+    const auto test_root = fixture.path();
 
     const auto store_directory =
         test_root / "store";
@@ -27,10 +28,9 @@ int main()
         test_root / "target";
 
     /*
-     * Start from a clean test environment. This makes repeated
-     * executions deterministic even if a previous run failed.
+     * The reserved fixture root is empty and remains present until
+     * RAII cleanup, so no other invocation can reuse its name.
      */
-    std::filesystem::remove_all(test_root);
 
     std::filesystem::create_directories(
         store_directory / "usr/bin"
@@ -224,8 +224,6 @@ int main()
     assert(
         std::filesystem::is_regular_file(preexisting)
     );
-
-    std::filesystem::remove_all(test_root);
 
     std::cout
         << "Activation tests passed.\n";

@@ -48,6 +48,7 @@ class ProjectionState {
 public:
     explicit ProjectionState(std::string generation_authority);
     const std::string& generations() const { return generations_; }
+    void revalidate() const;
 private:
     friend class LegacyAccess;
     friend class ProjectionContext;

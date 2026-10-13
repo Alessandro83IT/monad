@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "temporary_directory.hpp"
+
 #include "../src/build/cmake_backend.hpp"
 
 #include <cassert>
@@ -10,14 +12,10 @@
 
 int main()
 {
-    const std::filesystem::path source_directory =
-        "/tmp/athena-cmake-test";
-
-    const std::filesystem::path build_directory =
-        "/tmp/athena-cmake-test-build";
-
-    const std::filesystem::path staging_directory =
-        "/tmp/athena-cmake-test-staging";
+    athena::test::TemporaryDirectory fixture("athena-cmake-test");
+    const auto source_directory = fixture.path() / "source";
+    const auto build_directory = fixture.path() / "build";
+    const auto staging_directory = fixture.path() / "staging";
 
     std::cout << "Testing CMake backend...\n";
 

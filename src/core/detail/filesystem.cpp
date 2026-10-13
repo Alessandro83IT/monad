@@ -136,6 +136,9 @@ void acquire_flock(int fd, int flags, const Syscalls& ops) {
     if (result < 0) throw std::system_error(errno, std::generic_category(), "flock acquisition");
 }
 void atomic_replace(int parent, std::string_view destination, std::string_view data, const Syscalls& ops) {
+    atomic_replace(parent, destination, data, ops, ReplacementFailure::CleanupPrivate);
+}
+void atomic_replace(int parent, std::string_view destination, std::string_view data, const Syscalls& ops, ReplacementFailure failure) {
     durable_parent(parent, ops); leaf(destination); const std::string dest(destination);
     std::string temp;
     Fd fd;
@@ -158,7 +161,7 @@ void atomic_replace(int parent, std::string_view destination, std::string_view d
         for (auto c : random) { temp += hex[c >> 4]; temp += hex[c & 15]; }
         if (temp == dest) continue;
         int raw = ::openat(parent, temp.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
-        if (raw >= 0) { cleanup.active = true; fd = Fd::adopt(raw, ops); break; }
+        if (raw >= 0) { cleanup.active = failure == ReplacementFailure::CleanupPrivate; fd = Fd::adopt(raw, ops); break; }
         if (errno != EEXIST) fail("create temporary", errno);
     }
     complete_write(fd.get(), data, ops); file_barrier(fd.get(), ops);
