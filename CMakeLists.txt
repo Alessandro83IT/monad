@@ -56,6 +56,7 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    operational_plan_test
     activation_reconciliation_test
     activation_selection_test
     activation_plan_retention_test
