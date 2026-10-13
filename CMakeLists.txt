@@ -56,6 +56,7 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    activation_plan_retention_test
     activation_plan_persistence_test
     legacy_d3_test
     activation_projection_fs_test
@@ -196,6 +197,17 @@ set_tests_properties(activation_schema_test PROPERTIES TIMEOUT 180)
 
 set_tests_properties(activation_projection_fs_test PROPERTIES TIMEOUT 60)
 set_tests_properties(activation_plan_persistence_test PROPERTIES TIMEOUT 120)
+set_tests_properties(activation_plan_retention_test PROPERTIES TIMEOUT 180)
+foreach(mode IN ITEMS limits budgets processes kills)
+    add_test(NAME activation_plan_retention_${mode}_test COMMAND activation_plan_retention_test ${mode})
+    set_tests_properties(activation_plan_retention_${mode}_test PROPERTIES TIMEOUT 300)
+endforeach()
+foreach(case IN ITEMS owner bind nested ext4)
+    add_test(NAME activation_plan_retention_privileged_${case}_test
+        COMMAND activation_plan_retention_test privileged-${case})
+    set_tests_properties(activation_plan_retention_privileged_${case}_test
+        PROPERTIES SKIP_RETURN_CODE 77 LABELS "privileged" TIMEOUT 180)
+endforeach()
 # Native locator adoption uses the default filesystem provider. Keep its fault
 # provider confined to this one CTest process; it is never linked into Athena.
 add_library(athena_d4_locator_fault SHARED tests/activation_plan_persistence_test.cpp)

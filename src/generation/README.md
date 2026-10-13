@@ -1,5 +1,12 @@
 # Generation membership, publication and activation (M2.5-B)
 
+M2.5-D5 makes `discard` consult persisted activation plan references while holding
+exclusive State. Published plans and complete private preparations retain their
+target and selected-base generations. Ambiguous or invalid retention state blocks
+discard conservatively, including for an otherwise unreferenced generation.
+This does not change current selection or authorize plan/residue cleanup.
+See [the D5 contract](../../docs/m2.5-d5-plan-retention.md).
+
 A Generation retains its independently allocated numeric ID (max retained ID + 1).
 It is immutable once persisted. Generation identity is neither CandidateIdentity,
 ArtifactId nor BuildInputId. Membership does not derive the generation ID.

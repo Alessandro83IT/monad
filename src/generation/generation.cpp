@@ -5,6 +5,7 @@
 #include "../installed/environment.hpp"
 
 #include "../activation/activation.hpp"
+#include "../activation/plan_retention.hpp"
 
 #include <algorithm>
 #include <fcntl.h>
@@ -196,6 +197,9 @@ void GenerationManager::discard(
 )
 {
     core::FileLock state(core::state_lock_path(generations_directory_), core::LockKind::State);
+    const auto references = activation::scan_plan_references(generations_directory_, state);
+    if (references.generations.contains(id))
+        throw std::runtime_error("Generation is retained by an activation plan: " + std::to_string(id));
     const auto current_generation =
         current();
 

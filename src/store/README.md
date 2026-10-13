@@ -172,6 +172,12 @@ all retained generations, shared artifacts and separately defined runtime roots.
 
 ## M2.5-C lifetime and GC protocol
 
+M2.5-D5 additionally includes every validated published activation plan and
+complete private preparation in GC source roots. An incomplete, malformed,
+ambiguous or over-budget plan namespace stops collection before its first
+detach; each later detach rescans under State -> StoreGc. No plan cleanup or pin
+retirement authority is introduced. See [the D5 contract](../../docs/m2.5-d5-plan-retention.md).
+
 Production publishes prepared objects through `TransactionPins::publish`, which
 establishes a durable pin under StoreGc before publication or adoption. Old B
 publication seams are explicitly named `*_unprotected_for_test`. Authoritative

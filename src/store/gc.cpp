@@ -7,6 +7,7 @@
 
 #include "../generation/generation.hpp"
 #include "../generation/publication.hpp"
+#include "../activation/plan_retention.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -108,7 +109,7 @@ struct Snapshot {
     std::set<std::string> artifacts, legacy;
     bool transactions;
 };
-Snapshot roots(const AuthorityContext& authority, const std::filesystem::path& legacy_locator) {
+Snapshot roots(const AuthorityContext& authority, const std::filesystem::path& legacy_locator, const core::FileLock& state) {
     // Exactly one enumeration under shared State -> exclusive StoreGc.
     generation::GenerationManager manager(authority.generations(), generation::GenerationManager::GenerationDirectoryTag{});
     std::vector<generation::Generation> generations;
@@ -116,6 +117,12 @@ Snapshot roots(const AuthorityContext& authority, const std::filesystem::path& l
         generations.push_back(manager.get(id));
     const auto pins = scan_pins(authority);
     Snapshot result{pins.artifacts, {}, pins.transactions};
+    const auto plans = activation::scan_plan_references(authority.generations(), state, authority.store());
+    result.artifacts.insert(plans.artifacts.begin(), plans.artifacts.end());
+    // Translate canonical bound-store paths into the historical display locator.
+    // This preserves C's explicitly bound legacy-only symlink compatibility.
+    for (const auto& path : plans.legacy)
+        result.legacy.insert((legacy_locator / std::filesystem::path(path).lexically_relative(authority.store())).string());
     const auto root = normalize_path(legacy_locator);
     std::error_code object_namespace_error;
     const auto object_namespace = std::filesystem::canonical(authority.objects(), object_namespace_error);
@@ -183,7 +190,7 @@ std::vector<std::filesystem::path> GarbageCollector::collect(const core::detail:
         core::FileLock state(core::state_lock_path(state_directory_), core::LockKind::State, core::LockMode::Shared);
         core::FileLock store(core::store_gc_lock_path(bound_store_), core::LockKind::StoreGc);
         authority.validate_binding(false, ops);
-        const auto snapshot = roots(authority, store_directory_); // Validate ALL roots before first detach.
+        const auto snapshot = roots(authority, store_directory_, state); // Validate ALL roots before first detach.
         ObjectStore object_store(bound_store_);
         for (const auto& id : object_store.list()) if (!snapshot.artifacts.contains(id.value())) objects.push_back(id);
         if (!snapshot.transactions) for (const auto& entry : std::filesystem::directory_iterator(bound_store_)) {
@@ -201,7 +208,7 @@ std::vector<std::filesystem::path> GarbageCollector::collect(const core::detail:
             core::FileLock state(core::state_lock_path(state_directory_), core::LockKind::State, core::LockMode::Shared);
             core::FileLock store(core::store_gc_lock_path(bound_store_), core::LockKind::StoreGc);
             authority.validate_binding(false, ops);
-            const auto snapshot = roots(authority, store_directory_);
+            const auto snapshot = roots(authority, store_directory_, state);
             if (!snapshot.artifacts.contains(id.value())) {
                 const auto candidates = ObjectStore(bound_store_).list();
                 if (std::find(candidates.begin(), candidates.end(), id) != candidates.end()) {
@@ -217,7 +224,7 @@ std::vector<std::filesystem::path> GarbageCollector::collect(const core::detail:
         {
             core::FileLock state(core::state_lock_path(state_directory_), core::LockKind::State, core::LockMode::Shared);
             core::FileLock store(core::store_gc_lock_path(bound_store_), core::LockKind::StoreGc);
-            authority.validate_binding(false, ops); const auto snapshot = roots(authority, store_directory_);
+            authority.validate_binding(false, ops); const auto snapshot = roots(authority, store_directory_, state);
             if (!snapshot.transactions && !snapshot.legacy.contains(normalize_path(path).string()) &&
                 is_store_entry(bound_store_ / path.filename())) {
                 trash.detach_locked(path.filename().string(), ops); detached = true;

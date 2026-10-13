@@ -679,6 +679,84 @@ struct PlanAccess::Operation {
         return {std::move(container), std::move(intent), std::move(plan), std::move(ib), std::move(pb),
             {std::move(i), std::move(a), std::move(digest)}};
     }
+    PlanReferences retention() const {
+        context();
+        const auto admin = directory_observation(p.admin_.get());
+        if (exists(p.admin_.get(), ".plans-bootstrap"))
+            fail(Cause::BootstrapConflict, "D5 cannot dispose of bootstrap residue");
+        if (!exists(p.admin_.get(), "plans")) {
+            context();
+            if (!observation(admin, directory_observation(p.admin_.get())))
+                fail(Cause::Substituted, "D5 administration changed");
+            return {};
+        }
+        auto ns = namespace_open(true);
+        const auto plans_before = directory_observation(ns.plans.fd.get());
+        const auto prep_before = directory_observation(ns.preparations.fd.get());
+        std::set<std::string> ids;
+        auto reserve = [&](const std::string& name) {
+            id_name(name);
+            if (ids.size() == capacity) fail(Cause::AdministrativeLimit, "D5 combined container budget");
+            if (!ids.insert(name).second) fail(Cause::PreparationConflict, "D5 duplicate container ID");
+        };
+        const auto public_names = entries(ns.plans.fd.get(), capacity + 1, [&](const auto& name) {
+            if (name != ".preparations") reserve(name);
+        });
+        const auto private_names = entries(ns.preparations.fd.get(), capacity, reserve);
+        struct ObservedPair { std::string name; bool private_pair; struct statx container, intent, plan; PlanDigest digest; };
+        std::vector<ObservedPair> observed;
+        PlanReferences result;
+        std::size_t bytes = 0, references = 0;
+        auto budget = [&](std::size_t amount, std::size_t& used, std::size_t limit) {
+            if (amount > limit - used) fail(Cause::AdministrativeLimit, "D5 retention scan budget exceeded");
+            used += amount;
+        };
+        auto legacy_root = [&](const std::string& locator) {
+            // D1 already validates raw absolute locator grammar. Do not resolve
+            // aliases or normalize away traversal; retention is not source use.
+            const auto relative = std::filesystem::path(locator).lexically_relative(p.binding_.store_authority);
+            if (relative.empty() || relative == "." || relative.is_absolute() || *relative.begin() == "..")
+                fail(Cause::AuthorityMismatch, "D5 legacy source outside bound store");
+            result.legacy.insert((std::filesystem::path(p.binding_.store_authority) / *relative.begin()).native());
+        };
+        auto consume = [&](const std::string& name, bool private_pair) {
+            auto value = pair(private_pair ? ns.preparations.fd.get() : ns.plans.fd.get(), ActivationId(name), private_pair, false);
+            budget(value.intent_bytes.size(), bytes, max_retention_bytes);
+            budget(value.plan_bytes.size(), bytes, max_retention_bytes);
+            const auto& intent = value.document.intent;
+            budget(1 + (std::holds_alternative<SelectedBase>(intent.base) ? 1 : 0) + value.document.plan.sources.size(),
+                   references, max_retention_references);
+            result.generations.insert(intent.target_generation);
+            if (const auto* base = std::get_if<SelectedBase>(&intent.base)) result.generations.insert(selected_generation(base->current));
+            for (const auto& source : value.document.plan.sources) std::visit([&](const auto& s) {
+                using T = std::decay_t<decltype(s)>;
+                if constexpr (!std::is_same_v<T, ArtifactSource>) legacy_root(s.locator);
+                if constexpr (!std::is_same_v<T, LegacyTreeSource>) result.artifacts.insert(s.artifact_id.value());
+            }, source);
+            if (read(value.intent) != value.intent_bytes || read(value.plan) != value.plan_bytes)
+                fail(Cause::Substituted, "D5 pair changed during scan");
+            check(value.container, true); check(value.intent, true); check(value.plan, true);
+            observed.push_back({name, private_pair, value.container.initial, value.intent.initial, value.plan.initial, value.document.digest});
+            ++(private_pair ? result.preparations : result.published);
+        };
+        for (const auto& name : public_names) if (name != ".preparations") consume(name, false);
+        for (const auto& name : private_names) consume(name, true);
+        // Value observations bound descriptors independently of plan count. Reopen
+        // each pair at conclusion: same-byte replacement cannot borrow old evidence.
+        for (const auto& original : observed) {
+            auto value = pair(original.private_pair ? ns.preparations.fd.get() : ns.plans.fd.get(),
+                              ActivationId(original.name), original.private_pair, false);
+            if (!observation(original.container, value.container.initial) || !observation(original.intent, value.intent.initial) ||
+                !observation(original.plan, value.plan.initial) || original.digest != value.document.digest)
+                fail(Cause::Substituted, "D5 retained pair substituted");
+        }
+        context(); check(ns.plans, true); check(ns.preparations, true);
+        if (!observation(admin, directory_observation(p.admin_.get())) ||
+            !observation(plans_before, directory_observation(ns.plans.fd.get())) ||
+            !observation(prep_before, directory_observation(ns.preparations.fd.get())))
+            fail(Cause::Substituted, "D5 retention namespace changed");
+        return result;
+    }
     std::string evidence_read(const Evidence& e, Evidence::ObjectId id) const {
         evidence_chain(e, id);
         const int fd = evidence_fd(e, id); const auto before = evidence_stat(fd);
@@ -1122,6 +1200,9 @@ std::vector<std::string> PlanAccess::administration_entries(const ProjectionCont
 }
 void PlanAccess::namespace_shape(const ProjectionContext& p) {
     Operation op{p}; op.run([&] { op.shape(); });
+}
+PlanReferences PlanAccess::retention(const ProjectionContext& p) {
+    Operation op{p}; return op.run([&] { return op.retention(); });
 }
 ProjectionOutcome PlanAccess::ensure(ProjectionContext& p, const ProjectionState& state) {
     Operation op{p, &state}; return op.run([&] { op.ensure(); return op.outcome(); });

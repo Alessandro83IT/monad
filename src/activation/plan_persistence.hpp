@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "projection_fs.hpp"
+#include "plan_retention.hpp"
 #include <exception>
 #include <optional>
 #include <memory>
@@ -131,6 +132,7 @@ class PlanAccess {
 public:
     static std::vector<std::string> administration_entries(const ProjectionContext&);
     static void namespace_shape(const ProjectionContext&);
+    static PlanReferences retention(const ProjectionContext&);
     static ProjectionOutcome ensure(ProjectionContext&, const ProjectionState&);
     static InspectedActivationPlan inspect(const ProjectionContext&, const ProjectionState&, const ActivationId&);
     static PlanPersistenceResult publish(ProjectionContext&, const ProjectionState&, const ActivationIntent&, const ActivationPlan&);
