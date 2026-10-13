@@ -56,6 +56,7 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    operational_activation_test
     operational_plan_test
     activation_reconciliation_test
     activation_selection_test
@@ -266,3 +267,5 @@ set_tests_properties(legacy_d3_scanner_test PROPERTIES LABELS "privileged")
 add_test(NAME activation_plan_persistence_qualification_cleanup_test
     COMMAND activation_plan_persistence_test qualification-cleanup)
 set_tests_properties(activation_plan_persistence_qualification_cleanup_test PROPERTIES TIMEOUT 30)
+
+set_tests_properties(operational_activation_test PROPERTIES TIMEOUT 30)
