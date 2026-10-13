@@ -56,6 +56,8 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    activation_reconciliation_test
+    activation_selection_test
     activation_plan_retention_test
     activation_plan_persistence_test
     legacy_d3_test
@@ -195,6 +197,20 @@ set_tests_properties(activation_current_test activation_digest_test PROPERTIES T
 # Schema stress coverage parses complete 65,536-entry documents in Debug too.
 set_tests_properties(activation_schema_test PROPERTIES TIMEOUT 180)
 
+add_executable(activation_execution_privileged_test tests/activation_execution_privileged_test.cpp)
+target_link_libraries(activation_execution_privileged_test PRIVATE Athena::Core)
+target_include_directories(activation_execution_privileged_test PRIVATE "${PROJECT_SOURCE_DIR}/src")
+foreach(case sources legacy owner bind nested ext4)
+    add_test(NAME activation_execution_privileged_${case}_test COMMAND activation_execution_privileged_test ${case})
+    set_tests_properties(activation_execution_privileged_${case}_test PROPERTIES LABELS "privileged" SKIP_RETURN_CODE 77 TIMEOUT 180)
+endforeach()
+set_tests_properties(activation_selection_test activation_reconciliation_test PROPERTIES TIMEOUT 180)
+set_tests_properties(activation_selection_test PROPERTIES TIMEOUT 600)
+add_test(NAME activation_selection_metadata_test COMMAND activation_selection_test metadata)
+set_tests_properties(activation_selection_metadata_test PROPERTIES TIMEOUT 30)
+# These purity checks snapshot their whole working directory. Other CTest cases
+# create build fixtures there, so they must observe an otherwise idle test tree.
+set_tests_properties(public_planning_test resolution_result_test PROPERTIES RUN_SERIAL TRUE)
 set_tests_properties(activation_projection_fs_test PROPERTIES TIMEOUT 60)
 set_tests_properties(activation_plan_persistence_test PROPERTIES TIMEOUT 120)
 set_tests_properties(activation_plan_retention_test PROPERTIES TIMEOUT 180)

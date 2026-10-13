@@ -71,10 +71,20 @@ public:
     void validate_owned_symlink(std::string_view path, std::string_view target, const WitnessReference&) const;
     ProjectionOutcome succeed_witness(const ProjectionState&, std::string_view path, std::string_view target,
         const WitnessReference& old_witness, const WitnessReference& successor);
+    ProjectionOutcome remove_symlink(const ProjectionState&, std::string_view path, std::string_view target,
+        const WitnessReference&);
+    ProjectionOutcome replace_symlink(const ProjectionState&, std::string_view path,
+        std::string_view old_target, const WitnessReference& old_witness,
+        std::string_view new_target, const WitnessReference& new_witness);
+    ProjectionOutcome ensure_directory(const ProjectionState&, std::string_view path);
+    // Recognizes only an exact owned final link and repairs namespace barriers.
+    ProjectionOutcome recover_symlink(const ProjectionState&, std::string_view path,
+        std::string_view target, const WitnessReference&);
 private:
     ProjectionContext(ProjectionBinding, ProjectionIo);
     friend class LegacyAccess;
     friend class PlanAccess;
+    friend class ExecutionAccess;
     using Fd = core::detail::Fd;
     ProjectionBinding binding_;
     ProjectionIo io_;
@@ -97,5 +107,7 @@ private:
     void link_identity(int, std::string_view, std::string_view, ProjectionCause) const;
     void barrier(int, bool mutated) const;
     Fd mkdir_private(int, std::string_view) const;
+    ProjectionOutcome publish_symlink(const ProjectionState&, std::string_view, std::string_view,
+        const WitnessReference&, const std::optional<std::pair<std::string, WitnessReference>>&);
 };
 }

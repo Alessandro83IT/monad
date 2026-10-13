@@ -394,11 +394,29 @@ void ProjectionContext::validate_owned_symlink(std::string_view path, std::strin
     unchanged(witnesses_.get(), std::get<ActivationId>(witness.owner).value(), dir.get());
 }
 ProjectionOutcome ProjectionContext::create_symlink(const ProjectionState& session, std::string_view path, std::string_view target, const WitnessReference& witness) {
+    return publish_symlink(session, path, target, witness, {});
+}
+ProjectionOutcome ProjectionContext::replace_symlink(const ProjectionState& session, std::string_view path,
+    std::string_view old_target, const WitnessReference& old_witness,
+    std::string_view new_target, const WitnessReference& new_witness) {
+    state(session);
+    try { return recover_symlink(session, path, new_target, new_witness); }
+    catch (const ProjectionError& e) {
+        if (e.cause != ProjectionCause::MissingWitness && e.cause != ProjectionCause::OwnershipMismatch &&
+            e.cause != ProjectionCause::MissingManaged) throw;
+    }
+    validate_owned_symlink(path, old_target, old_witness);
+    return publish_symlink(session, path, new_target, new_witness, std::pair{std::string(old_target), old_witness});
+}
+ProjectionOutcome ProjectionContext::publish_symlink(const ProjectionState& session, std::string_view path,
+    std::string_view target, const WitnessReference& witness,
+    const std::optional<std::pair<std::string, WitnessReference>>& predecessor) {
     state(session); validate_projection_path(path); target_bytes(target); const auto name = witness_name(witness); revalidate();
     auto [destination, leaf] = parent(path); // Reject unsafe ancestry before preparation.
     d::require_durable_directory(destination.get(), io_.durable);
     const std::string literal_target(target);
     bool prepared = false;
+    bool published = false;
     try {
         auto witnesses = container(witnesses_.get(), witness, true, &prepared);
         auto work = container(work_.get(), witness, true, &prepared);
@@ -429,18 +447,87 @@ ProjectionOutcome ProjectionContext::create_symlink(const ProjectionState& sessi
         link_identity(work.get(), name, target, ProjectionCause::MissingWitness);
         if (!inode(identity(witnesses.get(), name, false), identity(work.get(), name, false)))
             fail(ProjectionCause::OwnershipMismatch, "Work/witness substituted before publication");
-        // True atomic NOREPLACE. An identical foreign destination remains untouched.
-        if (io_.rename(work.get(), name.c_str(), destination.get(), leaf.c_str(), RENAME_NOREPLACE) < 0)
+        // Under State/external-writer exclusion, only the exact owned predecessor
+        // permits replacement. Directories, regular files and foreign links reject.
+        if (predecessor) validate_owned_symlink(path, predecessor->first, predecessor->second);
+        if (io_.rename(work.get(), name.c_str(), destination.get(), leaf.c_str(), predecessor ? 0 : RENAME_NOREPLACE) < 0)
             fail(ProjectionCause::ProjectionConflict, "CREATE NOREPLACE publication", errno);
+        published = true;
         barrier(destination.get(), true); barrier(work.get(), true);
+        validate_owned_symlink(path, target, witness);
         return ProjectionOutcome::MutatedDurably;
     } catch (ProjectionError& e) {
-        if (prepared && e.outcome == no_mutation) e.outcome = ProjectionOutcome::MutatedDurably;
+        if (published) e.outcome = ProjectionOutcome::OutcomeUncertain;
+        else if (prepared && e.outcome == no_mutation) e.outcome = ProjectionOutcome::MutatedDurably;
         throw;
     } catch (const std::exception& e) {
         fail(ProjectionCause::IoFailure, e.what(), 0,
              prepared ? ProjectionOutcome::OutcomeUncertain : no_mutation);
     }
+}
+ProjectionOutcome ProjectionContext::recover_symlink(const ProjectionState& session, std::string_view path,
+    std::string_view target, const WitnessReference& witness) {
+    state(session); validate_owned_symlink(path, target, witness);
+    auto dir = std::holds_alternative<ActivationId>(witness.owner) ? container(witnesses_.get(), witness, false) :
+        LegacyAccess::resolve(*this, path, target, witness);
+    barrier(dir.get(), true);
+    if (std::holds_alternative<ActivationId>(witness.owner)) {
+        barrier(witnesses_.get(), true);
+        const auto& owner = std::get<ActivationId>(witness.owner).value();
+        struct statx s{};
+        if (io_.stat(work_.get(), owner.c_str(), AT_SYMLINK_NOFOLLOW, STATX_BASIC_STATS | STATX_MNT_ID, &s) == 0) {
+            auto work = container(work_.get(), witness, false); barrier(work.get(), true); barrier(work_.get(), true);
+        } else if (errno != ENOENT) fail(ProjectionCause::IoFailure, "Recovery work container stat", errno);
+    }
+    auto [parent_fd, leaf] = parent(path); barrier(parent_fd.get(), true);
+    validate_owned_symlink(path, target, witness);
+    return ProjectionOutcome::MutatedDurably;
+}
+ProjectionOutcome ProjectionContext::remove_symlink(const ProjectionState& session, std::string_view path,
+    std::string_view target, const WitnessReference& witness) {
+    state(session); validate_projection_path(path); target_bytes(target); revalidate();
+    // Even an absent managed leaf requires surviving exact old witness authority.
+    auto dir = std::holds_alternative<ActivationId>(witness.owner) ? container(witnesses_.get(), witness, false) :
+        LegacyAccess::resolve(*this, path, target, witness);
+    const auto name = std::to_string(witness.entry_id);
+    link_identity(dir.get(), name, target, ProjectionCause::MissingWitness);
+    barrier(dir.get(), true);
+    auto [destination, leaf] = parent(path);
+    d::require_durable_directory(destination.get(), io_.durable);
+    struct statx s{};
+    if (io_.stat(destination.get(), leaf.c_str(), AT_SYMLINK_NOFOLLOW, STATX_BASIC_STATS | STATX_MNT_ID, &s) < 0) {
+        if (errno != ENOENT) fail(ProjectionCause::IoFailure, "REMOVE managed inspection", errno);
+        barrier(destination.get(), true); return ProjectionOutcome::MutatedDurably;
+    }
+    validate_owned_symlink(path, target, witness);
+    auto [checked, ignored] = parent(path);
+    if (!inode(identity(checked.get()), identity(destination.get())))
+        fail(ProjectionCause::UnsafeAncestor, "REMOVE parent substituted");
+    if (io_.unlink(destination.get(), leaf.c_str(), 0) < 0)
+        fail(ProjectionCause::IoFailure, "REMOVE owned symlink", errno);
+    barrier(destination.get(), true); return ProjectionOutcome::MutatedDurably;
+}
+ProjectionOutcome ProjectionContext::ensure_directory(const ProjectionState& session, std::string_view path) {
+    state(session); validate_projection_path(path); revalidate();
+    auto [destination, leaf] = parent(path);
+    d::require_durable_directory(destination.get(), io_.durable);
+    bool created = false;
+    if (io_.mkdir(destination.get(), leaf.c_str(), 0755) < 0) {
+        if (errno != EEXIST) fail(ProjectionCause::IoFailure, "ENSURE_DIRECTORY mkdir", errno);
+    } else created = true;
+    try {
+        auto fd = directory(destination.get(), leaf);
+        const auto s = identity(fd.get());
+        if (s.stx_uid != ::geteuid() || (s.stx_mode & 07022))
+            fail(ProjectionCause::ForeignEntry, "Unsafe ENSURE_DIRECTORY owner/mode");
+        auto [checked, ignored] = parent(path);
+        if (!inode(identity(checked.get()), identity(destination.get())))
+            fail(ProjectionCause::UnsafeAncestor, "ENSURE_DIRECTORY parent substituted");
+        barrier(fd.get(), true); barrier(destination.get(), true);
+        unchanged(destination.get(), leaf, fd.get());
+        return ProjectionOutcome::MutatedDurably;
+    } catch (ProjectionError& e) { if (created) e.outcome = ProjectionOutcome::OutcomeUncertain; throw; }
+    catch (const std::exception& e) { fail(ProjectionCause::IoFailure, e.what(), 0, created ? ProjectionOutcome::OutcomeUncertain : no_mutation); }
 }
 ProjectionOutcome ProjectionContext::succeed_witness(const ProjectionState& session, std::string_view path, std::string_view target,
         const WitnessReference& old, const WitnessReference& successor) {

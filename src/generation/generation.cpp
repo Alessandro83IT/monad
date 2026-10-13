@@ -6,6 +6,7 @@
 
 #include "../activation/activation.hpp"
 #include "../activation/plan_retention.hpp"
+#include "../activation/current_selection.hpp"
 
 #include <algorithm>
 #include <fcntl.h>
@@ -41,7 +42,7 @@ std::filesystem::path bind_authority(const std::filesystem::path& locator) {
 std::string read_metadata(const std::filesystem::path& directory, std::string_view name) {
     namespace d = core::detail;
     auto parent = d::open_directory(directory);
-    auto file = d::open_at(parent.get(), name, O_RDONLY);
+    auto file = d::open_at(parent.get(), name, O_RDONLY | O_NONBLOCK);
     d::regular(file.get());
     std::string document;
     char buffer[4096];
@@ -50,6 +51,8 @@ std::string read_metadata(const std::filesystem::path& directory, std::string_vi
         if (size < 0 && errno == EINTR) continue;
         if (size < 0) throw std::system_error(errno, std::generic_category(), "read generation metadata");
         if (size == 0) return document;
+        if (name == "current" && static_cast<std::size_t>(size) > activation::max_current_size - document.size())
+            throw activation::SchemaError(activation::SchemaErrorCode::Bounds, "Current record exceeds D1 byte bound");
         document.append(buffer, static_cast<std::size_t>(size));
     }
 }
@@ -100,12 +103,15 @@ Generation GenerationManager::initialize()
     ensure_durable_directories();
     core::FileLock lock(core::state_lock_path(generations_directory_), core::LockKind::State);
 
-    const auto current_file =
-        generations_directory_ / "current";
-
-    if (std::filesystem::exists(current_file)) {
+    auto authority = core::detail::open_directory(generations_directory_);
+    struct stat current_entry{};
+    if (::fstatat(authority.get(), "current", &current_entry, AT_SYMLINK_NOFOLLOW) == 0) {
         return current();
     }
+    if (errno != ENOENT) throw std::system_error(errno, std::generic_category(), "Inspect current for initialization");
+    struct stat binding{};
+    if (::fstatat(authority.get(), ".athena-projection-authority.toml", &binding, AT_SYMLINK_NOFOLLOW) == 0 || errno != ENOENT)
+        throw std::runtime_error("Bound projection requires explicit D6 generation 0 selection");
 
     const Generation initial{
         0,
@@ -320,20 +326,8 @@ Generation GenerationManager::create_impl(
  */
 Generation GenerationManager::current() const
 {
-    std::istringstream input(read_metadata(generations_directory_, "current"));
-
-    std::uint64_t id = 0;
-
-    input >> id;
-
-    if (input.fail()) {
-        throw std::runtime_error(
-            "Identificatore della generation corrente non valido: " +
-            (generations_directory_ / "current").string()
-        );
-    }
-
-    return get(id);
+    return get(activation::selected_generation(activation::parse_current_selection(
+        read_metadata(generations_directory_, "current"))));
 }
 
 /*
@@ -375,6 +369,12 @@ void GenerationManager::switch_impl(std::uint64_t id, const std::filesystem::pat
                                     const store::ObjectStore* objects) {
     // Keep both persisted activation source generations alive against discard.
     core::FileLock state(core::state_lock_path(generations_directory_), core::LockKind::State, core::LockMode::Shared);
+    auto authority = core::detail::open_directory(generations_directory_);
+    struct stat binding{};
+    if (::fstatat(authority.get(), ".athena-projection-authority.toml", &binding, AT_SYMLINK_NOFOLLOW) == 0 || errno != ENOENT)
+        throw std::runtime_error("Bound projection requires D6/D7 selection and reconciliation");
+    if (std::holds_alternative<activation::CurrentV1>(activation::parse_current_selection(read_metadata(generations_directory_, "current"))))
+        throw std::runtime_error("CurrentV1 cannot be overwritten by legacy switch");
     const auto target = get(id);
     const auto previous = current();
     // Historical pre-M2.4 generations remain switchable under their original
