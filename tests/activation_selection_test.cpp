@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "activation/selection.hpp"
 #include "activation_execution_support.hpp"
+#include "store/gc.hpp"
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -14,6 +15,33 @@ namespace fs = std::filesystem;
 using d1_test::require;
 namespace {
 using namespace execution_test;
+void source_authority_bootstrap() {
+    Fixture f;
+    athena::store::AuthorityContext authority(f.binding.store_authority,f.binding.generation_authority);
+    require(!fs::exists(f.root/"generations/current"),"persisted generations are not an initialized authority");
+    f.state.reset();
+    try {
+        athena::store::TransactionPins pins(authority);
+        throw std::runtime_error("uninitialized authority accepted");
+    } catch(const std::runtime_error& e) {
+        require(std::string(e.what())=="uninitialized generation authority","pin rejection identifies missing current");
+    }
+    rejected([&]{athena::store::GarbageCollector(authority).collect();});
+    require(!fs::exists(authority.registry()) && !fs::exists(f.root/"generations/.athena-store-authority.toml"),
+        "rejection does not bind uninitialized authorities");
+    athena::generation::GenerationManager manager(f.root/"generations",athena::generation::GenerationManager::GenerationDirectoryTag{});
+    rejected([&]{manager.initialize();});
+    require(!fs::exists(f.root/"generations/current"),"projection binding requires explicit D6 bootstrap");
+    f.state=std::make_unique<ProjectionState>(f.binding.generation_authority);
+    auto zero=f.bootstrap_source_authority();
+    auto p=f.open();
+    require(inspect_selection(p,*f.state)==std::optional<CurrentSelection>(CurrentV1{0,zero.activation_id,zero.digest}),
+        "source authority retains explicit D6 selection");
+    authority.validate_binding(false);
+    f.state.reset();
+    { athena::store::TransactionPins pins(authority); pins.abandon(); }
+    require(athena::store::GarbageCollector(authority).collect().empty(),"initialized source authority supports GC");
+}
 void transitions() {
     Fixture f; auto p=f.open(); auto first=f.plan(1,0,AbsentBase{});
     require(recover_selection(p,*f.state,first).state==SelectionState::BaseSelected,"recovery never promotes");
@@ -179,4 +207,4 @@ int main(int argc,char** argv) { try {
         try {commit_selection(p,state,{ActivationId(argv[5]),PlanDigest(argv[6])});return 0;}
         catch(const ExecutionError& e){if(e.cause==ExecutionCause::SelectionConflict)return 4;throw;}
     }
-    transitions();invalid();faults();io_faults();instance_substitution();kills();processes();}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
+    source_authority_bootstrap();transitions();invalid();faults();io_faults();instance_substitution();kills();processes();}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }

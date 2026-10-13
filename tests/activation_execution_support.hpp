@@ -2,6 +2,7 @@
 #pragma once
 #include "activation/selection.hpp"
 #include "activation_schema_support.hpp"
+#include "store/transaction_pins.hpp"
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -25,7 +26,9 @@ struct Fixture {
         state = std::make_unique<ProjectionState>(binding.generation_authority);
         auto context = ProjectionContext::create_binding(binding,objects,*state);
         for (unsigned n=0;n<3;++n) { fs::create_directory(root/"generations"/std::to_string(n));
-            write(root/"generations"/std::to_string(n)/"generation.toml",athena::generation::serialize(athena::generation::make_generation(n,{}))); }
+            fs::permissions(root/"generations"/std::to_string(n),fs::perms::owner_all);
+            write(root/"generations"/std::to_string(n)/"generation.toml",athena::generation::serialize(athena::generation::make_generation(n,{})));
+            fs::permissions(root/"generations"/std::to_string(n)/"generation.toml",fs::perms::owner_read|fs::perms::owner_write); }
     }
     ~Fixture() { state.reset(); fs::remove_all(root); }
     auto open(ProjectionIo io={}) { return ProjectionContext::open(binding,objects,std::move(io)); }
@@ -37,6 +40,17 @@ struct Fixture {
     }
     SelectedBase base(unsigned activation,unsigned generation,const PlanIdentity& plan) {
         return {CurrentV1{generation,id(activation),plan.digest},digest(generation),ActivationOwnership{id(activation)}};
+    }
+    PlanIdentity bootstrap_source_authority() {
+        // A projection-bound namespace must select generation 0 through D6
+        // before TransactionPins can bind the store/generation authorities.
+        auto zero=plan(1,0,AbsentBase{});
+        { auto p=open(); commit_selection(p,*state,zero); }
+        // TransactionPins acquires State itself, before StoreGc and its lease.
+        state.reset();
+        { athena::store::TransactionPins pins({binding.store_authority,binding.generation_authority}); pins.abandon(); }
+        state=std::make_unique<ProjectionState>(binding.generation_authority);
+        return zero;
     }
 };
 template<class F> void rejected(F fn) { try { fn(); } catch(const std::exception&) { return; } throw std::runtime_error("Expected rejection"); }

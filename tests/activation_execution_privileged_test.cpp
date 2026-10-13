@@ -26,17 +26,17 @@ realization::RealizationRecord record(core::ArtifactId artifact) {
         installed::SemanticState{PackageMetadata{PackageId("demo"),PackageVersion("1")}}};
 }
 struct SourceFixture : Fixture {
-    SourceFixture() {
-        state.reset(); store::TransactionPins pins({binding.store_authority,binding.generation_authority}); pins.abandon();
-        state=std::make_unique<ProjectionState>(binding.generation_authority);
-    }
+    PlanIdentity zero;
+    SourceFixture() : zero(bootstrap_source_authority()) {}
     core::ArtifactId object(std::string name,std::string content) {
         auto source=root/name;fs::create_directory(source);fs::create_directory(source/"bin");write(source/"bin/tool",content);
         auto artifact=artifact::derive_artifact_id(artifact::scan(source));objects.publish_unprotected_for_test(source,artifact);return artifact;
     }
     void generation(unsigned n,const std::vector<realization::RealizationRecord>& records) {
         fs::create_directories(root/"generations"/std::to_string(n));
+        fs::permissions(root/"generations"/std::to_string(n),fs::perms::owner_all);
         write(root/"generations"/std::to_string(n)/"generation.toml",generation::serialize(generation::make_generation(n,{},records)));
+        fs::permissions(root/"generations"/std::to_string(n)/"generation.toml",fs::perms::owner_read|fs::perms::owner_write);
     }
     PlanIdentity publish(unsigned activation,unsigned n,ActivationBase base,std::vector<ActivationSource> sources,std::vector<ActivationOperation> operations) {
         auto p=open();ActivationIntent intent{id(activation),binding.generation_authority,binding.store_authority,binding.projection_root,binding.projection_id,n,digest(n),std::move(base)};
@@ -59,7 +59,7 @@ void interrupted(Fixture& f,const PlanIdentity& plan,std::string kind) {
 }
 void sources() {
     SourceFixture f; auto a=f.object("a","first"), b=f.object("b","second"); auto p=f.open();
-    auto zero=f.plan(1,0,AbsentBase{});commit_selection(p,*f.state,zero);
+    const auto& zero=f.zero;
     f.generation(1,{record(a)});f.generation(2,{record(a)});f.generation(3,{record(b)});f.generation(4,{});
     auto create=f.publish(2,1,f.base(1,0,zero),{ArtifactSource{a}},{{0,"bin",EnsureDirectory{}},{1,"bin/tool",CreateLink{0,{id(2),1}}}});
     {ProjectionIo io;io.durable.fsync=[](int){errno=EIO;return -1;};auto injected=f.open(io);
