@@ -223,3 +223,17 @@ set_tests_properties(activation_plan_persistence_privileged_test PROPERTIES SKIP
 set_tests_properties(legacy_d3_test PROPERTIES TIMEOUT 60)
 add_test(NAME legacy_d3_scanner_test COMMAND legacy_d3_test scanner)
 set_tests_properties(legacy_d3_scanner_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 180)
+
+# T17 cases have independent outcomes: a missing prerequisite is never a pass.
+foreach(case IN ITEMS owner bind nested tmpfs ext4)
+    add_test(NAME activation_plan_persistence_privileged_${case}_test
+        COMMAND activation_plan_persistence_test privileged-${case})
+    set_tests_properties(activation_plan_persistence_privileged_${case}_test
+        PROPERTIES SKIP_RETURN_CODE 77 LABELS "privileged" TIMEOUT 180)
+endforeach()
+set_tests_properties(legacy_d3_scanner_test PROPERTIES LABELS "privileged")
+
+# Cleanup regression uses simulated umount outcomes and needs no privileges.
+add_test(NAME activation_plan_persistence_qualification_cleanup_test
+    COMMAND activation_plan_persistence_test qualification-cleanup)
+set_tests_properties(activation_plan_persistence_qualification_cleanup_test PROPERTIES TIMEOUT 30)

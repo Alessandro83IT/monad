@@ -16,6 +16,7 @@ using namespace athena::activation;
 namespace fs = std::filesystem;
 using d1_test::require;
 namespace {
+bool qualification_cleanup_failed = false;
 void write(const fs::path& p, std::string_view b, mode_t mode = 0600) {
     std::ofstream f(p, std::ios::binary); f << b; f.close(); require(!f.fail(), "fixture write"); require(::chmod(p.c_str(), mode) == 0, "chmod");
 }
@@ -43,13 +44,21 @@ struct Fixture {
         state = std::make_unique<ProjectionState>(binding.generation_authority);
         auto p = ProjectionContext::create_binding(binding, store, *state);
     }
-    ~Fixture() {
+    ~Fixture() noexcept {
         state.reset();
-        // Published object fixtures are immutable/read-only. Cleanup is limited
-        // to this test's private temporary tree, never production legacy state.
-        for (const auto& e : fs::recursive_directory_iterator(base))
-            if (fs::is_directory(e.symlink_status())) fs::permissions(e.path(), fs::perms::owner_all, fs::perm_options::add);
-        fs::remove_all(base);
+        try {
+            // symlink_status avoids changing directories outside this fixture.
+            for (const auto& e : fs::recursive_directory_iterator(base))
+                if (fs::is_directory(e.symlink_status()))
+                    fs::permissions(e.path(), fs::perms::owner_all, fs::perm_options::add);
+            fs::remove_all(base);
+        } catch (const std::exception& e) {
+            qualification_cleanup_failed = true;
+            std::cerr << "FAIL: D3 fixture cleanup " << base << ": " << e.what() << '\n';
+        } catch (...) {
+            qualification_cleanup_failed = true;
+            std::fprintf(stderr, "FAIL: D3 fixture cleanup\n");
+        }
     }
     fs::path source() const { return base / "store/demo-1"; }
     fs::path admin() const { return base / "projection/.athena-activation"; }
@@ -627,7 +636,7 @@ void scanner_death() {
     require(::waitpid(retry, &status, 0) == retry && WIFEXITED(status) && WEXITSTATUS(status) == 0, "Fresh exec populated exact retry");
 }
 }
-int main(int argc, char** argv) {
+int run_tests(int argc, char** argv) {
     if (argc == 2 && std::string_view(argv[1]) == "review-findings") return d1_test::run([] {
         manifest_errors(); published_retry_barriers(); recovery_parent_substitution();
         std::cout << "H1: six post-publication EIO cases, six failed recovery barriers, six ordered successful recoveries; parent substitution rejected and recovered\n"
@@ -642,9 +651,31 @@ int main(int argc, char** argv) {
         } else adopt_legacy_projection(p, state, d1_test::adoption_id, {});
     });
     if (argc == 2) {
-        try { scanner(); scanner_manifest_errors(); scanner_seals(); scanner_provenance(); scanner_adoption_faults(); scanner_death(); return 0; }
-        catch (const LegacyError& e) { if (skip(e)) { std::cout << "SKIP D3 scanner-dependent sealing/adoption: " << e.what() << '\n'; return 77; } std::cerr << e.what() << '\n'; return 1; }
+        const char* active_group = "scanner";
+        try {
+            // Keep the real scanner and its initial-user-namespace capability
+            // gate unchanged. Report completed groups even if a later one skips.
+            const auto qualify = [&](const char* name, auto action) {
+                active_group = name;
+                action();
+                require(!qualification_cleanup_failed, "D3 fixture cleanup failed");
+                std::cout << "PASS T17 D3 " << name << '\n';
+            };
+            qualify("scanner", scanner);
+            qualify("manifest-errors", scanner_manifest_errors);
+            qualify("seals", scanner_seals);
+            qualify("provenance", scanner_provenance);
+            qualify("adoption-faults", scanner_adoption_faults);
+            qualify("death", scanner_death);
+            return 0;
+        }
+        catch (const LegacyError& e) { if (skip(e)) { std::cout << "SKIP T17 D3 " << active_group << " (remaining groups not qualified): " << e.what() << '\n'; return 77; } std::cerr << e.what() << '\n'; return 1; }
         catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
     }
     return d1_test::run([] { codecs(); unsafe_sources(); manifest_errors(); empty_adoption(); empty_faults(); published_retry_barriers(); recovery_parent_substitution(); empty_record_provenance(); death(); });
+}
+
+int main(int argc, char** argv) {
+    const int result = run_tests(argc, argv);
+    return qualification_cleanup_failed ? 1 : result;
 }

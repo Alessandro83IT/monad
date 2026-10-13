@@ -109,6 +109,11 @@ extern "C" int fcntl(int fd,int command,...) {
 #include <fcntl.h>
 #include <linux/fs.h>
 #include <sys/mount.h>
+#include <sys/vfs.h>
+#include <linux/magic.h>
+#include <linux/capability.h>
+#include <cstdlib>
+#include <sstream>
 #include <sys/syscall.h>
 #include <sys/wait.h>
 #include <signal.h>
@@ -148,6 +153,7 @@ using d1_test::require;
 namespace {
 using C = PlanPersistenceCause;
 using O = ProjectionOutcome;
+bool qualification_cleanup_failed = false;
 std::string fdpath(int fd) { return fs::read_symlink("/proc/self/fd/" + std::to_string(fd)).native(); }
 ino_t inode(const fs::path& p) { struct stat s{}; require(::lstat(p.c_str(), &s) == 0, "lstat fixture"); return s.st_ino; }
 void write(const fs::path& p, std::string_view b) {
@@ -162,8 +168,11 @@ struct Fixture {
     std::unique_ptr<ProjectionState> state;
     std::map<fs::path, struct stat> protected_files;
     bool preserve_on_cleanup = false;
-    static fs::path temporary() { char b[] = "/tmp/athena-d4-XXXXXX"; auto p = ::mkdtemp(b); require(p, "mkdtemp"); return p; }
-    Fixture() : base(temporary()), binding{d1_test::projection_id, (base / "generations").native(),
+    static fs::path temporary(const fs::path& parent) {
+        auto pattern = (parent / "athena-d4-XXXXXX").native();
+        auto p = ::mkdtemp(pattern.data()); require(p, "mkdtemp D4 fixture"); return p;
+    }
+    explicit Fixture(const fs::path& parent = "/tmp") : base(temporary(parent)), binding{d1_test::projection_id, (base / "generations").native(),
         (base / "store").native(), (base / "projection").native()}, store(base / "store") {
         for (auto name : {"generations", "store", "projection"}) directory(base / name);
         state = std::make_unique<ProjectionState>(binding.generation_authority);
@@ -177,7 +186,16 @@ struct Fixture {
             struct stat s{}; require(::lstat(path.c_str(), &s) == 0, "protected fixture observation"); protected_files.emplace(path, s);
         }
     }
-    ~Fixture() { state.reset(); if (!preserve_on_cleanup) fs::remove_all(base); }
+    ~Fixture() noexcept {
+        state.reset();
+        if (!preserve_on_cleanup) {
+            std::error_code ec; fs::remove_all(base, ec);
+            if (ec) {
+                qualification_cleanup_failed = true;
+                std::fprintf(stderr, "ERROR: D4 fixture cleanup '%s': %s\n", base.c_str(), ec.message().c_str());
+            }
+        }
+    }
     fs::path admin() const { return base / "projection/.athena-activation"; }
     fs::path plans() const { return admin() / "plans"; }
     fs::path published() const { return plans() / d1_test::id.value(); }
@@ -2546,48 +2564,270 @@ void processes() {
         f.state = std::make_unique<ProjectionState>(f.binding.generation_authority); auto p = f.open(); p.revalidate(); f.pristine();
     }
 }
-int privileged() {
-    // A real differing uid and bind-mount qualification requires initial-namespace
-    // privileges. Do not bypass the inherited D3 scanner capability gate.
-    if (::geteuid() != 0) { std::cout << "SKIP: real owner and mount qualification requires root/CAP_SYS_ADMIN\n"; return 77; }
-    Fixture f; f.publish(); auto p = f.open(); const auto file = f.published() / "plan.toml";
-    require(::chown(file.c_str(), 1, -1) == 0, "real foreign uid");
-    projection_error([&] { p.revalidate(); }, ProjectionCause::ProjectionConflict);
-    require(::chown(file.c_str(), 0, -1) == 0, "restore qualification fixture");
-    directory(f.base / "mount-source");
-    struct MountGuard {
-        Fixture& fixture;
-        fs::path target;
-        bool mounted = false;
-        ~MountGuard() noexcept {
-            if (mounted && ::umount(target.c_str()) != 0) {
-                const int number = errno;
-                // Leave the fixture on disk rather than let remove_all traverse
-                // a mount that could not be detached.
-                fixture.preserve_on_cleanup = true;
-                std::fprintf(stderr, "ERROR: umount '%s' during cleanup failed: %s (errno %d); preserving fixture '%s'\n",
-                    target.c_str(), std::strerror(number), number, fixture.base.c_str());
+// T17 only: ordinary fixtures deliberately keep their /tmp default. ext4 is
+// supplied by the qualification host, never provisioned using a block device.
+fs::path qualification_parent() {
+    const char* value = std::getenv("ATHENA_D4_PRIVILEGED_TMPDIR");
+    const fs::path parent = value ? value : "/tmp";
+    require(parent.is_absolute() && fs::is_directory(parent), "T17 parent must be an existing absolute directory");
+    return parent;
+}
+struct QualificationTree {
+    fs::path base;
+    bool preserve = false;
+    explicit QualificationTree(const fs::path& parent) : base(Fixture::temporary(parent)) {}
+    ~QualificationTree() noexcept {
+        if (!preserve) {
+            std::error_code ec; fs::remove_all(base, ec);
+            if (ec) {
+                qualification_cleanup_failed = true;
+                std::fprintf(stderr, "ERROR: T17 cleanup '%s': %s\n", base.c_str(), ec.message().c_str());
             }
         }
-        void unmount() {
-            if (::umount(target.c_str()) != 0)
-                throw std::system_error(errno, std::generic_category(), "unmount fixture");
-            mounted = false;
-        }
-    } mount_guard{f, f.plans() / ".preparations"};
-    if (::mount((f.base / "mount-source").c_str(), mount_guard.target.c_str(), nullptr, MS_BIND, nullptr) < 0) {
-        std::cout << "SKIP: real owner case executed; CAP_SYS_ADMIN unavailable for bind-mount qualification\n"; return 77;
     }
-    mount_guard.mounted = true;
-    rejects([&] { p.revalidate(); });
-    mount_guard.unmount();
+};
+struct QualificationMounts {
+    fs::path base;
+    bool& preserve;
+    bool* enclosing_preserve;
+    std::vector<fs::path> targets;
+    bool failed = false;
+    int (*unmount)(const char*) = ::umount;
+    QualificationMounts(fs::path root, bool& keep, bool* enclosing = nullptr)
+        : base(std::move(root)), preserve(keep), enclosing_preserve(enclosing) {}
+    // Register before mounting so allocation cannot strand an untracked mount.
+    bool mount(const char* source, const fs::path& target, const char* type, unsigned long flags, const char* data = nullptr) {
+        targets.push_back(target);
+        if (::mount(source, target.c_str(), type, flags, data) == 0) return true;
+        const int number = errno; targets.pop_back();
+        if (number != EPERM && number != EACCES)
+            throw std::system_error(number, std::generic_category(), "T17 mount " + target.native());
+        std::cout << "SKIP T17 mount " << target << ": " << std::strerror(number) << '\n';
+        return false;
+    }
+    bool cleanup() noexcept {
+        // A descendant guard propagates preservation before this guard unwinds.
+        // Never detach its container or retry a failed cleanup in a destructor.
+        if (failed || preserve) return false;
+        while (!targets.empty()) {
+            if (unmount(targets.back().c_str()) == 0) { targets.pop_back(); continue; }
+            const int number = errno;
+            preserve = true; failed = true; qualification_cleanup_failed = true;
+            if (enclosing_preserve) *enclosing_preserve = true;
+            std::fprintf(stderr, "ERROR: T17 umount '%s': %s (errno %d); preserving fixture '%s'\n",
+                targets.back().c_str(), std::strerror(number), number, base.c_str());
+            return false;
+        }
+        return true;
+    }
+    void finish() { require(cleanup(), "T17 cleanup failed; fixture preserved, qualification FAILED"); }
+    ~QualificationMounts() noexcept { cleanup(); }
+};
+void qualification_roundtrip(Fixture& f) {
+    require(f.publish().outcome == O::MutatedDurably, "T17 fresh publication");
+    auto p = f.open();
+    inspect_activation_plan(p, *f.state, d1_test::id);
+    require(recover_activation_plan(p, *f.state, f.expected()).outcome == O::NotMutated, "T17 durable recovery");
+    f.pristine();
+}
+// No mounts or external directories: simulate syscall outcomes to cover unwinding.
+int simulated_unmount_calls = 0;
+int simulated_unmount(const char*) {
+    ++simulated_unmount_calls;
+    if (simulated_unmount_calls == 1) return 0;
+    errno = EBUSY; return -1;
+}
+void qualification_cleanup_test() {
+    require(!qualification_cleanup_failed, "clean initial cleanup status");
+    simulated_unmount_calls = 0;
+    bool keep = false;
+    {
+        QualificationMounts mounts("/unused", keep);
+        mounts.unmount = simulated_unmount;
+        mounts.targets = {"/unused/container", "/unused/nested", "/unused/leaf"};
+        require(!mounts.cleanup() && keep && mounts.targets.size() == 2 &&
+            mounts.targets.back() == "/unused/nested", "failed mount and container remain tracked");
+        require(!mounts.cleanup() && simulated_unmount_calls == 2, "failed cleanup is idempotent");
+    }
+    require(simulated_unmount_calls == 2, "destructor never retries failed cleanup");
+    qualification_cleanup_failed = false;
+    simulated_unmount_calls = 1;
+    fs::path retained_tree, retained_fixture;
+    {
+        QualificationTree tree("/tmp");
+        directory(tree.base / "container");
+        QualificationMounts outer(tree.base, tree.preserve);
+        outer.unmount = simulated_unmount;
+        outer.targets = {tree.base / "container"};
+        const auto base = tree.base;
+        retained_tree = base;
+        fs::path fixture;
+        try {
+            Fixture f(tree.base / "container");
+            fixture = f.base;
+            retained_fixture = fixture;
+            QualificationMounts inner(f.base, f.preserve_on_cleanup, &tree.preserve);
+            inner.unmount = simulated_unmount;
+            inner.targets = {f.base / "nested"};
+            throw std::runtime_error("simulated test failure");
+        } catch (const std::runtime_error&) {
+            require(!fixture.empty() && tree.preserve && qualification_cleanup_failed,
+                "exception propagates descendant cleanup failure");
+        }
+        require(fs::exists(fixture / "store"), "fixture retained after destructor during unwinding");
+        require(!outer.cleanup() && outer.targets.size() == 1 && simulated_unmount_calls == 2,
+            "enclosing filesystem never unmounted after descendant failure");
+        require(fs::exists(base / "container"), "container retained");
+    }
+    require(simulated_unmount_calls == 2 && fs::exists(retained_fixture / "store"),
+        "outer destructors preserve the complete fixture and never unmount its container");
+    // The simulated mounts never existed; remove only this private tree.
+    fs::remove_all(retained_tree);
+    qualification_cleanup_failed = false;
+    bool success_keep = false;
+    QualificationMounts success("/unused", success_keep);
+    success.unmount = simulated_unmount;
+    simulated_unmount_calls = 0;
+    success.targets = {"/unused/leaf"};
+    require(success.cleanup() && success.cleanup() && success.targets.empty() && simulated_unmount_calls == 1,
+        "successful cleanup is idempotent");
+}
+bool qualification_mount_prerequisites(const std::string& which) {
+    if (::geteuid() != 0) {
+        std::cout << "SKIP T17 " << which << ": effective root required\n";
+        return false;
+    }
+    __user_cap_header_struct header{_LINUX_CAPABILITY_VERSION_3, 0};
+    __user_cap_data_struct caps[2]{};
+    if (::syscall(SYS_capget, &header, caps) != 0)
+        throw std::system_error(errno, std::generic_category(), "T17 capget");
+    if (!(caps[CAP_SYS_ADMIN / 32].effective & (1U << (CAP_SYS_ADMIN % 32)))) {
+        std::cout << "SKIP T17 " << which << ": effective CAP_SYS_ADMIN required\n";
+        return false;
+    }
+    if (which == "tmpfs") {
+        std::ifstream filesystems("/proc/filesystems");
+        require(filesystems.is_open(), "T17 read /proc/filesystems");
+        std::string line; bool available = false;
+        while (std::getline(filesystems, line)) {
+            std::istringstream fields(line); std::string field;
+            while (fields >> field) if (field == "tmpfs") available = true;
+        }
+        require(filesystems.eof() && !filesystems.bad(), "T17 filesystem prerequisites read");
+        if (!available) { std::cout << "SKIP T17 tmpfs: filesystem unavailable\n"; return false; }
+    }
+    return true;
+}
+int privileged(const std::string& which, bool report = true) {
+    require(which == "owner" || which == "bind" || which == "nested" || which == "tmpfs" || which == "ext4",
+        "unknown T17 case");
+    if ((which == "tmpfs" || which == "bind" || which == "nested") &&
+        !qualification_mount_prerequisites(which)) return 77;
+    if (which == "ext4") {
+        const char* value = std::getenv("ATHENA_D4_EXT4_TMPDIR");
+        if (!value) { std::cout << "SKIP T17 ext4: ATHENA_D4_EXT4_TMPDIR not supplied (existing ext4 directory required)\n"; return 77; }
+        const fs::path parent(value);
+        require(parent.is_absolute() && fs::is_directory(parent), "T17 ext4 parent must exist and be absolute");
+        struct statfs info{}; require(::statfs(parent.c_str(), &info) == 0, "T17 ext4 statfs");
+        // ext2/3 share this magic; require the kernel's mounted filesystem type too.
+        std::ifstream mounts("/proc/self/mountinfo"); std::string line; bool ext4 = false;
+        require(mounts.is_open(), "T17 open mountinfo");
+        struct statx identity{};
+        require(::statx(AT_FDCWD, parent.c_str(), 0, STATX_MNT_ID, &identity) == 0 &&
+            (identity.stx_mask & STATX_MNT_ID), "T17 ext4 mount identity");
+        while (std::getline(mounts, line)) {
+            if (line.starts_with(std::to_string(identity.stx_mnt_id) + " ") && line.find(" - ext4 ") != std::string::npos) ext4 = true;
+        }
+        require(mounts.eof() && !mounts.bad(), "T17 read mountinfo");
+        require(info.f_type == EXT4_SUPER_MAGIC && ext4, "T17 supplied directory is not mounted ext4");
+        Fixture f(parent); qualification_roundtrip(f);
+    } else if (which == "tmpfs") {
+        QualificationTree tree(qualification_parent());
+        directory(tree.base / "tmpfs");
+        QualificationMounts mounts(tree.base, tree.preserve);
+        if (!mounts.mount("tmpfs", tree.base / "tmpfs", "tmpfs", MS_NODEV | MS_NOSUID, "mode=0700,size=64m")) return 77;
+        {
+            Fixture f(tree.base / "tmpfs"); qualification_roundtrip(f); auto p = f.open();
+            QualificationMounts crossing(f.base, f.preserve_on_cleanup, &tree.preserve);
+            const auto target = f.plans() / ".preparations";
+            if (!crossing.mount("tmpfs", target, "tmpfs", MS_NODEV | MS_NOSUID, "mode=0700,size=8m")) {
+                // RAII releases the fixture before its containing filesystem.
+                return 77;
+            }
+            struct stat before{}, after{};
+            require(::stat(f.plans().c_str(), &before) == 0 && ::stat(target.c_str(), &after) == 0 &&
+                before.st_dev != after.st_dev, "T17 real different-device tmpfs crossing");
+            projection_error([&] { p.revalidate(); }, ProjectionCause::MountCrossing);
+            error([&] { inspect_activation_plan(p, *f.state, d1_test::id); }, C::UnsafeEntry, O::NotMutated);
+            error([&] { recover_activation_plan(p, *f.state, f.expected()); }, C::UnsafeEntry, O::NotMutated);
+            crossing.finish(); p.revalidate(); f.pristine();
+        }
+        mounts.finish();
+    } else {
+        if (::geteuid() != 0) { std::cout << "SKIP T17 " << which << ": effective root required\n"; return 77; }
+        Fixture f(qualification_parent()); qualification_roundtrip(f); auto p = f.open();
+        if (which == "owner") {
+            const auto file = f.published() / "plan.toml";
+            const auto unsafe_metadata = [&] {
+                projection_error([&] { p.revalidate(); }, ProjectionCause::ProjectionConflict);
+                error([&] { inspect_activation_plan(p, *f.state, d1_test::id); }, C::UnsafeEntry, O::NotMutated);
+                error([&] { recover_activation_plan(p, *f.state, f.expected()); }, C::UnsafeEntry, O::NotMutated);
+                error([&] { publish_activation_plan(p, *f.state, f.intent(), d1_test::plan()); }, C::UnsafeEntry, O::NotMutated);
+            };
+            require(::chown(file.c_str(), 1, -1) == 0, "T17 real foreign uid");
+            unsafe_metadata();
+            require(::chown(file.c_str(), 0, -1) == 0, "T17 restore owner");
+            for (mode_t mode : {0620, 0640, 04600}) {
+                require(::chmod(file.c_str(), mode) == 0, "T17 unsafe metadata");
+                unsafe_metadata();
+            }
+            require(::chmod(file.c_str(), 0600) == 0, "T17 restore mode");
+        } else {
+            require(which == "bind" || which == "nested", "unknown T17 case");
+            directory(f.base / "mount-source");
+            const auto target = f.plans() / ".preparations";
+            QualificationMounts mounts(f.base, f.preserve_on_cleanup);
+            // The root mount is allowed by D2. Open it successfully before
+            // installing a descendant crossing, so rejection is attributable
+            // to the nested mount rather than to an already invalid outer tree.
+            std::optional<ProjectionContext> mounted_context;
+            if (which == "nested") {
+                const auto root = f.base / "projection";
+                if (!mounts.mount(root.c_str(), root, nullptr, MS_BIND)) return 77;
+                mounted_context.emplace(f.open());
+                mounted_context->revalidate();
+            }
+            if (!mounts.mount((f.base / "mount-source").c_str(), target, nullptr, MS_BIND)) {
+                mounted_context.reset(); mounts.finish(); return 77;
+            }
+            struct statx source{}, crossed{};
+            require(::statx(AT_FDCWD, (f.base / "mount-source").c_str(), 0, STATX_BASIC_STATS | STATX_MNT_ID, &source) == 0 &&
+                ::statx(AT_FDCWD, target.c_str(), 0, STATX_BASIC_STATS | STATX_MNT_ID, &crossed) == 0 &&
+                (source.stx_mask & STATX_MNT_ID) && (crossed.stx_mask & STATX_MNT_ID) &&
+                source.stx_dev_major == crossed.stx_dev_major && source.stx_dev_minor == crossed.stx_dev_minor &&
+                source.stx_mnt_id != crossed.stx_mnt_id, "T17 real same-device different-mount crossing");
+            auto& crossed_context = mounted_context ? *mounted_context : p;
+            projection_error([&] { crossed_context.revalidate(); }, ProjectionCause::MountCrossing);
+            error([&] { inspect_activation_plan(crossed_context, *f.state, d1_test::id); }, C::UnsafeEntry, O::NotMutated);
+            error([&] { recover_activation_plan(crossed_context, *f.state, f.expected()); }, C::UnsafeEntry, O::NotMutated);
+            error([&] { publish_activation_plan(crossed_context, *f.state, f.intent(), d1_test::plan()); }, C::UnsafeEntry, O::NotMutated);
+            mounted_context.reset(); // Release fds on the allowed root mount.
+            mounts.finish();
+        }
+        p.revalidate(); f.pristine();
+    }
+    require(!qualification_cleanup_failed, "T17 cleanup failed; qualification FAILED");
+    if (report) std::cout << "PASS T17 " << which << " (filesystem ordering/namespace mechanics; no power-loss qualification)\n";
     return 0;
 }
+
 }
 int main(int argc, char** argv) {
-    return d1_test::run([&]() {
+    int qualification_status = 0;
+    const int result = d1_test::run([&]() {
         const std::string mode = argc > 1 ? argv[1] : "ordinary";
-        if (mode == "ordinary") ordinary();
+        if (mode == "qualification-cleanup") qualification_cleanup_test();
+        else if (mode == "ordinary") ordinary();
         else if (mode == "recovery-cloexec") recovery_cloexec_errors();
         else if (mode == "locator-cloexec") locator_cloexec_error();
         else if (mode == "filesystem-errors") filesystem_error_integrity();
@@ -2616,9 +2856,23 @@ int main(int argc, char** argv) {
         else if (mode == "kills") kills();
         else if (mode == "processes") processes();
         else if (mode == "worker") ::exit(worker(argc, argv));
-        else if (mode == "privileged") ::exit(privileged());
+        else if (mode == "privileged") {
+            bool skipped = false;
+            for (const auto* name : {"owner", "bind", "nested", "tmpfs", "ext4"}) {
+                skipped |= privileged(name, false) == 77;
+                require(!qualification_cleanup_failed, "T17 cleanup failed");
+            }
+            if (!skipped) std::cout << "PASS T17 privileged (all individual cases completed and cleaned)\n";
+            qualification_status = skipped ? 77 : 0;
+        }
+        else if (mode.starts_with("privileged-")) {
+            const int status = privileged(mode.substr(11));
+            qualification_status = status;
+        }
         else throw std::runtime_error("unknown test mode");
     });
+    if (qualification_cleanup_failed) { std::cerr << "FAIL: fixture/mount cleanup\n"; return 1; }
+    return result ? result : qualification_status;
 }
 
 #endif // ATHENA_D4_LOCATOR_FAULT_LIBRARY
