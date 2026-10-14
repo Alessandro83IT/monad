@@ -703,7 +703,9 @@ void migration(const std::string &kind) {
                                        MetadataReference("recipe"), snapshot}},
                  artifact,
                  {},
-                 ArtifactOrigin::AmbientSourceBuild});
+                 ArtifactOrigin::AmbientSourceBuild,
+                 athena::installed::SemanticState{PackageMetadata{PackageId("demo"),
+                                                                 PackageVersion("1")}}});
             write(f.root / "generations/1/generation.toml",
                   athena::generation::serialize(generation));
             source = object;

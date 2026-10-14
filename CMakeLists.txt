@@ -249,6 +249,12 @@ foreach(mode IN ITEMS faults limits bounds kills processes privileged publicatio
     add_test(NAME activation_plan_persistence_${mode}_test COMMAND activation_plan_persistence_test ${mode})
     set_tests_properties(activation_plan_persistence_${mode}_test PROPERTIES TIMEOUT 180)
 endforeach()
+# Successful completion validates diagnostic execution and preservation checks,
+# not universal A-model detection or current-instance durability.
+add_test(NAME activation_plan_persistence_concluding_callback_diagnostics
+    COMMAND activation_plan_persistence_test concluding-callback-diagnostics)
+set_tests_properties(activation_plan_persistence_concluding_callback_diagnostics
+    PROPERTIES TIMEOUT 180 LABELS "diagnostic;D4-A")
 foreach(path IN ITEMS fresh bootstrap reused published)
     add_test(NAME activation_plan_persistence_boundaries_${path}_test COMMAND activation_plan_persistence_test boundaries-${path})
     set_tests_properties(activation_plan_persistence_boundaries_${path}_test PROPERTIES TIMEOUT 600)

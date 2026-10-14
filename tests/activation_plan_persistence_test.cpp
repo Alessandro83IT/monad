@@ -781,7 +781,21 @@ void evidence_structural() {
                 ++synced;
                 if (failure == 1) { errno = EIO; return -1; }
                 const int result = direct(fd);
-                if (failure == 2) { write(f.published()/"plan.toml", serialize(d1_test::plan())); }
+                if (failure == 2) {
+                    // D4 model P: retain the same inode, size and bytes,
+                    // but force an observable metadata change after fsync.
+                    const auto file = f.published() / "plan.toml";
+                    struct stat before{};
+                    require(::stat(file.c_str(), &before) == 0,
+                        "stat plan before post-fsync perturbation");
+                    write(file, serialize(d1_test::plan()));
+                    const timespec times[2] = {
+                        {0, UTIME_OMIT},
+                        {before.st_mtim.tv_sec + 1, before.st_mtim.tv_nsec}
+                    };
+                    require(::utimensat(AT_FDCWD, file.c_str(), times, 0) == 0,
+                        "force deterministic post-fsync plan mtime change");
+                }
                 return result;
             }
             return direct(fd);
@@ -2245,10 +2259,14 @@ void eof_inventory_changes() {
     std::cout << "6 readdir EOF insertions rejected, errno=0, residue and unrelated state verified\n";
 }
 void concluding_callback_changes() {
+    // D4 model A: mutations follow the affected bytes/inventory observations.
+    // Later metadata checks need not expose them. Report actual results,
+    // without treating normal recovery as conformance or durability evidence.
     for (const auto target : {"intent", "plan", "inventory", "binding"}) {
         Fixture f; f.publish(); ProjectionIo io; auto read = io.pread; auto open = io.open;
         int barriers = 0, reads = 0; bool armed = false, enumerated = false, changed = false;
         fs::path residue; struct stat before{};
+        std::string injected_bytes;
         io.fsync = [&](int fd) { ++barriers; return ::fsync(fd); };
         io.pread = [&](int fd, void* bytes, size_t n, off_t offset) -> ssize_t {
             if (barriers == 7 && offset == 0 && fdpath(fd).ends_with("/plan.toml") && ++reads == 2) armed = true;
@@ -2257,37 +2275,69 @@ void concluding_callback_changes() {
         io.open = [&](int fd, const char* name, const open_how& how) {
             if (armed && std::string(name) == "." && fdpath(fd) == f.admin()) enumerated = true;
             // Mutate during concluding binding I/O, after document reads AND
-            // global enumeration. Binding case changes the first record while
-            // the second record is read, proving observations survive both reads.
+            // global enumeration. The binding case changes the already-read
+            // generation record while the projection record is being opened.
+            // Subsequent metadata checks are not byte/inventory observations.
             if (enumerated && !changed && std::string(name) == "authority.toml") {
                 if (std::string(target) == "binding") {
                     residue = f.base / "generations/.athena-projection-authority.toml";
-                    auto binding = f.binding; binding.projection_id = ProjectionId(std::string(32, '0')); write(residue, serialize(binding));
+                    auto binding = f.binding; binding.projection_id = ProjectionId(std::string(32, '0'));
+                    injected_bytes = serialize(binding); write(residue, injected_bytes);
                 } else if (std::string(target) == "inventory") {
                     residue = f.plans() / ".preparations" / std::string(32, 'a'); directory(residue);
                 } else {
                     residue = f.published() / (std::string(target) == "intent" ? "intent.toml" : "plan.toml");
                     auto bytes = std::string(target) == "intent" ? serialize(f.intent()) : serialize(d1_test::plan());
-                    bytes.back() = '#'; write(residue, bytes);
+                    bytes.back() = '#'; injected_bytes = bytes; write(residue, bytes);
                 }
                 require(::lstat(residue.c_str(), &before) == 0, "concluding callback residue"); changed = true;
             }
             return open(fd, name, how);
         };
-        auto p = f.open(io); auto e = error([&] { recover_activation_plan(p, *f.state, f.expected()); },
-            std::string(target) == "binding" ? C::AuthorityMismatch : C::Substituted, O::OutcomeUncertain);
-        require(changed && barriers == 7 && e.error == 0, "concluding callback typed rejection");
+        auto p = f.open(io);
+        bool unexpected_rejection = false;
+        try {
+            const auto result = recover_activation_plan(p, *f.state, f.expected());
+            std::cout << "D4 A diagnostic target=" << target
+                << " change=NOT_DETECTED recovery=RETURNED outcome(enum)="
+                << static_cast<int>(result.outcome)
+                << " (not evidence of conformance or current-instance durability)\n";
+        } catch (const PlanPersistenceError& e) {
+            const auto expected_cause = std::string(target) == "binding" ?
+                C::AuthorityMismatch : C::Substituted;
+            const bool consistent = changed && barriers == 7 &&
+                e.cause == expected_cause && e.error == 0 && e.outcome == O::OutcomeUncertain;
+            unexpected_rejection = !consistent;
+            std::cout << "D4 A diagnostic target=" << target
+                << " recovery=REJECTED cause(enum)=" << static_cast<int>(e.cause)
+                << " errno=" << e.error << " outcome(enum)=" << static_cast<int>(e.outcome)
+                << (consistent ? " rejection=CONSISTENT_WITH_PERTURBATION" :
+                    " rejection=UNEXPECTED change=UNDETERMINED") << '\n';
+        }
+        require(changed && barriers == 7,
+            "A concluding callback injection executed after seven barriers");
         struct stat after{}; require(::lstat(residue.c_str(), &after) == 0 && before.st_dev == after.st_dev &&
             before.st_ino == after.st_ino && before.st_size == after.st_size &&
             before.st_ctim.tv_sec == after.st_ctim.tv_sec && before.st_ctim.tv_nsec == after.st_ctim.tv_nsec,
-            "concluding rejection preserves injected instance");
+            "A concluding execution preserves injected instance");
+        if (std::string(target) == "inventory") {
+            require(fs::is_directory(residue) && fs::is_empty(residue),
+                "A injected directory retained unchanged");
+        } else {
+            std::ifstream bytes(residue, std::ios::binary);
+            require(bytes.is_open(), "A injected document remains readable");
+            require(std::string(std::istreambuf_iterator<char>(bytes), {}) == injected_bytes,
+                "A modified bytes retained");
+        }
         if (std::string(target) == "binding") {
             projection_error([&] { f.open(); }, ProjectionCause::BindingConflict);
             write(residue, serialize(f.binding)); require(::lstat(residue.c_str(), &f.protected_files.at(residue)) == 0, "fixture-only binding restoration");
         }
         f.pristine();
+        require(!unexpected_rejection, "A recovery rejected with unexpected cause/errno/outcome");
     }
-    std::cout << "4 mutations during concluding binding callbacks rejected with retained evidence\n";
+    std::cout << "D4 A: 4 diagnostics recorded; injection, seven barriers, "
+        "residue and unrelated state verified; no conformance or durability claim\n";
 }
 void faults() { barrier_faults(); io_faults(); substitutions(); final_read_substitutions(); }
 std::string numbered(std::size_t n) { char b[33]; std::snprintf(b, sizeof(b), "%032zx", n); return b; }
@@ -2834,7 +2884,7 @@ int main(int argc, char** argv) {
         else if (mode == "recovery-kills") recovery_kills();
         else if (mode == "recovery-evidence") { recovery_evidence(); recovery_substitutions(); }
         else if (mode == "recovery-capacity") recovery_capacity();
-        else if (mode == "recovery-targeted") { recovery_evidence(); recovery_substitutions(); substitutions(); final_read_substitutions(); late_binding_changes(true); eof_inventory_changes(); concluding_callback_changes(); boundaries("recovery-targeted"); }
+        else if (mode == "recovery-targeted") { recovery_evidence(); recovery_substitutions(); substitutions(); final_read_substitutions(); late_binding_changes(true); eof_inventory_changes(); boundaries("recovery-targeted"); }
         else if (mode == "publication-evidence") { publication_evidence(); publication_registry_faults(); }
         else if (mode == "publication-capacity") publication_capacity();
         else if (mode == "publication-registry") publication_registry_faults();
@@ -2843,8 +2893,9 @@ int main(int argc, char** argv) {
         else if (mode == "evidence") { evidence_foundation(); evidence_structural(); evidence_statx_fields(); }
         else if (mode == "late-bootstrap") late_bootstrap_substitutions();
         else if (mode == "late-binding") late_binding_changes();
-        else if (mode == "conclusion") { late_binding_changes(true); bootstrap_binding_changes(); eof_inventory_changes(); concluding_callback_changes(); }
-        else if (mode == "faults") { faults(); late_bootstrap_substitutions(); late_binding_changes(); late_binding_changes(true); bootstrap_binding_changes(); eof_inventory_changes(); concluding_callback_changes(); }
+        else if (mode == "concluding-callback-diagnostics") concluding_callback_changes();
+        else if (mode == "conclusion") { late_binding_changes(true); bootstrap_binding_changes(); eof_inventory_changes(); }
+        else if (mode == "faults") { faults(); late_bootstrap_substitutions(); late_binding_changes(); late_binding_changes(true); bootstrap_binding_changes(); eof_inventory_changes(); }
         else if (mode == "boundaries") boundaries();
         else if (mode.starts_with("boundaries-")) {
             require(argc == 2 || argc == 4, "boundary mode takes optional inclusive first/last positions");
