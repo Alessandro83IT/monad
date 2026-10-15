@@ -1,0 +1,824 @@
+--- a/impl/parser.hpp
++++ b/impl/parser.hpp
+@@ -4,16 +4,36 @@
+ // SPDX-License-Identifier: MIT
+ #pragma once
+ 
+-#include "preprocessor.hpp"
++#include <toml++/impl/preprocessor.hpp>
+ #if TOML_ENABLE_PARSER
+ 
+-#include "table.hpp"
+-#include "parse_result.hpp"
+-#include "header_start.hpp"
++#include <toml++/impl/table.hpp>
++#include <toml++/impl/parse_result.hpp>
++#include <toml++/impl/header_start.hpp>
++
++// Athena extension: operation-owned authorization before parser allocations.
++namespace toml {
++struct parse_observer {
++ virtual ~parse_observer() = default;
++ virtual void root(const table&) = 0;
++ virtual void key_start(const table&) = 0;
++ virtual void key_segment(std::string_view, bool) = 0;
++ virtual void key(const table&, std::string_view) = 0;
++ virtual void table_child(const table&, std::string_view, bool) = 0;
++ virtual void node(node_type) = 0;
++ virtual void attach(const toml::node&) = 0;
++ virtual void element(const array&) = 0;
++ virtual void complete(const table&) = 0;
++ virtual void text(std::size_t, bool) = 0;
++ virtual void key_storage(std::size_t) = 0;
++ virtual void depth(std::size_t) = 0;
++};
++}
+ 
+ TOML_NAMESPACE_START
+ {
+ 	TOML_ABI_NAMESPACE_BOOL(TOML_EXCEPTIONS, ex, noex);
++	parse_result TOML_CALLCONV parse(std::string_view, parse_observer&);
+ 
+ 	/// \brief	Parses a TOML document from a string view.
+ 	///
+@@ -386,5 +406,5 @@
+ }
+ TOML_NAMESPACE_END;
+ 
+-#include "header_end.hpp"
++#include <toml++/impl/header_end.hpp>
+ #endif // TOML_ENABLE_PARSER
+--- a/impl/parser.inl
++++ b/impl/parser.inl
+@@ -4,7 +4,7 @@
+ // SPDX-License-Identifier: MIT
+ #pragma once
+ 
+-#include "preprocessor.hpp"
++#include <toml++/impl/preprocessor.hpp>
+ //# {{
+ #if !TOML_IMPLEMENTATION
+ #error This is an implementation-only header.
+@@ -12,15 +12,15 @@
+ //# }}
+ #if TOML_ENABLE_PARSER
+ 
+-#include "parser.hpp"
+-#include "std_optional.hpp"
+-#include "source_region.hpp"
+-#include "parse_error.hpp"
+-#include "date_time.hpp"
+-#include "value.hpp"
+-#include "array.hpp"
+-#include "table.hpp"
+-#include "unicode.hpp"
++#include <toml++/impl/parser.hpp>
++#include <toml++/impl/std_optional.hpp>
++#include <toml++/impl/source_region.hpp>
++#include <toml++/impl/parse_error.hpp>
++#include <toml++/impl/date_time.hpp>
++#include <toml++/impl/value.hpp>
++#include <toml++/impl/array.hpp>
++#include <toml++/impl/table.hpp>
++#include <toml++/impl/unicode.hpp>
+ TOML_DISABLE_WARNINGS;
+ #include <istream>
+ #include <fstream>
+@@ -34,7 +34,7 @@
+ #include <iomanip>
+ #endif
+ TOML_ENABLE_WARNINGS;
+-#include "header_start.hpp"
++#include <toml++/impl/header_start.hpp>
+ 
+ //#---------------------------------------------------------------------------------------------------------------------
+ //# UTF8 STREAMS
+@@ -1060,10 +1060,27 @@
+ {
+ 	TOML_ABI_NAMESPACE_BOOL(TOML_EXCEPTIONS, impl_ex, impl_noex);
+ 
+-	class parser
++	class athena_parser
+ 	{
+ 	  private:
+ 		static constexpr size_t max_nested_values = TOML_MAX_NESTED_VALUES;
++        parse_observer* observer_ = nullptr;
++        bool in_key_ = false;
++        struct key_scope { bool& flag; explicit key_scope(bool& f):flag(f){ flag=true; } ~key_scope(){flag=false;} };
++        void authorize(node_type type) { if(observer_) observer_->node(type); }
++        void attach(node& value) { if(observer_) observer_->attach(value); }
++        template<class T> node_ptr guarded_value(T&& value) {
++            using V = impl::native_type_of<impl::remove_cvref<T>>;
++            authorize(impl::node_type_of<V>);
++            return node_ptr{new toml::value<V>{std::forward<T>(value)}};
++        }
++        void buffer_growth(std::size_t size, std::size_t amount) {
++            if(observer_) {
++                if(amount > (std::numeric_limits<std::size_t>::max)() - size) throw std::length_error("TOML buffer overflow");
++                observer_->text(size + amount, in_key_);
++            }
++        }
++
+ 
+ 		utf8_buffered_reader reader;
+ 		table root;
+@@ -1146,11 +1163,11 @@
+ 			if (recording && !is_eof())
+ 			{
+ 				if (recording_whitespace || !is_whitespace(*cp))
+-					recording_buffer.append(cp->bytes, cp->count);
+-			}
+-		}
+-
+-		void start_recording(bool include_current = true) noexcept
++					{ if(observer_) observer_->key_storage(cp->count); recording_buffer.append(cp->bytes, cp->count); }
++			}
++		}
++
++		void start_recording(bool include_current = true)
+ 		{
+ 			return_if_error();
+ 
+@@ -1158,7 +1175,7 @@
+ 			recording_whitespace = true;
+ 			recording_buffer.clear();
+ 			if (include_current && !is_eof())
+-				recording_buffer.append(cp->bytes, cp->count);
++				{ if(observer_) observer_->key_storage(cp->count); recording_buffer.append(cp->bytes, cp->count); }
+ 		}
+ 
+ 		void stop_recording(size_t pop_bytes = 0) noexcept
+@@ -1380,16 +1397,16 @@
+ 					switch (const auto escaped_codepoint = *cp)
+ 					{
+ 						// 'regular' escape codes
+-						case U'b': str += '\b'; break;
+-						case U'f': str += '\f'; break;
+-						case U'n': str += '\n'; break;
+-						case U'r': str += '\r'; break;
+-						case U't': str += '\t'; break;
+-						case U'"': str += '"'; break;
+-						case U'\\': str += '\\'; break;
++						case U'b': { buffer_growth(str.size(), 1); str += '\b'; } break;
++						case U'f': { buffer_growth(str.size(), 1); str += '\f'; } break;
++						case U'n': { buffer_growth(str.size(), 1); str += '\n'; } break;
++						case U'r': { buffer_growth(str.size(), 1); str += '\r'; } break;
++						case U't': { buffer_growth(str.size(), 1); str += '\t'; } break;
++						case U'"': { buffer_growth(str.size(), 1); str += '"'; } break;
++						case U'\\': { buffer_growth(str.size(), 1); str += '\\'; } break;
+ 
+ #if TOML_LANG_UNRELEASED // toml/pull/790 (\e shorthand for \x1B)
+-						case U'e': str += '\x1B'; break;
++						case U'e': { buffer_growth(str.size(), 1); str += '\x1B'; } break;
+ #else
+ 						case U'e':
+ 							set_error_and_return_default(
+@@ -1435,25 +1452,25 @@
+ 
+ 							if (sequence_value < 0x80)
+ 							{
+-								str += static_cast<char>(sequence_value);
++								{ buffer_growth(str.size(), 1); str += static_cast<char>(sequence_value); }
+ 							}
+ 							else if (sequence_value < 0x800u)
+ 							{
+-								str += static_cast<char>((sequence_value >> 6) | 0xC0u);
+-								str += static_cast<char>((sequence_value & 0x3Fu) | 0x80u);
++								{ buffer_growth(str.size(), 1); str += static_cast<char>((sequence_value >> 6) | 0xC0u); }
++								{ buffer_growth(str.size(), 1); str += static_cast<char>((sequence_value & 0x3Fu) | 0x80u); }
+ 							}
+ 							else if (sequence_value < 0x10000u)
+ 							{
+-								str += static_cast<char>((sequence_value >> 12) | 0xE0u);
+-								str += static_cast<char>(((sequence_value >> 6) & 0x3Fu) | 0x80u);
+-								str += static_cast<char>((sequence_value & 0x3Fu) | 0x80u);
++								{ buffer_growth(str.size(), 1); str += static_cast<char>((sequence_value >> 12) | 0xE0u); }
++								{ buffer_growth(str.size(), 1); str += static_cast<char>(((sequence_value >> 6) & 0x3Fu) | 0x80u); }
++								{ buffer_growth(str.size(), 1); str += static_cast<char>((sequence_value & 0x3Fu) | 0x80u); }
+ 							}
+ 							else if (sequence_value < 0x110000u)
+ 							{
+-								str += static_cast<char>((sequence_value >> 18) | 0xF0u);
+-								str += static_cast<char>(((sequence_value >> 12) & 0x3Fu) | 0x80u);
+-								str += static_cast<char>(((sequence_value >> 6) & 0x3Fu) | 0x80u);
+-								str += static_cast<char>((sequence_value & 0x3Fu) | 0x80u);
++								{ buffer_growth(str.size(), 1); str += static_cast<char>((sequence_value >> 18) | 0xF0u); }
++								{ buffer_growth(str.size(), 1); str += static_cast<char>(((sequence_value >> 12) & 0x3Fu) | 0x80u); }
++								{ buffer_growth(str.size(), 1); str += static_cast<char>(((sequence_value >> 6) & 0x3Fu) | 0x80u); }
++								{ buffer_growth(str.size(), 1); str += static_cast<char>((sequence_value & 0x3Fu) | 0x80u); }
+ 							}
+ 							break;
+ 						}
+@@ -1490,13 +1507,13 @@
+ 							{
+ 								// """ " (one quote somewhere in a ML string)
+ 								case 1:
+-									str += '"';
++									{ buffer_growth(str.size(), 1); str += '"'; }
+ 									skipping_whitespace = false;
+ 									continue;
+ 
+ 								// """ "" (two quotes somewhere in a ML string)
+ 								case 2:
+-									str.append("\"\""sv);
++									buffer_growth(str.size(), "\"\""sv.size()); str.append("\"\""sv);
+ 									skipping_whitespace = false;
+ 									continue;
+ 
+@@ -1504,11 +1521,11 @@
+ 								case 3: return str;
+ 
+ 								// """ """" (one at the end of the string)
+-								case 4: str += '"'; return str;
++								case 4: { buffer_growth(str.size(), 1); str += '"'; } return str;
+ 
+ 								// """ """"" (two quotes at the end of the string)
+ 								case 5:
+-									str.append("\"\""sv);
++									buffer_growth(str.size(), "\"\""sv.size()); str.append("\"\""sv);
+ 									advance_and_return_if_error({}); // skip the last '"'
+ 									return str;
+ 
+@@ -1537,7 +1554,7 @@
+ 						consume_line_break();
+ 						return_if_error({});
+ 						if (!skipping_whitespace)
+-							str += '\n';
++							{ buffer_growth(str.size(), 1); str += '\n'; }
+ 						continue;
+ 					}
+ 
+@@ -1559,11 +1576,11 @@
+ 						if (!skipping_whitespace || !is_horizontal_whitespace(*cp))
+ 						{
+ 							skipping_whitespace = false;
+-							str.append(cp->bytes, cp->count);
++							{ buffer_growth(str.size(), cp->count); str.append(cp->bytes, cp->count); }
+ 						}
+ 					}
+ 					else
+-						str.append(cp->bytes, cp->count);
++						{ buffer_growth(str.size(), cp->count); str.append(cp->bytes, cp->count); }
+ 
+ 					advance_and_return_if_error({});
+ 				}
+@@ -1620,20 +1637,20 @@
+ 						switch (consecutive_delimiters)
+ 						{
+ 							// ''' ' (one quote somewhere in a ML string)
+-							case 1: str += '\''; continue;
++							case 1: { buffer_growth(str.size(), 1); str += '\''; } continue;
+ 
+ 							// ''' '' (two quotes somewhere in a ML string)
+-							case 2: str.append("''"sv); continue;
++							case 2: buffer_growth(str.size(), "''"sv.size()); str.append("''"sv); continue;
+ 
+ 							// ''' ''' (the end of the string)
+ 							case 3: return str;
+ 
+ 							// ''' '''' (one at the end of the string)
+-							case 4: str += '\''; return str;
++							case 4: { buffer_growth(str.size(), 1); str += '\''; } return str;
+ 
+ 							// ''' ''''' (two quotes at the end of the string)
+ 							case 5:
+-								str.append("''"sv);
++								buffer_growth(str.size(), "''"sv.size()); str.append("''"sv);
+ 								advance_and_return_if_error({}); // skip the last '
+ 								return str;
+ 
+@@ -1652,7 +1669,7 @@
+ 				{
+ 					consume_line_break();
+ 					return_if_error({});
+-					str += '\n';
++					{ buffer_growth(str.size(), 1); str += '\n'; }
+ 					continue;
+ 				}
+ 
+@@ -1668,7 +1685,7 @@
+ 					set_error_and_return_default("unicode surrogates (U+D800 - U+DFFF) are explicitly prohibited"sv);
+ #endif
+ 
+-				str.append(cp->bytes, cp->count);
++				{ buffer_growth(str.size(), cp->count); str.append(cp->bytes, cp->count); }
+ 				advance_and_return_if_error({});
+ 			}
+ 			while (!is_eof());
+@@ -1735,7 +1752,7 @@
+ 				if (!is_bare_key_character(*cp))
+ 					break;
+ 
+-				string_buffer.append(cp->bytes, cp->count);
++				buffer_growth(string_buffer.size(), cp->count); string_buffer.append(cp->bytes, cp->count);
+ 				advance_and_return_if_error({});
+ 			}
+ 
+@@ -2516,11 +2533,11 @@
+ 				case U'{': return parse_inline_table();
+ 
+ 				// floats beginning with '.'
+-				case U'.': return node_ptr{ new value{ parse_float() } };
++				case U'.': return guarded_value(parse_float());
+ 
+ 				// strings
+ 				case U'"': [[fallthrough]];
+-				case U'\'': return node_ptr{ new value{ parse_string().value } };
++				case U'\'': return guarded_value(parse_string().value);
+ 
+ 				default:
+ 				{
+@@ -2528,11 +2545,11 @@
+ 
+ 					// bools
+ 					if (cp_upper == 70u || cp_upper == 84u) // F or T
+-						return node_ptr{ new value{ parse_boolean() } };
++						return guarded_value(parse_boolean());
+ 
+ 					// inf/nan
+ 					else if (cp_upper == 73u || cp_upper == 78u) // I or N
+-						return node_ptr{ new value{ parse_inf_or_nan() } };
++						return guarded_value(parse_inf_or_nan());
+ 
+ 					else
+ 						return nullptr;
+@@ -2550,6 +2567,7 @@
+ 			push_parse_scope("value"sv);
+ 
+ 			const depth_counter_scope depth_counter{ nested_values };
++            if(observer_) observer_->depth(nested_values);
+ 			if TOML_UNLIKELY(nested_values > max_nested_values)
+ 				set_error_and_return_default("exceeded maximum nested value depth of "sv,
+ 											 max_nested_values,
+@@ -2753,7 +2771,7 @@
+ 				{
+ 					if (has_any(begins_digit))
+ 					{
+-						val.reset(new value{ static_cast<int64_t>(chars[0] - U'0') });
++						val = guarded_value(static_cast<int64_t>(chars[0] - U'0'));
+ 						advance(); // skip the digit
+ 						break;
+ 					}
+@@ -2772,7 +2790,7 @@
+ 				// typed parse functions to take over and show better diagnostics if there's an issue
+ 				// (as opposed to the fallback "could not determine type" message)
+ 				if (has_any(has_p))
+-					val.reset(new value{ parse_hex_float() });
++					val = guarded_value(parse_hex_float());
+ 				else if (has_any(has_x | has_o | has_b))
+ 				{
+ 					int64_t i;
+@@ -2794,17 +2812,17 @@
+ 					}
+ 					return_if_error({});
+ 
+-					val.reset(new value{ i });
++					val = guarded_value(i);
+ 					val->ref_cast<int64_t>().flags(flags);
+ 				}
+ 				else if (has_any(has_e) || (has_any(begins_digit) && chars[1] == U'.'))
+-					val.reset(new value{ parse_float() });
++					val = guarded_value(parse_float());
+ 				else if (has_any(begins_sign))
+ 				{
+ 					// single-digit signed integers
+ 					if (char_count == 2u && has_any(has_digits))
+ 					{
+-						val.reset(new value{ static_cast<int64_t>(chars[1] - U'0') * (chars[0] == U'-' ? -1LL : 1LL) });
++						val = guarded_value(static_cast<int64_t>(chars[1] - U'0') * (chars[0] == U'-' ? -1LL : 1LL));
+ 						advance(); // skip the sign
+ 						advance(); // skip the digit
+ 						break;
+@@ -2812,11 +2830,11 @@
+ 
+ 					// simple signed floats (e.g. +1.0)
+ 					if (is_decimal_digit(chars[1]) && chars[2] == U'.')
+-						val.reset(new value{ parse_float() });
++						val = guarded_value(parse_float());
+ 
+ 					// signed infinity or nan
+ 					else if (is_match(chars[1], U'i', U'n', U'I', U'N'))
+-						val.reset(new value{ parse_inf_or_nan() });
++						val = guarded_value(parse_inf_or_nan());
+ 				}
+ 
+ 				return_if_error({});
+@@ -2832,14 +2850,14 @@
+ 					// binary integers
+ 					// 0b10
+ 					case bzero_msk | has_b:
+-						val.reset(new value{ parse_integer<2>() });
++						val = guarded_value(parse_integer<2>());
+ 						val->ref_cast<int64_t>().flags(value_flags::format_as_binary);
+ 						break;
+ 
+ 					// octal integers
+ 					// 0o10
+ 					case bzero_msk | has_o:
+-						val.reset(new value{ parse_integer<8>() });
++						val = guarded_value(parse_integer<8>());
+ 						val->ref_cast<int64_t>().flags(value_flags::format_as_octal);
+ 						break;
+ 
+@@ -2865,14 +2883,14 @@
+ 														 max_numeric_value_length,
+ 														 " characters"sv);
+ 
+-						val.reset(new value{ parse_integer<10>() });
++						val = guarded_value(parse_integer<10>());
+ 						break;
+ 					}
+ 
+ 					// hexadecimal integers
+ 					// 0x10
+ 					case bzero_msk | has_x:
+-						val.reset(new value{ parse_integer<16>() });
++						val = guarded_value(parse_integer<16>());
+ 						val->ref_cast<int64_t>().flags(value_flags::format_as_hexadecimal);
+ 						break;
+ 
+@@ -2925,7 +2943,7 @@
+ 					case begins_sign | has_digits | has_e | signs_msk: [[fallthrough]];
+ 					case begins_sign | has_digits | has_dot | has_minus: [[fallthrough]];
+ 					case begins_sign | has_digits | has_dot | has_e | has_minus:
+-						val.reset(new value{ parse_float() });
++						val = guarded_value(parse_float());
+ 						break;
+ 
+ 					// hexadecimal floats
+@@ -2959,7 +2977,7 @@
+ 					case begins_sign | has_digits | has_x | has_dot | has_p | has_minus: [[fallthrough]];
+ 					case begins_sign | has_digits | has_x | has_dot | has_p | has_plus: [[fallthrough]];
+ 					case begins_sign | has_digits | has_x | has_dot | has_p | signs_msk:
+-						val.reset(new value{ parse_hex_float() });
++						val = guarded_value(parse_hex_float());
+ 						break;
+ 
+ 					// times
+@@ -2969,12 +2987,12 @@
+ 					case bzero_msk | has_colon: [[fallthrough]];
+ 					case bzero_msk | has_colon | has_dot: [[fallthrough]];
+ 					case bdigit_msk | has_colon: [[fallthrough]];
+-					case bdigit_msk | has_colon | has_dot: val.reset(new value{ parse_time() }); break;
++					case bdigit_msk | has_colon | has_dot: val = guarded_value(parse_time()); break;
+ 
+ 					// local dates
+ 					// YYYY-MM-DD
+ 					case bzero_msk | has_minus: [[fallthrough]];
+-					case bdigit_msk | has_minus: val.reset(new value{ parse_date() }); break;
++					case bdigit_msk | has_minus: val = guarded_value(parse_date()); break;
+ 
+ 					// date-times
+ 					// YYYY-MM-DDTHH:MM
+@@ -3013,7 +3031,7 @@
+ 					case bzero_msk | has_minus | has_colon | has_dot | has_z | has_t: [[fallthrough]];
+ 					case bdigit_msk | has_minus | has_colon | has_z | has_t: [[fallthrough]];
+ 					case bdigit_msk | has_minus | has_colon | has_dot | has_z | has_t:
+-						val.reset(new value{ parse_date_time() });
++						val = guarded_value(parse_date_time());
+ 						break;
+ 				}
+ 			}
+@@ -3030,14 +3048,16 @@
+ 		}
+ 
+ 		TOML_NEVER_INLINE
+-		bool parse_key()
++		bool parse_key(table* key_parent = nullptr)
+ 		{
+ 			return_if_error({});
+ 			assert_not_eof();
+ 			TOML_ASSERT_ASSUME(is_bare_key_character(*cp) || is_string_delimiter(*cp));
+ 			push_parse_scope("key"sv);
+ 
+-			key_buffer.clear();
++			key_scope scoped_key(in_key_);
++            if(observer_) observer_->key_start(key_parent ? *key_parent : root);
++            key_buffer.clear();
+ 			recording_whitespace = false;
+ 
+ 			while (!is_error())
+@@ -3083,7 +3103,8 @@
+ 				consume_leading_whitespace();
+ 
+ 				// store segment
+-				key_buffer.push_back(key_segment, key_begin, key_end);
++				if(observer_) { observer_->key_segment(key_segment, !is_eof() && *cp == U'.'); observer_->key_storage(key_segment.size()); }
++                key_buffer.push_back(key_segment, key_begin, key_end);
+ 
+ 				// eof or no more key to come
+ 				if (is_eof() || *cp != U'.')
+@@ -3230,8 +3251,11 @@
+ 				// need to create a new implicit table
+ 				else
+ 				{
+-					pit		  = parent->emplace_hint<table>(pit, make_key(i));
++					if(observer_) observer_->table_child(*parent, segment, false);
++                    authorize(node_type::table);
++                    pit		  = parent->emplace_hint<table>(pit, make_key(i));
+ 					table& p  = pit->second.ref_cast<table>();
++                    attach(p);
+ 					p.source_ = { header_begin_pos, header_end_pos, reader.source_path() };
+ 
+ 					implicit_tables.push_back(&p);
+@@ -3252,7 +3276,10 @@
+ 				if (auto arr = matching_node.as_array();
+ 					is_arr && arr && impl::find(table_arrays.begin(), table_arrays.end(), arr))
+ 				{
+-					table& tbl	= arr->emplace_back<table>();
++					if(observer_) observer_->element(*arr);
++                    authorize(node_type::table);
++                    table& tbl	= arr->emplace_back<table>();
++                    attach(tbl);
+ 					tbl.source_ = { header_begin_pos, header_end_pos, reader.source_path() };
+ 					return &tbl;
+ 				}
+@@ -3309,18 +3336,24 @@
+ 			// there was no matching node, sweet - we can freely instantiate a new table/table array.
+ 			else
+ 			{
+-				auto last_key = make_key(key_buffer.size() - 1u);
++				if(observer_) observer_->table_child(*parent, last_segment, is_arr);
++                auto last_key = make_key(key_buffer.size() - 1u);
+ 
+ 				// if it's an array we need to make the array and it's first table element,
+ 				// set the starting regions, and return the table element
+ 				if (is_arr)
+ 				{
+-					it			   = parent->emplace_hint<array>(it, std::move(last_key));
++					authorize(node_type::array);
++                    it			   = parent->emplace_hint<array>(it, std::move(last_key));
+ 					array& tbl_arr = it->second.ref_cast<array>();
++                    attach(tbl_arr);
+ 					table_arrays.push_back(&tbl_arr);
+ 					tbl_arr.source_ = { header_begin_pos, header_end_pos, reader.source_path() };
+ 
+-					table& tbl	= tbl_arr.emplace_back<table>();
++					if(observer_) observer_->element(tbl_arr);
++                    authorize(node_type::table);
++                    table& tbl	= tbl_arr.emplace_back<table>();
++                    attach(tbl);
+ 					tbl.source_ = { header_begin_pos, header_end_pos, reader.source_path() };
+ 					return &tbl;
+ 				}
+@@ -3328,8 +3361,10 @@
+ 				// otherwise we're just making a table
+ 				else
+ 				{
+-					it			= parent->emplace_hint<table>(it, std::move(last_key));
++					authorize(node_type::table);
++                    it			= parent->emplace_hint<table>(it, std::move(last_key));
+ 					table& tbl	= it->second.ref_cast<table>();
++                    attach(tbl);
+ 					tbl.source_ = { header_begin_pos, header_end_pos, reader.source_path() };
+ 					return &tbl;
+ 				}
+@@ -3346,7 +3381,7 @@
+ 
+ 			// read the key into the key buffer
+ 			start_recording();
+-			parse_key();
++			parse_key(tbl);
+ 			stop_recording(1u);
+ 			return_if_error({});
+ 			TOML_ASSERT(key_buffer.size() >= 1u);
+@@ -3401,8 +3436,11 @@
+ 					// need to create a new implicit table
+ 					else
+ 					{
+-						pit		  = tbl->emplace_hint<table>(pit, make_key(i));
++						if(observer_) observer_->table_child(*tbl, segment, false);
++                        authorize(node_type::table);
++                        pit		  = tbl->emplace_hint<table>(pit, make_key(i));
+ 						table& p  = pit->second.ref_cast<table>();
++                    attach(p);
+ 						p.source_ = pit->first.source();
+ 
+ 						dotted_key_tables.push_back(&p);
+@@ -3426,7 +3464,8 @@
+ 
+ 			// create the key first since the key buffer will likely get overwritten during value parsing (inline
+ 			// tables)
+-			auto last_key = make_key(key_buffer.size() - 1u);
++			if(observer_) observer_->key(*tbl, last_segment);
++            auto last_key = make_key(key_buffer.size() - 1u);
+ 
+ 			// now we can actually parse the value
+ 			node_ptr val = parse_value();
+@@ -3523,10 +3562,11 @@
+ 		}
+ 
+ 	  public:
+-		parser(utf8_reader_interface&& reader_) //
+-			: reader{ reader_ }
++		athena_parser(utf8_reader_interface&& reader_, parse_observer* observer = nullptr) //
++			: observer_{observer}, reader{ reader_ }
+ 		{
+ 			root.source_ = { prev_pos, prev_pos, reader.source_path() };
++            if(observer_) observer_->root(root);
+ 
+ 			if (!reader.peek_eof())
+ 			{
+@@ -3566,7 +3606,7 @@
+ 	};
+ 
+ 	TOML_EXTERNAL_LINKAGE
+-	node_ptr parser::parse_array()
++	node_ptr athena_parser::parse_array()
+ 	{
+ 		return_if_error({});
+ 		assert_not_eof();
+@@ -3576,7 +3616,9 @@
+ 		// skip opening '['
+ 		advance_and_return_if_error_or_eof({});
+ 
+-		node_ptr arr_ptr{ new array{} };
++		authorize(node_type::array);
++        node_ptr arr_ptr{ new array{} };
++        attach(*arr_ptr);
+ 		array& arr = arr_ptr->ref_cast<array>();
+ 		enum class TOML_CLOSED_ENUM parse_type : int
+ 		{
+@@ -3621,7 +3663,8 @@
+ 				}
+ 				prev = parse_type::val;
+ 
+-				auto val = parse_value();
++				if(observer_) observer_->element(arr);
++                auto val = parse_value();
+ 				return_if_error({});
+ 
+ 				if (!arr.capacity())
+@@ -3635,7 +3678,7 @@
+ 	}
+ 
+ 	TOML_EXTERNAL_LINKAGE
+-	node_ptr parser::parse_inline_table()
++	node_ptr athena_parser::parse_inline_table()
+ 	{
+ 		return_if_error({});
+ 		assert_not_eof();
+@@ -3645,7 +3688,9 @@
+ 		// skip opening '{'
+ 		advance_and_return_if_error_or_eof({});
+ 
+-		node_ptr tbl_ptr{ new table{} };
++		authorize(node_type::table);
++        node_ptr tbl_ptr{ new table{} };
++        attach(*tbl_ptr);
+ 		table& tbl = tbl_ptr->ref_cast<table>();
+ 		tbl.is_inline(true);
+ 		table_vector_scope table_scope{ open_inline_tables, tbl };
+@@ -3717,7 +3762,8 @@
+ 		}
+ 
+ 		return_if_error({});
+-		return tbl_ptr;
++		if(observer_) observer_->complete(tbl);
++        return tbl_ptr;
+ 	}
+ 
+ 	TOML_ABI_NAMESPACE_END; // TOML_EXCEPTIONS
+@@ -3757,7 +3803,7 @@
+ 	TOML_INTERNAL_LINKAGE
+ 	parse_result do_parse(utf8_reader_interface && reader)
+ 	{
+-		return impl::parser{ std::move(reader) };
++		return impl::athena_parser{ std::move(reader) };
+ 	}
+ 
+ 	TOML_NODISCARD
+@@ -3822,6 +3868,10 @@
+ 	TOML_ABI_NAMESPACE_BOOL(TOML_EXCEPTIONS, ex, noex);
+ 
+ 	TOML_EXTERNAL_LINKAGE
++	parse_result TOML_CALLCONV parse(std::string_view doc, parse_observer& observer) {
++        return impl::athena_parser{TOML_ANON_NAMESPACE::utf8_reader{doc, std::string_view{}}, &observer};
++    }
++    TOML_EXTERNAL_LINKAGE
+ 	parse_result TOML_CALLCONV parse(std::string_view doc, std::string_view source_path)
+ 	{
+ 		return TOML_ANON_NAMESPACE::do_parse(TOML_ANON_NAMESPACE::utf8_reader{ doc, source_path });
+@@ -3913,5 +3963,5 @@
+ TOML_NAMESPACE_END;
+ 
+ #undef TOML_OVERALIGNED
+-#include "header_end.hpp"
++#include <toml++/impl/header_end.hpp>
+ #endif // TOML_ENABLE_PARSER
+--- a/toml.hpp
++++ b/toml.hpp
+@@ -8,7 +8,9 @@
+ #define INCLUDE_TOMLPLUSPLUS_H // old guard name used pre-v3
+ #define TOMLPLUSPLUS_H		   // guard name used in the legacy toml.h
+ 
+-#include "impl/preprocessor.hpp"
++#include <toml++/impl/preprocessor.hpp>
++#include <toml++/impl/version.hpp>
++static_assert(TOML_LIB_MAJOR == 3 && TOML_LIB_MINOR == 4 && TOML_LIB_PATCH == 0, "Athena parser overlay requires toml++ 3.4.0; review hooks before upgrading");
+ 
+ TOML_PUSH_WARNINGS;
+ TOML_DISABLE_SPAM_WARNINGS;
+@@ -31,47 +33,64 @@
+ #endif
+ #endif
+ 
+-#include "impl/std_new.hpp"
+-#include "impl/std_string.hpp"
+-#include "impl/std_optional.hpp"
+-#include "impl/forward_declarations.hpp"
+-#include "impl/print_to_stream.hpp"
+-#include "impl/source_region.hpp"
+-#include "impl/date_time.hpp"
+-#include "impl/at_path.hpp"
+-#include "impl/path.hpp"
+-#include "impl/node.hpp"
+-#include "impl/node_view.hpp"
+-#include "impl/value.hpp"
+-#include "impl/make_node.hpp"
+-#include "impl/array.hpp"
+-#include "impl/key.hpp"
+-#include "impl/table.hpp"
+-#include "impl/unicode_autogenerated.hpp"
+-#include "impl/unicode.hpp"
+-#include "impl/parse_error.hpp"
+-#include "impl/parse_result.hpp"
+-#include "impl/parser.hpp"
+-#include "impl/formatter.hpp"
+-#include "impl/toml_formatter.hpp"
+-#include "impl/json_formatter.hpp"
+-#include "impl/yaml_formatter.hpp"
++#include <toml++/impl/std_new.hpp>
++#include <toml++/impl/std_string.hpp>
++#include <toml++/impl/std_optional.hpp>
++#include <toml++/impl/forward_declarations.hpp>
++// Isolate parser implementation symbols from an unmodified system toml++.
++TOML_IMPL_NAMESPACE_START {
++TOML_ABI_NAMESPACE_BOOL(TOML_EXCEPTIONS, impl_ex, impl_noex);
++class athena_parser;
++TOML_ABI_NAMESPACE_END;
++} TOML_IMPL_NAMESPACE_END;
++#undef TOML_PARSER_TYPENAME
++#if TOML_ABI_NAMESPACES
++#if TOML_EXCEPTIONS
++#define TOML_PARSER_TYPENAME TOML_NAMESPACE::impl::impl_ex::athena_parser
++#else
++#define TOML_PARSER_TYPENAME TOML_NAMESPACE::impl::impl_noex::athena_parser
++#endif
++#else
++#define TOML_PARSER_TYPENAME TOML_NAMESPACE::impl::athena_parser
++#endif
++
++#include <toml++/impl/print_to_stream.hpp>
++#include <toml++/impl/source_region.hpp>
++#include <toml++/impl/date_time.hpp>
++#include <toml++/impl/at_path.hpp>
++#include <toml++/impl/path.hpp>
++#include <toml++/impl/node.hpp>
++#include <toml++/impl/node_view.hpp>
++#include <toml++/impl/value.hpp>
++#include <toml++/impl/make_node.hpp>
++#include <toml++/impl/array.hpp>
++#include <toml++/impl/key.hpp>
++#include <toml++/impl/table.hpp>
++#include <toml++/impl/unicode_autogenerated.hpp>
++#include <toml++/impl/unicode.hpp>
++#include <toml++/impl/parse_error.hpp>
++#include <toml++/impl/parse_result.hpp>
++#include <toml++/impl/parser.hpp>
++#include <toml++/impl/formatter.hpp>
++#include <toml++/impl/toml_formatter.hpp>
++#include <toml++/impl/json_formatter.hpp>
++#include <toml++/impl/yaml_formatter.hpp>
+ 
+ #if TOML_IMPLEMENTATION
+ 
+-#include "impl/std_string.inl"
+-#include "impl/print_to_stream.inl"
+-#include "impl/node.inl"
+-#include "impl/at_path.inl"
+-#include "impl/path.inl"
+-#include "impl/array.inl"
+-#include "impl/table.inl"
+-#include "impl/unicode.inl"
+-#include "impl/parser.inl"
+-#include "impl/formatter.inl"
+-#include "impl/toml_formatter.inl"
+-#include "impl/json_formatter.inl"
+-#include "impl/yaml_formatter.inl"
++#include <toml++/impl/std_string.inl>
++#include <toml++/impl/print_to_stream.inl>
++#include <toml++/impl/node.inl>
++#include <toml++/impl/at_path.inl>
++#include <toml++/impl/path.inl>
++#include <toml++/impl/array.inl>
++#include <toml++/impl/table.inl>
++#include <toml++/impl/unicode.inl>
++#include <toml++/impl/parser.inl>
++#include <toml++/impl/formatter.inl>
++#include <toml++/impl/toml_formatter.inl>
++#include <toml++/impl/json_formatter.inl>
++#include <toml++/impl/yaml_formatter.inl>
+ 
+ #endif // TOML_IMPLEMENTATION
+ 

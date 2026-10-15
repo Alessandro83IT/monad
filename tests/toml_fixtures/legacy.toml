@@ -1,0 +1,9 @@
+name='pkg'
+version='1'
+source='url'
+sha256='abc'
+build_system='cmake'
+dependencies=['other']
+[provides]
+features=['f']
+capabilities=['c']

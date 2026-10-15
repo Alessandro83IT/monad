@@ -1,0 +1,5 @@
+schema_version=1
+projection_id='0123456789abcdef0123456789abcdef'
+generation_authority_hex='2f67'
+store_authority_hex='2f73'
+projection_root_hex='2f70'

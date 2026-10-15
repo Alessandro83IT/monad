@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "identity.hpp"
+#include "../parsing/bounded_toml.hpp"
 #include <initializer_list>
-#include <toml++/toml.hpp>
+#include <athena_toml/athena_toml.hpp>
 
 namespace athena::activation::codec_detail {
-toml::table parse(std::string_view, std::size_t limit = max_document_size);
-void keys(const toml::table&, std::initializer_list<std::string_view>);
-std::string string(const toml::table&, std::string_view);
-std::uint64_t integer(const toml::table&, std::string_view);
-void version(const toml::table&);
+athena_toml::table parse(std::string_view, std::size_t limit = max_document_size, parsing::Profile = parsing::Profile::Any);
+void keys(const athena_toml::table&, std::initializer_list<std::string_view>);
+std::string string(const athena_toml::table&, std::string_view);
+std::uint64_t integer(const athena_toml::table&, std::string_view);
+void version(const athena_toml::table&);
 void canonical(std::string_view supplied, std::string_view written);
 std::uint64_t decimal(std::string_view);
 void generation(std::uint64_t);

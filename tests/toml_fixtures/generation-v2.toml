@@ -1,0 +1,6 @@
+schema_version=2
+id=2
+[[memberships]]
+kind='legacy'
+package='pkg'
+store='/store/pkg'

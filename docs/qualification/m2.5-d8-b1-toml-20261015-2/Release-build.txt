@@ -1,0 +1,368 @@
+[  0%] Building CXX object CMakeFiles/athena_d4_locator_fault.dir/tests/activation_plan_persistence_test.cpp.o
+[  0%] Building CXX object CMakeFiles/toml_upstream_probe.dir/tests/toml_probe.cpp.o
+[  0%] Building CXX object CMakeFiles/toml_coexistence_upstream_first.dir/tests/toml_coexistence_order.cpp.o
+[  0%] Building CXX object CMakeFiles/athena_core.dir/src/activation/activation.cpp.o
+[  1%] Linking CXX shared library libathena_d4_locator_fault.so
+[  1%] Built target athena_d4_locator_fault
+[  2%] Building CXX object CMakeFiles/toml_coexistence_athena_first.dir/tests/toml_coexistence_order.cpp.o
+[  2%] Building CXX object CMakeFiles/athena_core.dir/src/activation/codec_detail.cpp.o
+[  3%] Building CXX object CMakeFiles/athena_core.dir/src/activation/current_selection.cpp.o
+[  3%] Linking CXX executable toml_upstream_probe
+[  3%] Built target toml_upstream_probe
+[  3%] Building CXX object CMakeFiles/athena_core.dir/src/activation/identity.cpp.o
+[  3%] Building CXX object CMakeFiles/athena_core.dir/src/activation/initial_activation.cpp.o
+[  4%] Building CXX object CMakeFiles/athena_core.dir/src/activation/legacy.cpp.o
+[  4%] Built target toml_coexistence_upstream_first
+[  4%] Building CXX object CMakeFiles/athena_core.dir/src/activation/legacy_adoption.cpp.o
+[  4%] Built target toml_coexistence_athena_first
+[  5%] Building CXX object CMakeFiles/athena_core.dir/src/activation/legacy_authority.cpp.o
+[  5%] Building CXX object CMakeFiles/athena_core.dir/src/activation/legacy_codec.cpp.o
+[  5%] Building CXX object CMakeFiles/athena_core.dir/src/activation/operational_activation.cpp.o
+[  6%] Building CXX object CMakeFiles/athena_core.dir/src/activation/operational_plan.cpp.o
+[  6%] Building CXX object CMakeFiles/athena_core.dir/src/activation/operational_request.cpp.o
+[  6%] Building CXX object CMakeFiles/athena_core.dir/src/activation/operational_request_codec.cpp.o
+[  7%] Building CXX object CMakeFiles/athena_core.dir/src/activation/plan.cpp.o
+[  7%] Building CXX object CMakeFiles/athena_core.dir/src/activation/plan_persistence.cpp.o
+[  8%] Building CXX object CMakeFiles/athena_core.dir/src/activation/plan_retention.cpp.o
+[  8%] Building CXX object CMakeFiles/athena_core.dir/src/activation/projection_binding.cpp.o
+[  8%] Building CXX object CMakeFiles/athena_core.dir/src/activation/projection_fs.cpp.o
+[  9%] Building CXX object CMakeFiles/athena_core.dir/src/activation/reconciliation.cpp.o
+[  9%] Building CXX object CMakeFiles/athena_core.dir/src/activation/selection.cpp.o
+[ 10%] Building CXX object CMakeFiles/athena_core.dir/src/archive/archive.cpp.o
+[ 10%] Building CXX object CMakeFiles/athena_core.dir/src/artifact/encoding.cpp.o
+[ 10%] Building CXX object CMakeFiles/athena_core.dir/src/artifact/identity.cpp.o
+[ 11%] Building CXX object CMakeFiles/athena_core.dir/src/artifact/model.cpp.o
+[ 11%] Building CXX object CMakeFiles/athena_core.dir/src/artifact/scanner.cpp.o
+[ 11%] Building CXX object CMakeFiles/athena_core.dir/src/build/autotools_backend.cpp.o
+[ 12%] Building CXX object CMakeFiles/athena_core.dir/src/build/builder.cpp.o
+[ 12%] Building CXX object CMakeFiles/athena_core.dir/src/build/cmake_backend.cpp.o
+[ 13%] Building CXX object CMakeFiles/athena_core.dir/src/cli/cli.cpp.o
+[ 13%] Building CXX object CMakeFiles/athena_core.dir/src/cli/command_line.cpp.o
+[ 13%] Building CXX object CMakeFiles/athena_core.dir/src/core/arch_repository.cpp.o
+[ 14%] Building CXX object CMakeFiles/athena_core.dir/src/core/config.cpp.o
+[ 14%] Building CXX object CMakeFiles/athena_core.dir/src/core/detail/filesystem.cpp.o
+[ 14%] Building CXX object CMakeFiles/athena_core.dir/src/core/install_plan.cpp.o
+[ 15%] Building CXX object CMakeFiles/athena_core.dir/src/core/local_repository.cpp.o
+[ 15%] Building CXX object CMakeFiles/athena_core.dir/src/core/locking.cpp.o
+[ 16%] Building CXX object CMakeFiles/athena_core.dir/src/core/path_layout.cpp.o
+[ 16%] Building CXX object CMakeFiles/athena_core.dir/src/core/repository.cpp.o
+[ 16%] Building CXX object CMakeFiles/athena_core.dir/src/core/schema.cpp.o
+[ 17%] Building CXX object CMakeFiles/athena_core.dir/src/core/selection.cpp.o
+[ 17%] Building CXX object CMakeFiles/athena_core.dir/src/dependency/constraint.cpp.o
+[ 17%] Building CXX object CMakeFiles/athena_core.dir/src/dependency/expression_validation.cpp.o
+[ 18%] Building CXX object CMakeFiles/athena_core.dir/src/dependency/installed_environment.cpp.o
+[ 18%] Building CXX object CMakeFiles/athena_core.dir/src/dependency/parser.cpp.o
+[ 19%] Building CXX object CMakeFiles/athena_core.dir/src/dependency/resolver.cpp.o
+[ 19%] Building CXX object CMakeFiles/athena_core.dir/src/dependency/serializer.cpp.o
+[ 19%] Building CXX object CMakeFiles/athena_core.dir/src/dependency/validator.cpp.o
+[ 20%] Building CXX object CMakeFiles/athena_core.dir/src/download/downloader.cpp.o
+[ 20%] Building CXX object CMakeFiles/athena_core.dir/src/generation/codec.cpp.o
+[ 20%] Building CXX object CMakeFiles/athena_core.dir/src/generation/document.cpp.o
+[ 21%] Building CXX object CMakeFiles/athena_core.dir/src/generation/generation.cpp.o
+[ 21%] Building CXX object CMakeFiles/athena_core.dir/src/generation/publication.cpp.o
+[ 22%] Building CXX object CMakeFiles/athena_core.dir/src/hash/sha256.cpp.o
+[ 22%] Building CXX object CMakeFiles/athena_core.dir/src/install/generation_builder.cpp.o
+[ 22%] Building CXX object CMakeFiles/athena_core.dir/src/install/install_plan.cpp.o
+[ 23%] Building CXX object CMakeFiles/athena_core.dir/src/install/installer.cpp.o
+[ 23%] Building CXX object CMakeFiles/athena_core.dir/src/install/removal_planner.cpp.o
+[ 24%] Building CXX object CMakeFiles/athena_core.dir/src/install/remove_plan.cpp.o
+[ 24%] Building CXX object CMakeFiles/athena_core.dir/src/install/remover.cpp.o
+[ 24%] Building CXX object CMakeFiles/athena_core.dir/src/install/transaction.cpp.o
+[ 25%] Building CXX object CMakeFiles/athena_core.dir/src/installed/environment.cpp.o
+[ 25%] Building CXX object CMakeFiles/athena_core.dir/src/installed/semantics.cpp.o
+[ 25%] Building CXX object CMakeFiles/athena_core.dir/src/package/package.cpp.o
+[ 26%] Building CXX object CMakeFiles/athena_core.dir/src/package/package_loader.cpp.o
+[ 26%] Building CXX object CMakeFiles/athena_core.dir/src/parsing/bounded_toml.cpp.o
+[ 27%] Building CXX object CMakeFiles/athena_core.dir/src/paths/paths.cpp.o
+[ 27%] Building CXX object CMakeFiles/athena_core.dir/src/realization/executor.cpp.o
+[ 27%] Building CXX object CMakeFiles/athena_core.dir/src/realization/record.cpp.o
+[ 28%] Building CXX object CMakeFiles/athena_core.dir/src/repository/arch_repository.cpp.o
+[ 28%] Building CXX object CMakeFiles/athena_core.dir/src/repository/repository.cpp.o
+[ 28%] Building CXX object CMakeFiles/athena_core.dir/src/repository/repository_index.cpp.o
+[ 29%] Building CXX object CMakeFiles/athena_core.dir/src/repository/resolver_candidate.cpp.o
+[ 29%] Building CXX object CMakeFiles/athena_core.dir/src/repository/resolver_snapshot_adapter.cpp.o
+[ 30%] Building CXX object CMakeFiles/athena_core.dir/src/store/gc.cpp.o
+[ 30%] Building CXX object CMakeFiles/athena_core.dir/src/store/gc_trash.cpp.o
+[ 30%] Building CXX object CMakeFiles/athena_core.dir/src/store/manifest.cpp.o
+[ 31%] Building CXX object CMakeFiles/athena_core.dir/src/store/metadata.cpp.o
+[ 31%] Building CXX object CMakeFiles/athena_core.dir/src/store/object_store.cpp.o
+[ 31%] Building CXX object CMakeFiles/athena_core.dir/src/store/store.cpp.o
+[ 32%] Building CXX object CMakeFiles/athena_core.dir/src/store/transaction_pins.cpp.o
+[ 32%] Building CXX object CMakeFiles/athena_core.dir/src/verify/verifier.cpp.o
+[ 33%] Building CXX object CMakeFiles/athena_core.dir/src/version/version.cpp.o
+[ 33%] Linking CXX shared library libathena_core.so
+[ 33%] Built target athena_core
+[ 33%] Building CXX object CMakeFiles/athena.dir/src/main.cpp.o
+[ 33%] Building CXX object CMakeFiles/store_metadata_errors_test.dir/tests/store_metadata_errors_test.cpp.o
+[ 33%] Building CXX object CMakeFiles/bounded_toml_test.dir/tests/bounded_toml_test.cpp.o
+[ 33%] Building CXX object CMakeFiles/operational_request_codec_test.dir/tests/operational_request_codec_test.cpp.o
+[ 34%] Linking CXX executable athena
+[ 34%] Built target athena
+[ 34%] Building CXX object CMakeFiles/initial_activation_test.dir/tests/initial_activation_test.cpp.o
+/home/alessandro/Lab/Programming/athena-pm/tests/store_metadata_errors_test.cpp: In function ‘void {anonymous}::tests()’:
+/home/alessandro/Lab/Programming/athena-pm/tests/store_metadata_errors_test.cpp:56:27: warning: ignoring return value of ‘toml::v3::ex::parse_result toml::v3::ex::parse_file(std::string_view)’, declared with attribute ‘nodiscard’ [-Wunused-result]
+   56 |     try { toml::parse_file((root / ".athena/metadata.toml").string()); }
+      |           ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/toml++/toml.hpp:70,
+                 from /home/alessandro/Lab/Programming/athena-pm/tests/store_metadata_errors_test.cpp:4:
+/usr/include/toml++/impl/parser.inl:3849:36: note: declared here
+ 3849 |         parse_result TOML_CALLCONV parse_file(std::string_view file_path)
+      |                                    ^~~~~~~~~~
+[ 35%] Linking CXX executable store_metadata_errors_test
+[ 35%] Built target store_metadata_errors_test
+[ 35%] Building CXX object CMakeFiles/operational_activation_test.dir/tests/operational_activation_test.cpp.o
+[ 36%] Linking CXX executable bounded_toml_test
+[ 36%] Built target bounded_toml_test
+[ 36%] Building CXX object CMakeFiles/operational_plan_test.dir/tests/operational_plan_test.cpp.o
+[ 36%] Linking CXX executable initial_activation_test
+[ 36%] Built target initial_activation_test
+[ 36%] Building CXX object CMakeFiles/activation_reconciliation_test.dir/tests/activation_reconciliation_test.cpp.o
+[ 36%] Linking CXX executable operational_request_codec_test
+[ 36%] Built target operational_request_codec_test
+[ 37%] Building CXX object CMakeFiles/activation_selection_test.dir/tests/activation_selection_test.cpp.o
+[ 38%] Linking CXX executable operational_activation_test
+[ 38%] Built target operational_activation_test
+[ 38%] Building CXX object CMakeFiles/activation_plan_retention_test.dir/tests/activation_plan_retention_test.cpp.o
+[ 39%] Linking CXX executable activation_reconciliation_test
+[ 39%] Built target activation_reconciliation_test
+[ 39%] Building CXX object CMakeFiles/activation_plan_persistence_test.dir/tests/activation_plan_persistence_test.cpp.o
+[ 39%] Linking CXX executable activation_selection_test
+[ 39%] Built target activation_selection_test
+[ 40%] Building CXX object CMakeFiles/legacy_d3_test.dir/tests/legacy_d3_test.cpp.o
+[ 41%] Linking CXX executable operational_plan_test
+[ 41%] Built target operational_plan_test
+[ 42%] Building CXX object CMakeFiles/activation_projection_fs_test.dir/tests/activation_projection_fs_test.cpp.o
+[ 42%] Linking CXX executable activation_plan_retention_test
+[ 42%] Built target activation_plan_retention_test
+[ 42%] Building CXX object CMakeFiles/activation_current_test.dir/tests/activation_current_test.cpp.o
+[ 42%] Linking CXX executable activation_current_test
+[ 42%] Built target activation_current_test
+[ 42%] Building CXX object CMakeFiles/activation_schema_test.dir/tests/activation_schema_test.cpp.o
+[ 42%] Linking CXX executable legacy_d3_test
+[ 42%] Linking CXX executable activation_projection_fs_test
+[ 42%] Built target legacy_d3_test
+[ 42%] Built target activation_projection_fs_test
+[ 43%] Building CXX object CMakeFiles/activation_digest_test.dir/tests/activation_digest_test.cpp.o
+[ 44%] Building CXX object CMakeFiles/transaction_gc_fault_test.dir/tests/transaction_gc_fault_test.cpp.o
+[ 44%] Linking CXX executable transaction_gc_fault_test
+[ 44%] Built target transaction_gc_fault_test
+[ 45%] Building CXX object CMakeFiles/transaction_gc_protocol_test.dir/tests/transaction_gc_protocol_test.cpp.o
+[ 45%] Linking CXX executable activation_digest_test
+[ 45%] Built target activation_digest_test
+[ 45%] Building CXX object CMakeFiles/transaction_gc_test.dir/tests/transaction_gc_test.cpp.o
+[ 45%] Linking CXX executable activation_schema_test
+[ 45%] Built target activation_schema_test
+[ 45%] Building CXX object CMakeFiles/immutable_publication_test.dir/tests/immutable_publication_test.cpp.o
+[ 45%] Linking CXX executable transaction_gc_protocol_test
+[ 45%] Built target transaction_gc_protocol_test
+[ 45%] Building CXX object CMakeFiles/locking_test.dir/tests/locking_test.cpp.o
+[ 46%] Linking CXX executable locking_test
+[ 46%] Built target locking_test
+[ 47%] Building CXX object CMakeFiles/durable_filesystem_test.dir/tests/durable_filesystem_test.cpp.o
+[ 48%] Linking CXX executable immutable_publication_test
+[ 48%] Built target immutable_publication_test
+[ 49%] Building CXX object CMakeFiles/installed_semantics_regression_test.dir/tests/installed_semantics_regression_test.cpp.o
+[ 50%] Linking CXX executable transaction_gc_test
+[ 50%] Built target transaction_gc_test
+[ 50%] Building CXX object CMakeFiles/installed_semantics_test.dir/tests/installed_semantics_test.cpp.o
+[ 50%] Linking CXX executable durable_filesystem_test
+[ 50%] Built target durable_filesystem_test
+[ 51%] Building CXX object CMakeFiles/installed_semantics_integration_test.dir/tests/installed_semantics_integration_test.cpp.o
+[ 52%] Linking CXX executable activation_plan_persistence_test
+[ 52%] Built target activation_plan_persistence_test
+[ 53%] Building CXX object CMakeFiles/cli_install_test.dir/tests/cli_install_test.cpp.o
+[ 53%] Linking CXX executable installed_semantics_integration_test
+[ 53%] Built target installed_semantics_integration_test
+[ 53%] Building CXX object CMakeFiles/cli_install_integration_test.dir/tests/cli_install_integration_test.cpp.o
+[ 53%] Linking CXX executable cli_install_test
+[ 53%] Built target cli_install_test
+[ 53%] Building CXX object CMakeFiles/install_transaction_test.dir/tests/install_transaction_test.cpp.o
+[ 53%] Linking CXX executable cli_install_integration_test
+[ 53%] Built target cli_install_integration_test
+[ 53%] Building CXX object CMakeFiles/install_transaction_integration_test.dir/tests/install_transaction_integration_test.cpp.o
+[ 53%] Linking CXX executable install_transaction_test
+[ 53%] Built target install_transaction_test
+[ 53%] Linking CXX executable installed_semantics_regression_test
+[ 53%] Building CXX object CMakeFiles/activation_projection_test.dir/tests/activation_projection_test.cpp.o
+[ 53%] Built target installed_semantics_regression_test
+[ 53%] Building CXX object CMakeFiles/generation_activation_test.dir/tests/generation_activation_test.cpp.o
+[ 54%] Linking CXX executable install_transaction_integration_test
+[ 54%] Built target install_transaction_integration_test
+[ 55%] Building CXX object CMakeFiles/generation_membership_test.dir/tests/generation_membership_test.cpp.o
+[ 56%] Linking CXX executable installed_semantics_test
+[ 56%] Built target installed_semantics_test
+[ 57%] Building CXX object CMakeFiles/realization_executor_test.dir/tests/realization_executor_test.cpp.o
+[ 58%] Linking CXX executable activation_projection_test
+[ 58%] Built target activation_projection_test
+[ 58%] Building CXX object CMakeFiles/realization_executor_integration_test.dir/tests/realization_executor_integration_test.cpp.o
+[ 59%] Linking CXX executable generation_activation_test
+[ 59%] Built target generation_activation_test
+[ 59%] Building CXX object CMakeFiles/realization_record_test.dir/tests/realization_record_test.cpp.o
+[ 59%] Linking CXX executable generation_membership_test
+[ 59%] Built target generation_membership_test
+[ 60%] Building CXX object CMakeFiles/object_store_test.dir/tests/object_store_test.cpp.o
+[ 60%] Linking CXX executable realization_executor_test
+[ 60%] Built target realization_executor_test
+[ 60%] Building CXX object CMakeFiles/object_store_scanner_test.dir/tests/object_store_scanner_test.cpp.o
+[ 60%] Linking CXX executable realization_executor_integration_test
+[ 60%] Built target realization_executor_integration_test
+[ 61%] Linking CXX executable realization_record_test
+[ 61%] Building CXX object CMakeFiles/artifact_encoding_test.dir/tests/artifact_encoding_test.cpp.o
+[ 61%] Built target realization_record_test
+[ 61%] Building CXX object CMakeFiles/artifact_identity_test.dir/tests/artifact_identity_test.cpp.o
+[ 61%] Linking CXX executable object_store_test
+[ 61%] Built target object_store_test
+[ 61%] Building CXX object CMakeFiles/artifact_identity_scanner_test.dir/tests/artifact_identity_scanner_test.cpp.o
+[ 62%] Linking CXX executable artifact_encoding_test
+[ 62%] Built target artifact_encoding_test
+[ 63%] Building CXX object CMakeFiles/artifact_model_test.dir/tests/artifact_model_test.cpp.o
+[ 63%] Linking CXX executable object_store_scanner_test
+[ 63%] Built target object_store_scanner_test
+[ 63%] Building CXX object CMakeFiles/artifact_scanner_test.dir/tests/artifact_scanner_test.cpp.o
+[ 63%] Linking CXX executable artifact_identity_test
+[ 64%] Linking CXX executable artifact_identity_scanner_test
+[ 64%] Built target artifact_identity_test
+[ 64%] Built target artifact_identity_scanner_test
+[ 65%] Building CXX object CMakeFiles/artifact_contract_test.dir/tests/artifact_contract_test.cpp.o
+[ 65%] Building CXX object CMakeFiles/arch_repository_test.dir/tests/arch_repository_test.cpp.o
+[ 65%] Linking CXX executable artifact_model_test
+[ 65%] Built target artifact_model_test
+[ 66%] Building CXX object CMakeFiles/arch_repository_adapter_test.dir/tests/arch_repository_adapter_test.cpp.o
+[ 66%] Linking CXX executable arch_repository_test
+[ 66%] Built target arch_repository_test
+[ 67%] Building CXX object CMakeFiles/arch_version_test.dir/tests/arch_version_test.cpp.o
+[ 68%] Linking CXX executable artifact_scanner_test
+[ 68%] Built target artifact_scanner_test
+[ 68%] Building CXX object CMakeFiles/cmake_backend_test.dir/tests/cmake_backend_test.cpp.o
+[ 68%] Linking CXX executable arch_version_test
+[ 68%] Built target arch_version_test
+[ 68%] Building CXX object CMakeFiles/version_test.dir/tests/version_test.cpp.o
+[ 69%] Linking CXX executable version_test
+[ 69%] Built target version_test
+[ 70%] Building CXX object CMakeFiles/package_loader_test.dir/tests/package_loader_test.cpp.o
+[ 71%] Linking CXX executable cmake_backend_test
+[ 71%] Built target cmake_backend_test
+[ 71%] Building CXX object CMakeFiles/dependency_resolver_test.dir/tests/dependency_resolver_test.cpp.o
+[ 71%] Linking CXX executable arch_repository_adapter_test
+[ 71%] Linking CXX executable artifact_contract_test
+[ 71%] Built target arch_repository_adapter_test
+[ 72%] Built target artifact_contract_test
+[ 72%] Building CXX object CMakeFiles/install_plan_test.dir/tests/install_plan_test.cpp.o
+[ 72%] Building CXX object CMakeFiles/generation_builder_test.dir/tests/generation_builder_test.cpp.o
+[ 72%] Linking CXX executable package_loader_test
+[ 72%] Built target package_loader_test
+[ 72%] Building CXX object CMakeFiles/dependency_expression_test.dir/tests/dependency_expression_test.cpp.o
+[ 72%] Linking CXX executable install_plan_test
+[ 72%] Built target install_plan_test
+[ 73%] Building CXX object CMakeFiles/dependency_roles_test.dir/tests/dependency_roles_test.cpp.o
+[ 74%] Linking CXX executable dependency_expression_test
+[ 74%] Built target dependency_expression_test
+[ 74%] Building CXX object CMakeFiles/dependency_scope_precedence_test.dir/tests/dependency_scope_precedence_test.cpp.o
+[ 74%] Linking CXX executable generation_builder_test
+[ 74%] Linking CXX executable dependency_roles_test
+[ 74%] Built target generation_builder_test
+[ 75%] Building CXX object CMakeFiles/dependency_expression_resolution_test.dir/tests/dependency_expression_resolution_test.cpp.o
+[ 75%] Built target dependency_roles_test
+[ 75%] Building CXX object CMakeFiles/dependency_constraint_test.dir/tests/dependency_constraint_test.cpp.o
+[ 75%] Linking CXX executable dependency_constraint_test
+[ 75%] Built target dependency_constraint_test
+[ 75%] Building CXX object CMakeFiles/dependency_parser_test.dir/tests/dependency_parser_test.cpp.o
+[ 75%] Linking CXX executable dependency_resolver_test
+[ 75%] Built target dependency_resolver_test
+[ 75%] Building CXX object CMakeFiles/dependency_serializer_test.dir/tests/dependency_serializer_test.cpp.o
+[ 76%] Linking CXX executable dependency_scope_precedence_test
+[ 77%] Linking CXX executable dependency_parser_test
+[ 77%] Built target dependency_scope_precedence_test
+[ 77%] Building CXX object CMakeFiles/dependency_validator_test.dir/tests/dependency_validator_test.cpp.o
+[ 78%] Linking CXX executable dependency_serializer_test
+[ 78%] Built target dependency_parser_test
+[ 78%] Building CXX object CMakeFiles/remove_plan_test.dir/tests/remove_plan_test.cpp.o
+[ 78%] Built target dependency_serializer_test
+[ 78%] Building CXX object CMakeFiles/removal_planner_test.dir/tests/removal_planner_test.cpp.o
+[ 79%] Linking CXX executable remove_plan_test
+[ 79%] Built target remove_plan_test
+[ 79%] Building CXX object CMakeFiles/activation_test.dir/tests/activation_test.cpp.o
+[ 79%] Linking CXX executable dependency_expression_resolution_test
+[ 80%] Linking CXX executable activation_test
+[ 80%] Linking CXX executable removal_planner_test
+[ 80%] Built target dependency_expression_resolution_test
+[ 81%] Building CXX object CMakeFiles/generation_test.dir/tests/generation_test.cpp.o
+[ 81%] Linking CXX executable dependency_validator_test
+[ 81%] Built target activation_test
+[ 81%] Building CXX object CMakeFiles/installer_e2e_test.dir/tests/installer_e2e_test.cpp.o
+[ 81%] Built target removal_planner_test
+[ 81%] Building CXX object CMakeFiles/store_metadata_test.dir/tests/store_metadata_test.cpp.o
+[ 81%] Built target dependency_validator_test
+[ 81%] Building CXX object CMakeFiles/gc_test.dir/tests/gc_test.cpp.o
+[ 81%] Linking CXX executable store_metadata_test
+[ 81%] Built target store_metadata_test
+[ 81%] Building CXX object CMakeFiles/repository_index_test.dir/tests/repository_index_test.cpp.o
+[ 81%] Linking CXX executable installer_e2e_test
+[ 81%] Built target installer_e2e_test
+[ 81%] Building CXX object CMakeFiles/repository_test.dir/tests/repository_test.cpp.o
+[ 81%] Linking CXX executable generation_test
+[ 81%] Built target generation_test
+[ 81%] Building CXX object CMakeFiles/repository_api_types_test.dir/tests/repository_api_types_test.cpp.o
+[ 81%] Linking CXX executable repository_index_test
+[ 81%] Built target repository_index_test
+[ 81%] Building CXX object CMakeFiles/metadata_schema_test.dir/tests/metadata_schema_test.cpp.o
+[ 82%] Linking CXX executable gc_test
+[ 82%] Built target gc_test
+[ 83%] Building CXX object CMakeFiles/repository_snapshot_test.dir/tests/repository_snapshot_test.cpp.o
+[ 84%] Linking CXX executable repository_test
+[ 84%] Built target repository_test
+[ 85%] Building CXX object CMakeFiles/repository_selection_test.dir/tests/repository_selection_test.cpp.o
+[ 86%] Linking CXX executable repository_api_types_test
+[ 86%] Built target repository_api_types_test
+[ 87%] Building CXX object CMakeFiles/resolver_candidate_test.dir/tests/resolver_candidate_test.cpp.o
+[ 88%] Linking CXX executable metadata_schema_test
+[ 88%] Built target metadata_schema_test
+[ 89%] Building CXX object CMakeFiles/resolver_snapshot_adapter_test.dir/tests/resolver_snapshot_adapter_test.cpp.o
+[ 89%] Linking CXX executable repository_snapshot_test
+[ 89%] Built target repository_snapshot_test
+[ 90%] Building CXX object CMakeFiles/install_request_resolution_test.dir/tests/install_request_resolution_test.cpp.o
+[ 90%] Linking CXX executable repository_selection_test
+[ 90%] Built target repository_selection_test
+[ 91%] Building CXX object CMakeFiles/local_repository_test.dir/tests/local_repository_test.cpp.o
+[ 91%] Linking CXX executable resolver_candidate_test
+[ 91%] Built target resolver_candidate_test
+[ 91%] Building CXX object CMakeFiles/removal_e2e_test.dir/tests/removal_e2e_test.cpp.o
+[ 91%] Linking CXX executable resolver_snapshot_adapter_test
+[ 91%] Built target resolver_snapshot_adapter_test
+[ 92%] Building CXX object CMakeFiles/removal_realization_test.dir/tests/removal_realization_test.cpp.o
+[ 92%] Linking CXX executable local_repository_test
+[ 92%] Built target local_repository_test
+[ 92%] Building CXX object CMakeFiles/core_foundation_test.dir/tests/core_foundation_test.cpp.o
+[ 92%] Linking CXX executable install_request_resolution_test
+[ 92%] Built target install_request_resolution_test
+[ 92%] Building CXX object CMakeFiles/public_planning_test.dir/tests/public_planning_test.cpp.o
+[ 93%] Linking CXX executable removal_e2e_test
+/home/alessandro/Lab/Programming/athena-pm/tests/core_foundation_test.cpp: In function ‘int main()’:
+/home/alessandro/Lab/Programming/athena-pm/tests/core_foundation_test.cpp:135:26: warning: ignoring return value of ‘ssize_t write(int, const void*, size_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  135 |             (void)::write(result_pipe[1], &result, 1);
+      |                   ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[ 93%] Built target removal_e2e_test
+[ 93%] Building CXX object CMakeFiles/public_install_plan_test.dir/tests/public_install_plan_test.cpp.o
+[ 94%] Linking CXX executable core_foundation_test
+[ 94%] Built target core_foundation_test
+[ 94%] Building CXX object CMakeFiles/resolution_result_test.dir/tests/resolution_result_test.cpp.o
+[ 94%] Linking CXX executable removal_realization_test
+[ 94%] Built target removal_realization_test
+[ 94%] Building CXX object CMakeFiles/arch_repository_live_test.dir/tests/arch_repository_live.cpp.o
+[ 95%] Linking CXX executable arch_repository_live_test
+[ 95%] Built target arch_repository_live_test
+[ 95%] Building CXX object CMakeFiles/activation_execution_privileged_test.dir/tests/activation_execution_privileged_test.cpp.o
+[ 96%] Linking CXX executable public_install_plan_test
+[ 96%] Built target public_install_plan_test
+[ 97%] Building CXX object CMakeFiles/toml_athena_probe.dir/tests/toml_probe.cpp.o
+[ 98%] Linking CXX executable public_planning_test
+[ 98%] Built target public_planning_test
+[ 98%] Building CXX object CMakeFiles/toml_upstream_consumer_test.dir/tests/toml_upstream_consumer_test.cpp.o
+[ 98%] Linking CXX executable toml_athena_probe
+[ 98%] Built target toml_athena_probe
+[ 99%] Linking CXX executable activation_execution_privileged_test
+[ 99%] Built target activation_execution_privileged_test
+[ 99%] Linking CXX executable resolution_result_test
+[ 99%] Built target resolution_result_test
+[100%] Linking CXX executable toml_upstream_consumer_test
+[100%] Built target toml_upstream_consumer_test

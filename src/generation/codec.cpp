@@ -1,29 +1,30 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "../parsing/bounded_toml.hpp"
 #include "generation.hpp"
 #include <algorithm>
 #include <limits>
 #include <locale>
 #include <set>
 #include <sstream>
-#include <toml++/toml.hpp>
+#include <athena_toml/athena_toml.hpp>
 
 namespace athena::generation {
 namespace {
-void keys(const toml::table& t, std::initializer_list<std::string_view> allowed) {
+void keys(const athena_toml::table& t, std::initializer_list<std::string_view> allowed) {
     for (const auto& [k, v] : t) {
         (void)v;
         if (std::find(allowed.begin(), allowed.end(), k.str()) == allowed.end())
             throw core::TypeError("Unknown generation field: " + std::string(k.str()));
     }
 }
-std::string string(const toml::table& t, const char* key) {
+std::string string(const athena_toml::table& t, const char* key) {
     auto value = t[key].value<std::string>();
     if (!value) throw core::TypeError(std::string("Invalid generation field: ") + key);
     return *value;
 }
-std::string format(const toml::table& t) {
+std::string format(const athena_toml::table& t) {
     std::ostringstream out;
     out.imbue(std::locale::classic());
     out << t;
@@ -73,22 +74,22 @@ Generation make_generation(std::uint64_t id, std::vector<GenerationEntry> legacy
 }
 std::string serialize(const Generation& generation) {
     auto g = make_generation(generation.id, generation.entries, generation.realizations, generation.policies);
-    toml::array members, policies;
+    athena_toml::array members, policies;
     for (const auto& entry : g.entries) {
-        toml::table member{{"kind", "legacy"}, {"package", entry.package}, {"store", entry.store_path}};
-        if (entry.semantics) member.insert("semantics", toml::parse(installed::serialize(*entry.semantics)));
+        athena_toml::table member{{"kind", "legacy"}, {"package", entry.package}, {"store", entry.store_path}};
+        if (entry.semantics) member.insert("semantics", parsing::parse_model(installed::serialize(*entry.semantics), parsing::Profile::Semantics));
         members.push_back(std::move(member));
     }
     for (const auto& record : g.realizations)
-        members.push_back(toml::table{{"kind", "realization"},
-            {"record", toml::parse(realization::serialize(record))}});
-    for (const auto& policy : g.policies) policies.push_back(toml::parse(installed::serialize(policy)));
-    return format(toml::table{{"schema_version", 3}, {"id", static_cast<std::int64_t>(g.id)},
+        members.push_back(athena_toml::table{{"kind", "realization"},
+            {"record", parsing::parse_model(realization::serialize(record), parsing::Profile::Record)}});
+    for (const auto& policy : g.policies) policies.push_back(parsing::parse_model(installed::serialize(policy), parsing::Profile::Policy));
+    return format(athena_toml::table{{"schema_version", 3}, {"id", static_cast<std::int64_t>(g.id)},
         {"memberships", std::move(members)}, {"policies", std::move(policies)}});
 }
 Generation deserialize_generation(const std::string& document) {
     try {
-        auto t = toml::parse(document);
+        auto t = parsing::parse_model(document, parsing::Profile::Generation);
         const bool modern = t.contains("schema_version");
         const auto version = t["schema_version"].value<std::int64_t>();
         if (modern && (!t["schema_version"].is_integer() || (version != 2 && version != 3)))
@@ -136,6 +137,6 @@ Generation deserialize_generation(const std::string& document) {
         auto result = make_generation(g.id, std::move(g.entries), std::move(g.realizations), std::move(g.policies));
         result.compatibility = version == 3 ? GenerationCompatibility::Modern : GenerationCompatibility::Historical;
         return result;
-    } catch (const toml::parse_error& error) { throw core::TypeError(error.what()); }
+    } catch (const athena_toml::parse_error& error) { throw core::TypeError(error.what()); }
 }
 }

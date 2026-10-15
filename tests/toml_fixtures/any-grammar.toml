@@ -1,0 +1,17 @@
+# grammar and native value types
+"quoted.key" = "snowman \u2603 😀"
+literal = 'literal \n'
+multiline = """first
+second"""
+integers=[0, -1, +42, 0xff, 0o17, 0b101, 1_000]
+floats=[-0.0, 1e3, +inf, -inf, nan]
+date=1979-05-27
+time=07:32:00.999
+datetime=1979-05-27T07:32:00Z
+a.b.c='implicit'
+[[servers]]
+name='one'
+[servers.settings]
+enabled=true
+[[servers]]
+name='two'

@@ -4,12 +4,13 @@
 #include <charconv>
 
 namespace athena::activation::codec_detail {
-toml::table parse(std::string_view bytes, std::size_t limit) {
+athena_toml::table parse(std::string_view bytes, std::size_t limit, parsing::Profile profile) {
     if (bytes.size() > limit) throw SchemaError(SchemaErrorCode::Bounds, "Document exceeds bound");
-    try { return toml::parse(bytes); }
-    catch (const toml::parse_error& e) { throw SchemaError(SchemaErrorCode::Schema, e.what()); }
+    try { return parsing::parse(bytes, profile); }
+    catch (const parsing::Error& e) { throw SchemaError(e.reason == parsing::Rejection::Budget ? SchemaErrorCode::Bounds : e.reason == parsing::Rejection::Identity ? SchemaErrorCode::Identity : SchemaErrorCode::Schema, e.what()); }
+    catch (const athena_toml::parse_error& e) { throw SchemaError(SchemaErrorCode::Schema, e.what()); }
 }
-void keys(const toml::table& table, std::initializer_list<std::string_view> expected) {
+void keys(const athena_toml::table& table, std::initializer_list<std::string_view> expected) {
     if (table.size() != expected.size()) throw SchemaError(SchemaErrorCode::Schema, "Incorrect key set");
     for (const auto& [key, value] : table) {
         (void)value;
@@ -17,17 +18,17 @@ void keys(const toml::table& table, std::initializer_list<std::string_view> expe
             throw SchemaError(SchemaErrorCode::Schema, "Unknown key: " + std::string(key.str()));
     }
 }
-std::string string(const toml::table& table, std::string_view key) {
+std::string string(const athena_toml::table& table, std::string_view key) {
     if (!table[key].is_string()) throw SchemaError(SchemaErrorCode::Schema, "Expected string: " + std::string(key));
     return *table[key].value<std::string>();
 }
-std::uint64_t integer(const toml::table& table, std::string_view key) {
+std::uint64_t integer(const athena_toml::table& table, std::string_view key) {
     if (!table[key].is_integer()) throw SchemaError(SchemaErrorCode::Schema, "Expected integer: " + std::string(key));
     const auto value = table[key].value<std::int64_t>();
     if (!value || *value < 0) throw SchemaError(SchemaErrorCode::Schema, "Expected nonnegative int64: " + std::string(key));
     return static_cast<std::uint64_t>(*value);
 }
-void version(const toml::table& table) {
+void version(const athena_toml::table& table) {
     if (integer(table, "schema_version") != 1) throw SchemaError(SchemaErrorCode::Schema, "Unsupported schema version");
 }
 void canonical(std::string_view supplied, std::string_view written) {

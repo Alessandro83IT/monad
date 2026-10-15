@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "../parsing/bounded_toml.hpp"
 #include "../../include/athena/core/repository.hpp"
 
 #include "../dependency/parser.hpp"
@@ -15,13 +16,13 @@
 #include <sstream>
 #include <string_view>
 #include <tuple>
-#include <toml++/toml.hpp>
+#include <athena_toml/athena_toml.hpp>
 #include "../hash/sha256.hpp"
 
 namespace athena::core {
 namespace {
 
-std::string required_string(const toml::table& table, const char* key)
+std::string required_string(const athena_toml::table& table, const char* key)
 {
     const auto value = table[key].value<std::string>();
     if (!value || value->empty()) {
@@ -30,7 +31,7 @@ std::string required_string(const toml::table& table, const char* key)
     return *value;
 }
 
-int required_schema(const toml::table& table, SchemaKind kind)
+int required_schema(const athena_toml::table& table, SchemaKind kind)
 {
     const auto raw = table["schema_version"].value<std::int64_t>();
     if (!raw || *raw < 1 || *raw > std::numeric_limits<int>::max()) {
@@ -40,7 +41,7 @@ int required_schema(const toml::table& table, SchemaKind kind)
     return static_cast<int>(*raw);
 }
 
-std::optional<std::string> optional_string(const toml::table& table, const char* key)
+std::optional<std::string> optional_string(const athena_toml::table& table, const char* key)
 {
     const auto* node = table.get(key);
     if (!node) return std::nullopt;
@@ -49,7 +50,7 @@ std::optional<std::string> optional_string(const toml::table& table, const char*
     return *value;
 }
 
-std::optional<std::int64_t> optional_integer(const toml::table& table, const char* key)
+std::optional<std::int64_t> optional_integer(const athena_toml::table& table, const char* key)
 {
     const auto* node = table.get(key);
     if (!node) return std::nullopt;
@@ -59,7 +60,7 @@ std::optional<std::int64_t> optional_integer(const toml::table& table, const cha
 }
 
 void reject_unknown_keys(
-    const toml::table& table,
+    const athena_toml::table& table,
     std::initializer_list<std::string_view> accepted
 )
 {
@@ -73,7 +74,7 @@ void reject_unknown_keys(
 }
 
 std::vector<std::string> string_array(
-    const toml::table& table,
+    const athena_toml::table& table,
     const char* key,
     bool required = false
 )
@@ -129,9 +130,9 @@ std::vector<std::string> canonical_expressions(const std::vector<std::string>& e
     return result;
 }
 
-toml::array to_array(const std::vector<std::string>& values)
+athena_toml::array to_array(const std::vector<std::string>& values)
 {
-    toml::array result;
+    athena_toml::array result;
     for (const auto& value : values) result.push_back(value);
     return result;
 }
@@ -178,9 +179,9 @@ DependencyTargetContext read_context(const std::string& value)
     throw TypeError("Unsupported dependency target context");
 }
 
-toml::table dependency_table(const DependencyMetadata& dependency)
+athena_toml::table dependency_table(const DependencyMetadata& dependency)
 {
-    return toml::table{
+    return athena_toml::table{
         {"expression", canonical_expression(dependency.expression.text)},
         {"role", role_name(dependency.role)},
         {"context", context_name(dependency.context)},
@@ -188,17 +189,17 @@ toml::table dependency_table(const DependencyMetadata& dependency)
     };
 }
 
-toml::array feature_dependency_array(const std::vector<DependencyMetadata>& dependencies)
+athena_toml::array feature_dependency_array(const std::vector<DependencyMetadata>& dependencies)
 {
-    toml::array result;
+    athena_toml::array result;
     for (const auto& dependency : dependencies) result.push_back(dependency_table(dependency));
     return result;
 }
 
-std::map<std::string, std::vector<DependencyMetadata>> read_feature_dependencies(const toml::table& table)
+std::map<std::string, std::vector<DependencyMetadata>> read_feature_dependencies(const athena_toml::table& table)
 {
     std::map<std::string, std::vector<DependencyMetadata>> result;
-    const auto* features = table.get_as<toml::table>("feature_dependencies");
+    const auto* features = table.get_as<athena_toml::table>("feature_dependencies");
     if (!features && table.contains("feature_dependencies"))
         throw TypeError("Feature dependencies must be a table");
     if (!features) return result;
@@ -224,7 +225,7 @@ std::map<std::string, std::vector<DependencyMetadata>> read_feature_dependencies
     return result;
 }
 
-void add_package_fields(toml::table& table, const PackageMetadata& metadata)
+void add_package_fields(athena_toml::table& table, const PackageMetadata& metadata)
 {
     table.insert("package_id", metadata.package_id.value());
     table.insert("version", metadata.version.value());
@@ -233,7 +234,7 @@ void add_package_fields(toml::table& table, const PackageMetadata& metadata)
     if (!metadata.description.empty()) table.insert("description", metadata.description);
     table.insert("dependencies", to_array(canonical_expressions(metadata.dependencies)));
     if (!metadata.feature_dependencies.empty()) {
-        toml::table features;
+        athena_toml::table features;
         for (const auto& [name, dependencies] : metadata.feature_dependencies)
             features.insert(name, feature_dependency_array(dependencies));
         table.insert("feature_dependencies", std::move(features));
@@ -246,7 +247,7 @@ void add_package_fields(toml::table& table, const PackageMetadata& metadata)
     table.insert("abis", to_array(metadata.abis));
 }
 
-PackageMetadata read_package_fields(const toml::table& table)
+PackageMetadata read_package_fields(const athena_toml::table& table)
 {
     reject_unknown_keys(table, {
         "package_id", "version", "schema_version", "display_name", "description",
@@ -306,7 +307,7 @@ ImportedBinaryFormat read_format(const std::string& value)
     throw TypeError("Unsupported imported binary format");
 }
 
-void add_provenance(toml::table& table, const Provenance& provenance)
+void add_provenance(athena_toml::table& table, const Provenance& provenance)
 {
     table.insert("origin", origin_name(provenance.origin));
     if (!provenance.repository.empty()) table.insert("repository", provenance.repository);
@@ -319,7 +320,7 @@ void add_provenance(toml::table& table, const Provenance& provenance)
     if (!provenance.signer.empty()) table.insert("signer", provenance.signer);
 }
 
-Provenance read_provenance(const toml::table& table)
+Provenance read_provenance(const athena_toml::table& table)
 {
     reject_unknown_keys(table, {
         "origin", "repository", "repository_snapshot", "source_reference", "signer"
@@ -333,14 +334,14 @@ Provenance read_provenance(const toml::table& table)
     return result;
 }
 
-toml::table parse_document(const std::string& document);
-std::string format_toml(const toml::table& table);
+athena_toml::table parse_document(const std::string& document, parsing::Profile profile = parsing::Profile::Any);
+std::string format_toml(const athena_toml::table& table);
 
-toml::table candidate_table(const RepositoryCandidate& candidate)
+athena_toml::table candidate_table(const RepositoryCandidate& candidate)
 {
-    toml::table package;
+    athena_toml::table package;
     add_package_fields(package, candidate.package);
-    toml::table result{{"package", std::move(package)}};
+    athena_toml::table result{{"package", std::move(package)}};
     if (candidate.provenance.metadata_reference) {
         result.insert("metadata_reference", candidate.provenance.metadata_reference->value());
     }
@@ -357,7 +358,7 @@ toml::table candidate_table(const RepositoryCandidate& candidate)
 }
 
 RepositoryCandidate read_candidate(
-    const toml::table& table,
+    const athena_toml::table& table,
     const RepositoryId& repository_id,
     const RepositoryRevision& revision
 )
@@ -389,9 +390,9 @@ RepositoryCandidate read_candidate(
     return candidate;
 }
 
-toml::array candidate_array(const std::vector<RepositoryCandidate>& candidates)
+athena_toml::array candidate_array(const std::vector<RepositoryCandidate>& candidates)
 {
-    toml::array result;
+    athena_toml::array result;
     for (const auto& candidate : candidates) result.push_back(candidate_table(candidate));
     return result;
 }
@@ -404,7 +405,7 @@ std::string sha256(std::string_view bytes)
 
 std::string candidates_material(const std::vector<RepositoryCandidate>& candidates)
 {
-    toml::table table{{"candidates", candidate_array(candidates)}};
+    athena_toml::table table{{"candidates", candidate_array(candidates)}};
     return format_toml(table);
 }
 
@@ -415,7 +416,7 @@ std::string identity_material(
     const ContentDigest& metadata_digest
 )
 {
-    toml::table table{
+    athena_toml::table table{
         {"schema_version", schema_version.value},
         {"repository_id", repository_id.value()},
         {"revision", revision.value()},
@@ -463,16 +464,16 @@ void canonicalize_candidate(RepositoryCandidate& candidate)
     sort_values(candidate.package.abis);
 }
 
-toml::table parse_document(const std::string& document)
+athena_toml::table parse_document(const std::string& document, parsing::Profile profile)
 {
     try {
-        return toml::parse(document);
-    } catch (const toml::parse_error&) {
+        return parsing::parse_model(document, profile);
+    } catch (const athena_toml::parse_error&) {
         throw TypeError("Malformed TOML metadata document");
     }
 }
 
-std::string format_toml(const toml::table& table)
+std::string format_toml(const athena_toml::table& table)
 {
     std::ostringstream output;
     output << table;
@@ -770,7 +771,7 @@ void RepositorySnapshot::validate() const
 std::string serialize(const RepositorySnapshot& snapshot)
 {
     snapshot.validate();
-    toml::table table{
+    athena_toml::table table{
         {"schema_version", snapshot.schema_version().value},
         {"repository_id", snapshot.repository_id().value()},
         {"revision", snapshot.revision().value()},
@@ -836,37 +837,37 @@ void RepositoryRequest::validate() const
 std::string serialize(const PackageMetadata& metadata)
 {
     metadata.validate();
-    toml::table table;
+    athena_toml::table table;
     add_package_fields(table, metadata);
     return format_toml(table);
 }
 
 PackageMetadata deserialize_package_metadata(const std::string& document)
 {
-    return read_package_fields(parse_document(document));
+    return read_package_fields(parse_document(document, parsing::Profile::Package));
 }
 
 std::string serialize(const SourceRecipe& recipe)
 {
     recipe.validate();
-    toml::table table{
+    athena_toml::table table{
         {"schema_version", recipe.schema_version.value},
         {"package_id", recipe.package_id.value()},
         {"version", recipe.version.value()},
         {"build_backend", recipe.build_backend}
     };
-    toml::array sources;
+    athena_toml::array sources;
     for (const auto& source : recipe.sources) {
-        toml::table entry{{"reference", source.reference.value()}};
+        athena_toml::table entry{{"reference", source.reference.value()}};
         if (source.digest) entry.insert("digest", source.digest->value());
         if (source.size_bytes) entry.insert("size_bytes", static_cast<std::int64_t>(*source.size_bytes));
         sources.push_back(std::move(entry));
     }
     table.insert("sources", std::move(sources));
-    toml::array inputs;
+    athena_toml::array inputs;
     for (const auto& input : recipe.build_inputs) inputs.push_back(input.value());
     table.insert("build_inputs", std::move(inputs));
-    toml::table parameters;
+    athena_toml::table parameters;
     for (const auto& [key, value] : recipe.build_parameters) parameters.insert(key, value);
     table.insert("build_parameters", std::move(parameters));
     if (recipe.build_ir_reference) {
@@ -926,9 +927,9 @@ SourceRecipe deserialize_source_recipe(const std::string& document)
 std::string serialize(const ImportedBinaryMetadata& metadata)
 {
     metadata.validate();
-    toml::table package;
+    athena_toml::table package;
     add_package_fields(package, metadata.package);
-    toml::table table{
+    athena_toml::table table{
         {"schema_version", metadata.schema_version.value},
         {"archive_reference", metadata.archive_reference.value()},
         {"format", format_name(metadata.format)},
@@ -936,13 +937,13 @@ std::string serialize(const ImportedBinaryMetadata& metadata)
     };
     if (metadata.original_digest) table.insert("original_digest", metadata.original_digest->value());
     if (metadata.size_bytes) table.insert("size_bytes", static_cast<std::int64_t>(*metadata.size_bytes));
-    toml::table fields;
+    athena_toml::table fields;
     for (const auto& [key, values] : metadata.ecosystem_fields) {
         fields.insert(key, to_array(values));
     }
     table.insert("ecosystem_fields", std::move(fields));
     if (metadata.repository_origin) {
-        toml::table provenance{
+        athena_toml::table provenance{
             {"repository_id", metadata.repository_origin->repository_id.value()}
         };
         if (metadata.repository_origin->revision) {
@@ -953,7 +954,7 @@ std::string serialize(const ImportedBinaryMetadata& metadata)
         }
         if (metadata.repository_origin->snapshot) {
             const auto& snapshot = *metadata.repository_origin->snapshot;
-            toml::table snapshot_table{
+            athena_toml::table snapshot_table{
                 {"repository_id", snapshot.repository_id.value()},
                 {"revision", snapshot.revision.value()},
                 {"schema_version", snapshot.schema_version.value}
@@ -1045,12 +1046,12 @@ ImportedBinaryMetadata deserialize_imported_binary_metadata(const std::string& d
 std::string serialize(const ArtifactMetadata& metadata)
 {
     metadata.validate();
-    toml::table table{
+    athena_toml::table table{
         {"schema_version", metadata.schema_version.value},
         {"artifact_id", metadata.artifact_id.value()},
         {"output_digest", metadata.output_digest.value()},
         {"manifest_digest", metadata.manifest_digest.value()},
-        {"provenance", toml::table{}}
+        {"provenance", athena_toml::table{}}
     };
     add_provenance(*table["provenance"].as_table(), metadata.provenance);
     if (metadata.build_input_id) table.insert("build_input_id", metadata.build_input_id->value());

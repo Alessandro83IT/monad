@@ -75,4 +75,8 @@ Metadata read_metadata(
     const std::filesystem::path& store_directory
 );
 
+// Parser-only operational overload: same conversion, an explicit existing
+// document byte bound and strict legacy TOML shape. No authority is granted.
+Metadata read_metadata(const std::filesystem::path&, std::size_t max_document_bytes);
+
 }

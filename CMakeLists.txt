@@ -15,6 +15,7 @@ find_package(Threads REQUIRED)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Enable CTest integration.
 enable_testing()
@@ -28,7 +29,7 @@ add_library(athena_core SHARED
 add_library(Athena::Core ALIAS athena_core)
 target_include_directories(athena_core
     PUBLIC "${PROJECT_SOURCE_DIR}/include"
-    PRIVATE "${PROJECT_SOURCE_DIR}/src"
+    PRIVATE "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/third_party"
 )
 target_compile_features(athena_core PUBLIC cxx_std_20)
 target_link_libraries(athena_core PRIVATE OpenSSL::Crypto LibArchive::LibArchive Threads::Threads)
@@ -51,7 +52,7 @@ add_custom_target(appimage
 function(add_athena_test name)
     add_executable(${name} tests/${name}.cpp)
     target_link_libraries(${name} PRIVATE Athena::Core)
-    target_include_directories(${name} PRIVATE "${PROJECT_SOURCE_DIR}/src")
+    target_include_directories(${name} PRIVATE "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/third_party")
     # Historical tests use assert for verification (and occasionally fixture setup).
     # Keep these checks active in Release without changing production build flags.
     target_compile_options(${name} PRIVATE
@@ -60,6 +61,9 @@ function(add_athena_test name)
 endfunction()
 
 set(ATHENA_TESTS
+    store_metadata_errors_test
+    bounded_toml_test
+    operational_request_codec_test
     initial_activation_test
     operational_activation_test
     operational_plan_test
@@ -284,3 +288,44 @@ set_tests_properties(operational_activation_test PROPERTIES TIMEOUT 30)
 set_tests_properties(initial_activation_test PROPERTIES TIMEOUT 30)
 add_test(NAME initial_activation_migration_test COMMAND initial_activation_test migration)
 set_tests_properties(initial_activation_migration_test PROPERTIES LABELS "privileged" TIMEOUT 180)
+
+# The original dependency is used only by independent qualification consumers.
+# Production uses the private self-contained fork, never this include directory.
+find_path(ATHENA_UPSTREAM_TOML_INCLUDE_DIR toml++/toml.hpp REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_executable(toml_upstream_probe tests/toml_probe.cpp)
+target_include_directories(toml_upstream_probe PRIVATE "${ATHENA_UPSTREAM_TOML_INCLUDE_DIR}")
+add_executable(toml_athena_probe tests/toml_probe.cpp)
+target_compile_definitions(toml_athena_probe PRIVATE ATHENA_TOML_PROBE)
+target_include_directories(toml_athena_probe PRIVATE "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/third_party")
+target_link_libraries(toml_athena_probe PRIVATE Athena::Core)
+add_test(NAME toml_differential_test COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/toml_differential_test.py"
+    $<TARGET_FILE:toml_upstream_probe> $<TARGET_FILE:toml_athena_probe>
+    "${PROJECT_SOURCE_DIR}/tests/toml_fixtures")
+set_tests_properties(toml_differential_test PROPERTIES TIMEOUT 60)
+
+foreach(order upstream_first athena_first)
+    add_library(toml_coexistence_${order} OBJECT tests/toml_coexistence_order.cpp)
+    target_include_directories(toml_coexistence_${order} PRIVATE
+        "${PROJECT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}/src"
+        "${PROJECT_SOURCE_DIR}/third_party" "${ATHENA_UPSTREAM_TOML_INCLUDE_DIR}")
+endforeach()
+target_compile_definitions(toml_coexistence_athena_first PRIVATE ATHENA_FORK_FIRST)
+add_executable(toml_upstream_consumer_test tests/toml_upstream_consumer_test.cpp
+    $<TARGET_OBJECTS:toml_coexistence_upstream_first> $<TARGET_OBJECTS:toml_coexistence_athena_first>)
+target_link_libraries(toml_upstream_consumer_test PRIVATE Athena::Core)
+target_include_directories(toml_upstream_consumer_test PRIVATE "${ATHENA_UPSTREAM_TOML_INCLUDE_DIR}")
+add_test(NAME toml_upstream_consumer_test COMMAND toml_upstream_consumer_test)
+set_tests_properties(toml_upstream_consumer_test PROPERTIES TIMEOUT 30)
+add_test(NAME toml_vendor_reproduction_test COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/third_party/athena_toml/vendor.py"
+    "${ATHENA_UPSTREAM_TOML_INCLUDE_DIR}/toml++")
+add_test(NAME toml_isolation_test COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/toml_isolation_test.py"
+    "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}" $<TARGET_FILE:athena_core>
+    $<TARGET_FILE:toml_upstream_probe>)
+set_tests_properties(toml_vendor_reproduction_test toml_isolation_test PROPERTIES TIMEOUT 60)
+add_test(NAME qualification_driver_test COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/qualification_driver_test.py")
+set_tests_properties(qualification_driver_test PROPERTIES TIMEOUT 60)

@@ -26,4 +26,7 @@ void inherit_profile_features(generation::Generation&, const generation::Generat
 // Returns preserved memberships and resulting policies after validating the
 // complete target with planned semantic values. Never fabricates an ArtifactId.
 generation::Generation prepare_install(const generation::Generation&, const core::InstallPlan&);
+// Parser-only overload for D8's existing legacy document bound.
+void capture_legacy_semantics(generation::Generation&, std::size_t max_document_bytes);
+
 }

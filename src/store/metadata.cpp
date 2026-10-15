@@ -1,11 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "../parsing/bounded_toml.hpp"
+#include <limits>
 #include "metadata.hpp"
+#include "metadata_detail.hpp"
 
 #include <fstream>
 #include <stdexcept>
-#include <toml++/toml.hpp>
+#include <athena_toml/athena_toml.hpp>
 
 namespace athena::store {
 
@@ -59,7 +62,7 @@ void write_metadata(
      * Build the TOML document through toml++ so dependency strings
      * are escaped correctly instead of being interpolated manually.
      */
-    toml::table table{
+    athena_toml::table table{
         {"name", metadata.name},
         {"version", metadata.version},
         {"source", metadata.source},
@@ -67,7 +70,7 @@ void write_metadata(
         {"build_system", metadata.build_system}
     };
 
-    toml::array dependencies;
+    athena_toml::array dependencies;
 
     for (const auto& dependency : metadata.dependencies) {
         dependencies.push_back(dependency);
@@ -83,10 +86,10 @@ void write_metadata(
     if (!metadata.provides.capabilities.empty() ||
         !metadata.provides.features.empty()) {
 
-        toml::table provides;
+        athena_toml::table provides;
 
         if (!metadata.provides.capabilities.empty()) {
-            toml::array capabilities;
+            athena_toml::array capabilities;
 
             for (const auto& capability :
                  metadata.provides.capabilities) {
@@ -100,7 +103,7 @@ void write_metadata(
         }
 
         if (!metadata.provides.features.empty()) {
-            toml::array features;
+            athena_toml::array features;
 
             for (const auto& feature :
                  metadata.provides.features) {
@@ -128,8 +131,8 @@ void write_metadata(
  * The metadata file is parsed using toml++ and converted back into
  * Athena's internal Metadata representation.
  */
-Metadata read_metadata(
-    const std::filesystem::path& store_directory
+Metadata metadata_detail::read_metadata_stream(
+    std::istream& stream, const std::filesystem::path& store_directory, std::size_t max_document_bytes
 )
 {
     /*
@@ -145,8 +148,11 @@ Metadata read_metadata(
         /*
          * Parse the TOML metadata file.
          */
-        const auto table =
-            toml::parse_file(metadata_file.string());
+        if (!stream) throw parsing::Error(parsing::Rejection::Structure, "Cannot open TOML document");
+        const auto table = parsing::detail::parse_stream(stream,
+            max_document_bytes == std::numeric_limits<std::size_t>::max()
+                ? parsing::Profile::Any : parsing::Profile::LegacyMetadata,
+            max_document_bytes);
 
         /*
          * Read dependencies as an optional array.
@@ -235,7 +241,7 @@ Metadata read_metadata(
             std::move(provides)
         };
     }
-    catch (const toml::parse_error& error) {
+    catch (const athena_toml::parse_error& error) {
 
         /*
          * Hide the TOML-specific exception from higher-level modules
@@ -247,6 +253,22 @@ Metadata read_metadata(
             error.what()
         );
     }
+    catch (const std::invalid_argument& error) {
+        // The shared frontend uses invalid_argument for file/budget/shape
+        // rejection. Keep the legacy store API's runtime_error and path context.
+        throw std::runtime_error(
+            "Impossibile leggere i metadati del pacchetto '" +
+            store_directory.string() + "': " + error.what());
+    }
+}
+
+Metadata read_metadata(const std::filesystem::path& store_directory, std::size_t max_document_bytes) {
+ std::ifstream stream(store_directory / ".athena/metadata.toml", std::ios::binary | std::ios::ate);
+ return metadata_detail::read_metadata_stream(stream, store_directory, max_document_bytes);
+}
+
+Metadata read_metadata(const std::filesystem::path& store_directory) {
+ return read_metadata(store_directory,std::numeric_limits<std::size_t>::max());
 }
 
 }

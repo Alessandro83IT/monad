@@ -3,10 +3,10 @@
 
 #pragma once
 #include <athena/core/install_plan.hpp>
-#include <toml++/toml.hpp>
+#include <athena_toml/athena_toml.hpp>
 namespace athena::realization {
 // Internal shared candidate codec; never a second identity representation.
-toml::table encode_candidate(const core::CandidateIdentity&);
-core::CandidateIdentity decode_candidate(const toml::table&);
+athena_toml::table encode_candidate(const core::CandidateIdentity&);
+core::CandidateIdentity decode_candidate(const athena_toml::table&);
 void validate_candidate(const core::CandidateIdentity&);
 }

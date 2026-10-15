@@ -102,7 +102,7 @@ std::string serialize(const AdoptionRecord& r) {
     return w.bytes();
 }
 AdoptionRecord parse_adoption_record(std::string_view bytes) {
-    auto t = c::parse(bytes); c::version(t);
+    auto t = c::parse(bytes, max_document_size, parsing::Profile::Adoption); c::version(t);
     c::keys(t, {"schema_version", "adoption_id", "projection_id", "generation_authority_hex", "store_authority_hex",
         "projection_root_hex", "generation", "historical_current_hex", "generation_digest", "directories_hex", "sources", "entries"});
     auto path = [&](std::string_view key) { return decode_hex(c::string(t, key), max_path_size); };

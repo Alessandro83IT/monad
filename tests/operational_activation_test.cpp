@@ -41,6 +41,25 @@ void selected(Fixture& f, ProjectionContext& p, const OperationalPlanInput& r) {
 }
 void run() {
     { Fixture f;auto p=f.open();auto r=request(f);
+      const auto file=f.root/"generations/0/generation.toml";
+      const auto original=r.target.document;
+      write(file,"id=0\nentries=[]\nunexpected=[0,0,0]\n");
+      // D8.2 reparses persisted bytes before publishing or selecting anything.
+      fails([&]{activate_operational(p,*f.state,r);},OperationalStage::Identity,OperationalFailure::BeforeSelection,
+          [](const OperationalActivationError& e){
+              try {std::rethrow_exception(e.underlying);}
+              catch(const athena::core::TypeError& error){
+                  require(std::string_view(error.what()).find("Unknown TOML field")!=std::string_view::npos,
+                      "D8.2 reached shared typed parser");return;
+              }
+              throw std::runtime_error("D8.2 lost frontend error");
+          });
+      require(!inspect_selection(p,*f.state),"parser failure must not select current");
+      require(!fs::exists(f.root/"projection/.athena-activation/plans"/r.activation_id.value()),
+          "parser failure must not publish a plan");
+      write(file,original);
+      activate_operational(p,*f.state,r); }
+    { Fixture f;auto p=f.open();auto r=request(f);
       auto result=activate_operational(p,*f.state,r);
       require(result.reconciliation.state==ReconciliationState::Complete,"complete transition");
       require(inspect_selection(p,*f.state)==std::optional<CurrentSelection>(CurrentV1{0,r.activation_id,result.identity.digest}),"single identity");

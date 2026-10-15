@@ -10,7 +10,7 @@ bool lowercase_hex(std::string_view bytes) noexcept {
     });
 }
 bool sha256_text(std::string_view text) noexcept {
-    return text.size() == 71 && text.starts_with("sha256:") && lowercase_hex(text.substr(7));
+    return text.size() == PlanDigest::encoded_size && text.starts_with("sha256:") && lowercase_hex(text.substr(7));
 }
 std::string encode_hex(std::string_view bytes) {
     if (bytes.size() > max_document_size / 2)

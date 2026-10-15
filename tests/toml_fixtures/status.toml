@@ -1,0 +1,4 @@
+schema_version=1
+activation_id='0123456789abcdef0123456789abcdef'
+plan_digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+outcome='complete'

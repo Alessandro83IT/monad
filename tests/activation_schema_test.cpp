@@ -237,13 +237,24 @@ void document_limits() {
     for (std::size_t i = 0; i <= max_operations; ++i)
         limit.operations.push_back({i, "p" + std::to_string(i), EnsureDirectory{}});
     rejects([&] { (void)serialize(limit); }, SchemaErrorCode::Bounds);
-    // Count checks happen before entry decoding, including malformed entry tables.
+    // Incremental authorization may reject an unknown entry key before the
+    // later count overflow is encountered. Both are pre-materialization failures;
+    // the independent valid-entry boundary tests below still enforce the limit.
+    auto reject_early = [](auto action) {
+        try { action(); }
+        catch (const SchemaError& error) {
+            require(error.code() == SchemaErrorCode::Bounds || error.code() == SchemaErrorCode::Schema,
+                "Expected early schema/count rejection");
+            return;
+        }
+        throw std::runtime_error("Oversized malformed array accepted");
+    };
     std::string too_many = "schema_version = 1\nactivation_id = \"" + id.value() + "\"\nsources = []\n";
     for (std::size_t i = 0; i <= max_operations; ++i) too_many += "[[operations]]\nx = 0\n";
-    rejects([&] { (void)parse_activation_plan(too_many); }, SchemaErrorCode::Bounds);
+    reject_early([&] { (void)parse_activation_plan(too_many); });
     too_many = "schema_version = 1\nactivation_id = \"" + id.value() + "\"\noperations = []\n";
     for (std::size_t i = 0; i <= max_sources; ++i) too_many += "[[sources]]\nx = 0\n";
-    rejects([&] { (void)parse_activation_plan(too_many); }, SchemaErrorCode::Bounds);
+    reject_early([&] { (void)parse_activation_plan(too_many); });
     // Accept the operation limit, with deterministic ordering and actual parsing.
     limit.operations.pop_back();
     std::sort(limit.operations.begin(), limit.operations.end(), operation_less); renumber(limit);

@@ -1,0 +1,169 @@
+[
+  {
+    "command": [
+      "c++",
+      "--version"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "compiler.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "--version"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "cmake-version.txt"
+  },
+  {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "git-status-before.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/athena-toml-commit-snapshot-20261015-3",
+      "-B",
+      "/tmp/athena-toml-qualified-20261015-3/debug",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "Debug-configure.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/athena-toml-qualified-20261015-3/debug",
+      "-j",
+      "4"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "Debug-build.txt"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-toml-qualified-20261015-3/debug",
+      "--show-only=json-v1"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "Debug-inventory.json"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-toml-qualified-20261015-3/debug",
+      "-LE",
+      "privileged",
+      "-E",
+      "^artifact_scanner_test$",
+      "--output-on-failure",
+      "--output-junit",
+      "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b1-toml-20261015-3/Debug-junit.xml",
+      "-j",
+      "2"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "Debug-tests.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-LA",
+      "-N",
+      "/tmp/athena-toml-qualified-20261015-3/debug"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "Debug-cache.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/athena-toml-commit-snapshot-20261015-3",
+      "-B",
+      "/tmp/athena-toml-qualified-20261015-3/release",
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "Release-configure.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/athena-toml-qualified-20261015-3/release",
+      "-j",
+      "4"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "Release-build.txt"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-toml-qualified-20261015-3/release",
+      "--show-only=json-v1"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "Release-inventory.json"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-toml-qualified-20261015-3/release",
+      "-LE",
+      "privileged",
+      "-E",
+      "^artifact_scanner_test$",
+      "--output-on-failure",
+      "--output-junit",
+      "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b1-toml-20261015-3/Release-junit.xml",
+      "-j",
+      "2"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "Release-tests.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-LA",
+      "-N",
+      "/tmp/athena-toml-qualified-20261015-3/release"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "Release-cache.txt"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "git-diff-check.txt"
+  },
+  {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "cwd": "/tmp/athena-toml-commit-snapshot-20261015-3",
+    "log": "git-status-after.txt"
+  }
+]

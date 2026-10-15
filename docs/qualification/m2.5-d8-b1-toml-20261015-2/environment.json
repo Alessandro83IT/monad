@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-15T05:30:18.108581+00:00",
+  "platform": "Linux-6.18.54-gentoo-gentoo-dist-arl005-x86_64-Intel-R-_Core-TM-_Ultra_9_275HX-with-glibc2.43",
+  "source": "/home/alessandro/Lab/Programming/athena-pm",
+  "build_root": "/tmp/athena-toml-qualified-20261015-2",
+  "source_manifest_sha256": "9f6300c3c7f89697c61ef1f6cdf2d7e3e03283a44be912ee6e7921759909b249",
+  "head": "93a98fa7e2444c55dda909184f04075475fbdd35",
+  "environment": {},
+  "excluded": "label privileged; exact artifact_scanner_test; unregistered network test; OOM stress"
+}

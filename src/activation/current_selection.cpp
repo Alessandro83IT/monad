@@ -33,7 +33,7 @@ CurrentSelection parse_current_selection(std::string_view bytes) {
         if (number.ends_with('\n')) number.remove_suffix(1);
         return HistoricalCurrent{d::decimal(number), std::string(bytes)};
     }
-    const auto table = d::parse(bytes, max_current_size);
+    const auto table = d::parse(bytes, max_current_size, parsing::Profile::Current);
     d::keys(table, {"schema_version", "generation", "activation_id", "plan_digest"});
     d::version(table);
     CurrentSelection result = CurrentV1{d::integer(table, "generation"),

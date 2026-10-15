@@ -118,7 +118,7 @@ ExecutionAccess::Authorized ExecutionAccess::authorize(ProjectionContext& p, con
         reject(ExecutionCause::MembershipMismatch, "Generation 0 must have empty payload membership");
     if (target_doc.generation.compatibility == generation::GenerationCompatibility::Modern) {
         auto environment = target_doc.generation;
-        installed::capture_legacy_semantics(environment);
+        installed::capture_legacy_semantics(environment, max_document_size);
         installed::validate_environment(environment);
     }
     std::optional<generation::ValidatedGenerationDocument> base_doc;

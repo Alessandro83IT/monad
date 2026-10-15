@@ -14,7 +14,7 @@ using GenerationDigest = generation::GenerationDocumentDigest;
 void artifact_id(const core::ArtifactId& id) {
     if (!sha256_text(id.value())) throw SchemaError(SchemaErrorCode::Identity, "Invalid ArtifactId");
 }
-core::ArtifactId parse_artifact_id(const toml::table& table) {
+core::ArtifactId parse_artifact_id(const athena_toml::table& table) {
     const auto value = d::string(table, "artifact_id");
     if (!sha256_text(value)) throw SchemaError(SchemaErrorCode::Identity, "Invalid ArtifactId");
     return core::ArtifactId(value);
@@ -91,12 +91,12 @@ std::string_view operation_kind(const OperationState& state) {
 struct ByteLess {
     bool operator()(std::string_view a, std::string_view b) const { return artifact::path_bytes_less(a, b); }
 };
-const toml::table& table_node(const toml::node& node) {
+const athena_toml::table& table_node(const athena_toml::node& node) {
     const auto* table = node.as_table();
     if (!table) throw SchemaError(SchemaErrorCode::Schema, "Expected array-of-table entry");
     return *table;
 }
-const toml::array& array(const toml::table& table, std::string_view key, std::size_t limit) {
+const athena_toml::array& array(const athena_toml::table& table, std::string_view key, std::size_t limit) {
     const auto* result = table[key].as_array();
     if (!result) throw SchemaError(SchemaErrorCode::Schema, "Expected array: " + std::string(key));
     if (result->size() > limit) throw SchemaError(SchemaErrorCode::Bounds, "Array exceeds count bound");
@@ -236,7 +236,7 @@ std::string serialize(const ActivationIntent& intent) {
     return out.bytes();
 }
 ActivationIntent parse_activation_intent(std::string_view bytes, const std::optional<ActivationId>& expected_id) {
-    const auto table = d::parse(bytes);
+    const auto table = d::parse(bytes, max_document_size, parsing::Profile::Intent);
     d::keys(table, {"schema_version", "activation_id", "generation_authority_hex", "store_authority_hex",
         "projection_root_hex", "projection_id", "target_generation", "target_generation_digest", "base"});
     d::version(table);
@@ -305,7 +305,7 @@ std::string serialize(const ActivationPlan& plan) {
     return out.bytes();
 }
 ActivationPlan parse_activation_plan(std::string_view bytes, const std::optional<ActivationId>& expected_id) {
-    const auto table = d::parse(bytes);
+    const auto table = d::parse(bytes, max_document_size, parsing::Profile::Plan);
     d::keys(table, {"schema_version", "activation_id", "sources", "operations"}); d::version(table);
     ActivationPlan result{ActivationId(d::string(table, "activation_id")), {}, {}};
     expected(result.activation_id, expected_id);
@@ -362,7 +362,7 @@ std::string serialize(const ActivationStatus& status) {
     return out.bytes();
 }
 ActivationStatus parse_activation_status(std::string_view bytes, const std::optional<ActivationId>& expected_id) {
-    const auto table = d::parse(bytes);
+    const auto table = d::parse(bytes, max_document_size, parsing::Profile::Status);
     d::keys(table, {"schema_version", "activation_id", "plan_digest", "outcome"}); d::version(table);
     const auto outcome = d::string(table, "outcome");
     if (outcome != "complete" && outcome != "aborted") throw SchemaError(SchemaErrorCode::Schema, "Unknown terminal outcome");

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "../parsing/bounded_toml.hpp"
 #include "transaction_pins.hpp"
 #include "../generation/publication.hpp"
 #include "object_store_detail.hpp"
 #include "../generation/generation.hpp"
-#include <toml++/toml.hpp>
+#include <athena_toml/athena_toml.hpp>
 #include <algorithm>
 #include <sstream>
 #include <array>
@@ -127,7 +128,7 @@ AuthorityContext::AuthorityContext(fs::path store, fs::path generations)
     : store_(a::locator(store)), generations_(a::locator(generations)) {}
 namespace {
 std::string binding_document(const AuthorityContext& authority) {
-    toml::table table; table.insert("schema_version", 1);
+    athena_toml::table table; table.insert("schema_version", 1);
     table.insert("store_authority", authority.store().string());
     table.insert("generation_authority", authority.generations().string());
     std::ostringstream out; out << table << '\n'; return out.str();
@@ -167,7 +168,7 @@ bool AuthorityContext::inspect_binding(const StoreGcLock& lock) const {
     if (!reverse || !present(registry.get(), "authority.toml"))
         throw std::runtime_error("partial store/generation binding; recovery required");
     auto matches = [&](std::string_view document) {
-        const auto table = toml::parse(document);
+        const auto table = parsing::parse_model(document, parsing::Profile::StoreBinding);
         return table.size() == 3 && table["schema_version"].is_integer() &&
             table["schema_version"].value<int64_t>() == 1 &&
             table["store_authority"].value<std::string>() == store_.string() &&
@@ -200,7 +201,7 @@ void AuthorityContext::validate_binding(bool create, const d::Syscalls& ops, d::
         throw std::runtime_error("generation authority has no persisted roots");
     const auto expected = binding_document(*this);
     auto matches = [&](std::string_view document) {
-        const auto table = toml::parse(document);
+        const auto table = parsing::parse_model(document, parsing::Profile::StoreBinding);
         return table.size() == 3 && table["schema_version"].is_integer() &&
             table["schema_version"].value<int64_t>() == 1 &&
             table["store_authority"].value<std::string>() == store_.string() &&
@@ -253,7 +254,7 @@ std::string serialize_pins(std::string_view id, const std::set<std::string>& ids
 }
 std::set<std::string> parse_pins(std::string_view document, std::string_view id) {
     if (document.size() > a::max_record_size || !a::hex_name(id, 32)) throw std::runtime_error("invalid pin record bounds");
-    auto table = toml::parse(document);
+    auto table = parsing::parse_model(document, parsing::Profile::Pins);
     if (table.size() != 3 || table["schema_version"].value<int64_t>() != 1 ||
         table["transaction_id"].value<std::string>() != id || !table["artifacts"].is_array())
         throw std::runtime_error("invalid pin schema");

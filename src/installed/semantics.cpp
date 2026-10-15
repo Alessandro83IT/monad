@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "../parsing/bounded_toml.hpp"
 #include "semantics.hpp"
 #include "../dependency/parser.hpp"
 #include "../dependency/serializer.hpp"
@@ -15,46 +16,46 @@ namespace athena::installed {
 namespace {
 using namespace core;
 namespace dep = athena::dependency;
-void keys(const toml::table& t, std::initializer_list<std::string_view> allowed) {
+void keys(const athena_toml::table& t, std::initializer_list<std::string_view> allowed) {
     for (const auto& [k, v] : t) {
         (void)v;
         if (std::find(allowed.begin(), allowed.end(), k.str()) == allowed.end())
             throw TypeError("Unknown installed semantic field: " + std::string(k.str()));
     }
 }
-std::string text(const toml::table& t, const char* k) {
+std::string text(const athena_toml::table& t, const char* k) {
     auto v = t[k].value<std::string>();
     if (!v) throw TypeError(std::string("Invalid installed semantic string: ") + k);
     return *v;
 }
-bool boolean(const toml::table& t, const char* k) {
+bool boolean(const athena_toml::table& t, const char* k) {
     auto v = t[k].value<bool>();
     if (!v) throw TypeError(std::string("Invalid installed semantic boolean: ") + k);
     return *v;
 }
-int integer(const toml::table& t, const char* k, int maximum) {
+int integer(const athena_toml::table& t, const char* k, int maximum) {
     if (!t[k].is_integer()) throw TypeError(std::string("Invalid installed semantic integer: ") + k);
     auto v = t[k].value<int>();
     if (!v || *v < 0 || *v > maximum) throw TypeError(std::string("Invalid installed semantic enum: ") + k);
     return *v;
 }
-const toml::table& table(const toml::table& t, const char* k) {
+const athena_toml::table& table(const athena_toml::table& t, const char* k) {
     auto v = t[k].as_table();
     if (!v) throw TypeError(std::string("Invalid installed semantic table: ") + k);
     return *v;
 }
-const toml::array& array(const toml::table& t, const char* k) {
+const athena_toml::array& array(const athena_toml::table& t, const char* k) {
     auto v = t[k].as_array();
     if (!v) throw TypeError(std::string("Invalid installed semantic array: ") + k);
     return *v;
 }
-std::string format(const toml::table& t) {
+std::string format(const athena_toml::table& t) {
     std::ostringstream out; out.imbue(std::locale::classic()); out << t; return out.str();
 }
-toml::table environment(const TargetEnvironment& e) {
-    return toml::table{{"platform", e.platform}, {"architecture", e.architecture}, {"abi", e.abi}, {"triple", e.triple}};
+athena_toml::table environment(const TargetEnvironment& e) {
+    return athena_toml::table{{"platform", e.platform}, {"architecture", e.architecture}, {"abi", e.abi}, {"triple", e.triple}};
 }
-TargetEnvironment environment(const toml::table& t) {
+TargetEnvironment environment(const athena_toml::table& t) {
     keys(t, {"platform", "architecture", "abi", "triple"});
     return {text(t, "platform"), text(t, "architecture"), text(t, "abi"), text(t, "triple")};
 }
@@ -176,14 +177,14 @@ std::vector<PolicyRequirement> policies_from_plan(const core::InstallPlan& plan)
 }
 std::string serialize(const SemanticState& s) {
     s.validate();
-    toml::array roles, bindings;
+    athena_toml::array roles, bindings;
     for (auto r : s.active_roles) roles.push_back(static_cast<int>(r));
-    for (const auto& b : s.bindings) bindings.push_back(toml::table{
+    for (const auto& b : s.bindings) bindings.push_back(athena_toml::table{
         {"selector", b.selector.text}, {"provider", realization::encode_candidate(b.provider)},
         {"role", static_cast<int>(b.role)}, {"context", static_cast<int>(b.context)}});
-    toml::table features;
+    athena_toml::table features;
     for (const auto& [name, enabled] : s.feature_states) features.insert(name, enabled);
-    return format(toml::table{{"schema_version", 1}, {"package", toml::parse(core::serialize(s.package))},
+    return format(athena_toml::table{{"schema_version", 1}, {"package", parsing::parse_model(core::serialize(s.package), parsing::Profile::Package)},
         {"version_scheme", static_cast<int>(s.version_scheme)}, {"target", environment(s.target)},
         {"host", environment(s.environments.host)}, {"build", environment(s.environments.build)},
         {"profile", s.profile}, {"active_roles", std::move(roles)}, {"optional_enabled", s.optional_enabled},
@@ -192,7 +193,7 @@ std::string serialize(const SemanticState& s) {
 }
 SemanticState deserialize_semantics(const std::string& document) {
     try {
-        const auto t = toml::parse(document);
+        const auto t = parsing::parse_model(document, parsing::Profile::Semantics);
         keys(t, {"schema_version", "package", "version_scheme", "target", "host", "build", "profile",
                  "active_roles", "optional_enabled", "propagated_enabled", "features", "bindings", "legacy_restricted"});
         if (integer(t, "schema_version", 1) != 1) throw core::TypeError("Unsupported installed semantic schema");
@@ -222,21 +223,21 @@ SemanticState deserialize_semantics(const std::string& document) {
                 static_cast<core::DependencyTargetContext>(integer(*b, "context", 2))});
         }
         s.validate(); return s;
-    } catch (const toml::parse_error& e) { throw core::TypeError(e.what()); }
+    } catch (const athena_toml::parse_error& e) { throw core::TypeError(e.what()); }
 }
 std::string serialize(const PolicyRequirement& p) {
     if (p.policy.empty()) throw core::TypeError("Empty installed policy");
     expression(p.selector); atomic_selector(p.selector);
-    return format(toml::table{{"schema_version", 1}, {"policy", p.policy.value()},
+    return format(athena_toml::table{{"schema_version", 1}, {"policy", p.policy.value()},
         {"selector", p.selector.text}, {"target", environment(p.target)}});
 }
 PolicyRequirement deserialize_policy(const std::string& document) {
     try {
-        const auto t = toml::parse(document);
+        const auto t = parsing::parse_model(document, parsing::Profile::Policy);
         keys(t, {"schema_version", "policy", "selector", "target"});
         if (integer(t, "schema_version", 1) != 1) throw core::TypeError("Unsupported installed policy schema");
         PolicyRequirement p{core::SystemPolicyId(text(t, "policy")), {text(t, "selector")}, environment(table(t, "target"))};
         (void)serialize(p); return p;
-    } catch (const toml::parse_error& e) { throw core::TypeError(e.what()); }
+    } catch (const athena_toml::parse_error& e) { throw core::TypeError(e.what()); }
 }
 }

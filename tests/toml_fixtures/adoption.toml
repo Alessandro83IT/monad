@@ -1,0 +1,12 @@
+schema_version=1
+adoption_id='0123456789abcdef0123456789abcdef'
+projection_id='0123456789abcdef0123456789abcdef'
+generation_authority_hex='2f67'
+store_authority_hex='2f73'
+projection_root_hex='2f70'
+generation=0
+historical_current_hex='300a'
+generation_digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+directories_hex=[]
+sources=[]
+entries=[]

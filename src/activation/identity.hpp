@@ -28,11 +28,12 @@ bool sha256_text(std::string_view text) noexcept;
 
 template<class Tag> class HexId {
 public:
+    static constexpr std::size_t encoded_size = 32;
     explicit HexId(std::string value) : value_(std::move(value)) {
         validate();
     }
     void validate() const {
-        if (value_.size() != 32 || !lowercase_hex(value_))
+        if (value_.size() != encoded_size || !lowercase_hex(value_))
             throw SchemaError(SchemaErrorCode::Identity, "Expected 32 lowercase hex ID");
     }
     const std::string& value() const noexcept { return value_; }
@@ -42,6 +43,7 @@ private:
 };
 template<class Tag> class Sha256Digest {
 public:
+    static constexpr std::size_t encoded_size = 71;
     explicit Sha256Digest(std::string value) : value_(std::move(value)) {
         validate();
     }

@@ -49,7 +49,7 @@ bool has(const artifact::NormalizedArtifact& tree, std::string_view path) {
 }
 }
 std::vector<std::string> LegacyAccess::manifest_projection(const artifact::NormalizedArtifact& tree) try {
-    auto t = c::parse(content(tree, ".athena/manifest.toml")); c::keys(t, {"files"});
+    auto t = c::parse(content(tree, ".athena/manifest.toml"), max_document_size, parsing::Profile::Manifest); c::keys(t, {"files"});
     const auto* files = t["files"].as_array();
     if (!files || files->size() > max_operations) bad(LegacyCause::Manifest, "Invalid manifest files array");
     std::set<std::string, decltype(&artifact::path_bytes_less)> paths(&artifact::path_bytes_less);
@@ -81,7 +81,7 @@ std::vector<std::string> LegacyAccess::manifest_projection(const artifact::Norma
 }
 namespace {
 void metadata(const artifact::NormalizedArtifact& tree, std::string_view package) try {
-    auto t = c::parse(content(tree, ".athena/metadata.toml"));
+    auto t = c::parse(content(tree, ".athena/metadata.toml"), max_document_size, parsing::Profile::LegacyMetadata);
     for (const auto& [k, v] : t) {
         (void)v;
         if (k != "name" && k != "version" && k != "source" && k != "sha256" &&
@@ -91,7 +91,7 @@ void metadata(const artifact::NormalizedArtifact& tree, std::string_view package
     for (auto key : {"name", "version", "source", "sha256", "build_system"})
         if (c::string(t, key).empty()) bad(LegacyCause::Manifest, "Empty legacy metadata field");
     if (c::string(t, "name") != package) bad(LegacyCause::Manifest, "Generation package/metadata mismatch");
-    auto strings = [](const toml::node_view<const toml::node>& view) {
+    auto strings = [](const athena_toml::node_view<const athena_toml::node>& view) {
         const auto* a = view.as_array(); if (!a) bad(LegacyCause::Manifest, "Invalid metadata array");
         std::set<std::string> seen;
         for (const auto& n : *a) { auto s = n.value<std::string>();

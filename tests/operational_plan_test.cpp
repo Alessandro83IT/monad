@@ -2,6 +2,8 @@
 #include "activation/operational_plan.hpp"
 #include "activation/plan_retention.hpp"
 #include "activation_schema_support.hpp"
+#include "activation/codec_detail.hpp"
+#include "hash/sha256.hpp"
 #include <algorithm>
 #include <random>
 
@@ -240,5 +242,17 @@ void artifacts_and_aliases() {
 }
 int main() {
     return d1_test::run([] { transitions(); determinism(); invalid(); artifacts_and_aliases();
+        auto input = request(generation(0), generation(1));
+        input.target.document = "id=1\nentries=[]\nunexpected=[0,0,0]\n";
+        std::string preimage("athena-generation-document-v1\0", sizeof("athena-generation-document-v1\0") - 1);
+        codec_detail::append_u64(preimage, input.target.document.size());
+        preimage += input.target.document;
+        input.target.digest = athena::generation::GenerationDocumentDigest(athena::hash::sha256(preimage));
+        // A matching byte digest cannot bypass D8.1's typed generation parser.
+        try { build_operational_plan(input); throw std::runtime_error("D8.1 accepted unknown generation payload"); }
+        catch (const athena::core::TypeError& e) {
+            require(std::string_view(e.what()).find("Unknown TOML field") != std::string_view::npos,
+                    "D8.1 reached typed generation boundary");
+        }
         std::cout << "PASS operational plan: transitions, membership, witnesses, canonical ordering, invalid inputs\n"; });
 }

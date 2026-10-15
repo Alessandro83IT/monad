@@ -1,0 +1,14 @@
+schema_version=1
+artifact_id='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+origin='ambient_source_build'
+[candidate]
+package='pkg'
+version='1'
+repository='repo'
+[candidate.snapshot]
+schema_version=1
+repository_id='repo'
+revision='rev'
+snapshot_id='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+[candidate.provenance]
+repository_id='repo'

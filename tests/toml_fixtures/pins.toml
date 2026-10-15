@@ -1,0 +1,3 @@
+schema_version=1
+transaction_id='0123456789abcdef0123456789abcdef'
+artifacts=['sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']

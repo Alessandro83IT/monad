@@ -19,7 +19,7 @@ std::string serialize(const ProjectionBinding& binding) {
 }
 ProjectionBinding parse_projection_binding(std::string_view bytes) {
     namespace c = codec_detail;
-    const auto table = c::parse(bytes, 32 * 1024);
+    const auto table = c::parse(bytes, 32 * 1024, parsing::Profile::ProjectionBinding);
     c::keys(table, {"schema_version", "projection_id", "generation_authority_hex", "store_authority_hex", "projection_root_hex"});
     c::version(table);
     ProjectionBinding result{ProjectionId(c::string(table, "projection_id")),

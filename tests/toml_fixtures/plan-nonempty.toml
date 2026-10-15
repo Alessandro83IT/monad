@@ -1,0 +1,9 @@
+schema_version=1
+activation_id='0123456789abcdef0123456789abcdef'
+[[sources]]
+kind='artifact'
+artifact_id='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+[[operations]]
+id=0
+kind='ensure-directory'
+path_hex='62696e'

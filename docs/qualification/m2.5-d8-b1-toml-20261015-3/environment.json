@@ -1,0 +1,27 @@
+{
+  "utc": "2026-10-15T06:14:35.183568+00:00",
+  "platform": "Linux-6.18.54-gentoo-gentoo-dist-arl005-x86_64-Intel-R-_Core-TM-_Ultra_9_275HX-with-glibc2.43",
+  "source": "/tmp/athena-toml-commit-snapshot-20261015-3",
+  "build_root": "/tmp/athena-toml-qualified-20261015-3",
+  "source_manifest_sha256": "fe6ba3974b680d2056e4f6016b46257b6422032696b299a56f03c0127b92cfc4",
+  "source_inventory": "tests/bounded_toml_sources.txt",
+  "source_scope": {
+    "roots": [
+      "src",
+      "include",
+      "tests",
+      "cmake",
+      "third_party",
+      "packaging",
+      "packages"
+    ],
+    "root_files": [
+      "CMakeLists.txt",
+      "docs/m2.5-d8-b1-parser-boundary.md"
+    ],
+    "generated_omission": "__pycache__ directories"
+  },
+  "head": "93a98fa7e2444c55dda909184f04075475fbdd35",
+  "environment": {},
+  "excluded": "label privileged; exact artifact_scanner_test; unregistered network test; OOM stress"
+}

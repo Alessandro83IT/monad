@@ -1,13 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "../parsing/bounded_toml.hpp"
 #include "record.hpp"
 #include "identity_codec.hpp"
 #include "../core/resolution_order.hpp"
 #include <algorithm>
 #include <locale>
 #include <sstream>
-#include <toml++/toml.hpp>
+#include <athena_toml/athena_toml.hpp>
 
 namespace athena::realization {
 using namespace core;
@@ -18,39 +19,39 @@ void digest(const std::string& text) {
             return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
         })) throw TypeError("Expected full lowercase sha256 identity");
 }
-void keys(const toml::table& t, std::initializer_list<std::string_view> allowed) {
+void keys(const athena_toml::table& t, std::initializer_list<std::string_view> allowed) {
     for (const auto& [k, v] : t) {
         (void)v;
         if (std::find(allowed.begin(), allowed.end(), k.str()) == allowed.end())
             throw TypeError("Unknown realization field: " + std::string(k.str()));
     }
 }
-std::string string(const toml::table& t, const char* k) {
+std::string string(const athena_toml::table& t, const char* k) {
     auto v = t[k].value<std::string>();
     if (!v || v->empty()) throw TypeError(std::string("Missing/invalid realization field: ") + k);
     return *v;
 }
-std::optional<std::string> optional(const toml::table& t, const char* k) {
+std::optional<std::string> optional(const athena_toml::table& t, const char* k) {
     if (!t.contains(k)) return {};
     return string(t, k);
 }
-const toml::table& table(const toml::table& t, const char* k) {
+const athena_toml::table& table(const athena_toml::table& t, const char* k) {
     auto* v = t[k].as_table();
     if (!v) throw TypeError(std::string("Missing/invalid realization table: ") + k);
     return *v;
 }
-void version(const toml::table& t) {
+void version(const athena_toml::table& t) {
     if (!t["schema_version"].is_integer() || t["schema_version"].value<int>() != 1)
         throw TypeError("Unsupported snapshot schema version");
 }
-toml::table snapshot_table(const RepositorySnapshotRef& s) {
-    toml::table t{{"repository_id", s.repository_id.value()}, {"revision", s.revision.value()},
+athena_toml::table snapshot_table(const RepositorySnapshotRef& s) {
+    athena_toml::table t{{"repository_id", s.repository_id.value()}, {"revision", s.revision.value()},
                   {"schema_version", s.schema_version.value}};
     if (s.metadata_digest) t.insert("metadata_digest", s.metadata_digest->value());
     if (s.snapshot_id) t.insert("snapshot_id", s.snapshot_id->value());
     return t;
 }
-RepositorySnapshotRef snapshot(const toml::table& t) {
+RepositorySnapshotRef snapshot(const athena_toml::table& t) {
     keys(t, {"repository_id", "revision", "schema_version", "metadata_digest", "snapshot_id"});
     version(t);
     RepositorySnapshotRef s{RepositoryId(string(t, "repository_id")), RepositoryRevision(string(t, "revision"))};
@@ -72,15 +73,15 @@ ArtifactOrigin origin(const std::string& s) {
     throw TypeError("Unknown realization origin");
 }
 }
-toml::table encode_candidate(const CandidateIdentity& c) {
-    toml::table p{{"repository_id", c.provenance.repository_id.value()}};
+athena_toml::table encode_candidate(const CandidateIdentity& c) {
+    athena_toml::table p{{"repository_id", c.provenance.repository_id.value()}};
     if (c.provenance.revision) p.insert("revision", c.provenance.revision->value());
     if (c.provenance.metadata_reference) p.insert("metadata_reference", c.provenance.metadata_reference->value());
     if (c.provenance.snapshot) p.insert("snapshot", snapshot_table(*c.provenance.snapshot));
-    return toml::table{{"package", c.package.value()}, {"version", c.version.value()}, {"repository", c.repository.value()},
+    return athena_toml::table{{"package", c.package.value()}, {"version", c.version.value()}, {"repository", c.repository.value()},
         {"snapshot", snapshot_table(c.snapshot)}, {"provenance", std::move(p)}};
 }
-CandidateIdentity decode_candidate(const toml::table& c) {
+CandidateIdentity decode_candidate(const athena_toml::table& c) {
     keys(c, {"package", "version", "repository", "snapshot", "provenance"});
     const auto& p = table(c, "provenance");
     keys(p, {"repository_id", "revision", "metadata_reference", "snapshot"});
@@ -136,9 +137,9 @@ bool RealizationRecord::operator<(const RealizationRecord& other) const {
 }
 std::string serialize(const RealizationRecord& r) {
     r.validate();
-    toml::table t{{"schema_version", r.semantics ? 2 : 1}, {"artifact_id", r.artifact_id.value()},
+    athena_toml::table t{{"schema_version", r.semantics ? 2 : 1}, {"artifact_id", r.artifact_id.value()},
         {"origin", origin_name(r.origin)}, {"candidate", encode_candidate(r.candidate)}};
-    if (r.semantics) t.insert("semantics", toml::parse(installed::serialize(*r.semantics)));
+    if (r.semantics) t.insert("semantics", parsing::parse_model(installed::serialize(*r.semantics), parsing::Profile::Semantics));
     if (r.build_input_id) t.insert("build_input_id", r.build_input_id->value());
     std::ostringstream out;
     out.imbue(std::locale::classic());
@@ -147,7 +148,7 @@ std::string serialize(const RealizationRecord& r) {
 }
 RealizationRecord deserialize_record(const std::string& document) {
     try {
-        auto t = toml::parse(document);
+        auto t = parsing::parse_model(document, parsing::Profile::Record);
         keys(t, {"schema_version", "artifact_id", "origin", "candidate", "build_input_id", "semantics"});
         const auto v = t["schema_version"].value<int>();
         if (!t["schema_version"].is_integer() || (v != 1 && v != 2)) throw TypeError("Unsupported realization schema version");
@@ -161,6 +162,6 @@ RealizationRecord deserialize_record(const std::string& document) {
         if (auto v = optional(t, "build_input_id")) r.build_input_id = BuildInputId(*v);
         r.validate();
         return r;
-    } catch (const toml::parse_error& e) { throw TypeError(e.what()); }
+    } catch (const athena_toml::parse_error& e) { throw TypeError(e.what()); }
 }
 }

@@ -1,0 +1,20 @@
+{
+  "previous_run": "m2.5-d8-b1-toml-20261015-2",
+  "new_run": "m2.5-d8-b1-toml-20261015-3",
+  "previous_manifest_sha256": "9f6300c3c7f89697c61ef1f6cdf2d7e3e03283a44be912ee6e7921759909b249",
+  "new_manifest_sha256": "fe6ba3974b680d2056e4f6016b46257b6422032696b299a56f03c0127b92cfc4",
+  "retained_previous_artifacts_sha256": "2ccd287358931f78e165ad120080722b7cf67e28477389ad084c8c3327c35b4a",
+  "changed_inputs": [
+    "CMakeLists.txt",
+    "docs/m2.5-d8-b1-parser-boundary.md",
+    "tests/qualify_bounded_toml.py"
+  ],
+  "added_inputs": [
+    "tests/bounded_toml_sources.txt",
+    "tests/qualification_driver_test.py"
+  ],
+  "removed_inputs": [
+    "docs/m2.5-d8b-cli-integration.md"
+  ],
+  "reason": "Historical CLI report is unrelated documentary context. New explicit source inventory includes all build/test dependencies and rejects unlisted or missing inputs. No parser/codec/operational source changes."
+}

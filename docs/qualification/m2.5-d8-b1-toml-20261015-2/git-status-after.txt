@@ -1,0 +1,45 @@
+ M CMakeLists.txt
+ M src/activation/codec_detail.cpp
+ M src/activation/codec_detail.hpp
+ M src/activation/current_selection.cpp
+ M src/activation/identity.cpp
+ M src/activation/identity.hpp
+ M src/activation/legacy.cpp
+ M src/activation/legacy_codec.cpp
+ M src/activation/plan.cpp
+ M src/activation/projection_binding.cpp
+ M src/activation/selection.cpp
+ M src/core/repository.cpp
+ M src/generation/codec.cpp
+ M src/installed/environment.cpp
+ M src/installed/environment.hpp
+ M src/installed/semantics.cpp
+ M src/realization/identity_codec.hpp
+ M src/realization/record.cpp
+ M src/store/metadata.cpp
+ M src/store/metadata.hpp
+ M src/store/transaction_pins.cpp
+ M tests/activation_schema_test.cpp
+ M tests/operational_activation_test.cpp
+ M tests/operational_plan_test.cpp
+?? docs/m2.5-d8-b1-parser-boundary.md
+?? docs/m2.5-d8-b1-toml-stabilization.md
+?? docs/m2.5-d8b-cli-integration.md
+?? docs/qualification/
+?? src/activation/operational_request.cpp
+?? src/activation/operational_request.hpp
+?? src/activation/operational_request_codec.cpp
+?? src/activation/operational_request_codec.hpp
+?? src/parsing/
+?? src/store/metadata_detail.hpp
+?? tests/bounded_toml_test.cpp
+?? tests/operational_request_codec_test.cpp
+?? tests/qualify_bounded_toml.py
+?? tests/store_metadata_errors_test.cpp
+?? tests/toml_coexistence_order.cpp
+?? tests/toml_differential_test.py
+?? tests/toml_fixtures/
+?? tests/toml_isolation_test.py
+?? tests/toml_probe.cpp
+?? tests/toml_upstream_consumer_test.cpp
+?? third_party/

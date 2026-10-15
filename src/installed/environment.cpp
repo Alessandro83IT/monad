@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "../parsing/bounded_toml.hpp"
+#include <limits>
 #include "environment.hpp"
 #include "../dependency/parser.hpp"
 #include "../dependency/constraint.hpp"
@@ -13,7 +15,7 @@
 #include "../store/metadata.hpp"
 #include <algorithm>
 #include <set>
-#include <toml++/toml.hpp>
+#include <athena_toml/athena_toml.hpp>
 
 namespace athena::installed {
 namespace {
@@ -187,13 +189,13 @@ void validate_expression(const dep::ExpressionPtr& e, bool legacy, bool conditio
     try { dep::validate_expression(e, legacy ? dep::ExpressionSupport::Legacy : dep::ExpressionSupport::Complete, condition); }
     catch (const std::runtime_error& error) { throw ValidationError(error.what()); }
 }
-void capture_legacy_semantics(generation::Generation& g) {
+void capture_legacy_semantics(generation::Generation& g, std::size_t max_document_bytes) {
     for (auto& e : g.entries) {
         if (e.semantics) continue;
-        const auto doc = toml::parse_file((std::filesystem::path(e.store_path) / ".athena/metadata.toml").string());
+        const auto doc = parsing::parse_file(std::filesystem::path(e.store_path) / ".athena/metadata.toml", max_document_bytes == std::numeric_limits<std::size_t>::max() ? parsing::Profile::Any : parsing::Profile::LegacyMetadata, max_document_bytes);
         // Older absent fields are unknown, not an assertion of no dependencies.
         if (!doc["dependencies"].is_array()) throw ValidationError("Legacy dependency state is unavailable: " + e.package);
-        const auto m = store::read_metadata(e.store_path);
+        const auto m = store::read_metadata(e.store_path, max_document_bytes);
         if (m.name != e.package || m.version.empty()) throw ValidationError("Generation/store package mismatch: " + e.package);
         SemanticState s{core::PackageMetadata{core::PackageId(m.name), core::PackageVersion(m.version)}};
         s.package.dependencies = m.dependencies;
@@ -213,6 +215,10 @@ void capture_legacy_semantics(generation::Generation& g) {
         s.validate(); e.semantics = std::move(s);
     }
 }
+void capture_legacy_semantics(generation::Generation& g) {
+ capture_legacy_semantics(g,std::numeric_limits<std::size_t>::max());
+}
+
 void validate_environment(const generation::Generation& g, const std::vector<SemanticState>& planned_members) {
     g.validate();
     std::vector<const SemanticState*> members;

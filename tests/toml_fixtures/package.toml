@@ -1,0 +1,12 @@
+schema_version=1
+package_id='pkg'
+version='1'
+dependencies=[]
+capabilities=[]
+features=['☃.dynamic']
+conflicts=[]
+platforms=[]
+architectures=[]
+abis=[]
+[feature_dependencies]
+'☃.dynamic'=[{expression='pkg',role='runtime',context='target',enabled=true}]
