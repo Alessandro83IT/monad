@@ -1,0 +1,1052 @@
+[
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/activation.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/activation.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/activation.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/activation.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/codec_detail.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/codec_detail.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/codec_detail.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/codec_detail.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/current_selection.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/current_selection.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/current_selection.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/current_selection.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/identity.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/identity.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/identity.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/identity.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/initial_activation.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/initial_activation.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/initial_activation.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/initial_activation.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/legacy.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/legacy.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/legacy.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/legacy.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/legacy_adoption.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/legacy_adoption.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/legacy_adoption.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/legacy_adoption.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/legacy_authority.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/legacy_authority.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/legacy_authority.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/legacy_authority.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/legacy_codec.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/legacy_codec.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/legacy_codec.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/legacy_codec.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/operational_activation.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/operational_activation.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/operational_activation.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/operational_activation.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/operational_plan.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/operational_plan.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/operational_plan.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/operational_plan.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/operational_request.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/operational_request.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/operational_request.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/operational_request.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/operational_request_codec.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/operational_request_codec.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/operational_request_codec.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/operational_request_codec.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/operational_request_runtime.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/operational_request_runtime.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/operational_request_runtime.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/operational_request_runtime.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/plan.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/plan.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/plan.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/plan.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/plan_persistence.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/plan_persistence.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/plan_persistence.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/plan_persistence.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/plan_retention.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/plan_retention.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/plan_retention.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/plan_retention.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/projection_binding.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/projection_binding.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/projection_binding.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/projection_binding.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/projection_fs.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/projection_fs.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/projection_fs.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/projection_fs.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/reconciliation.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/reconciliation.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/reconciliation.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/reconciliation.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/activation/selection.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/activation/selection.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/activation/selection.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/activation/selection.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/archive/archive.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/archive/archive.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/archive/archive.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/archive/archive.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/artifact/encoding.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/artifact/encoding.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/artifact/encoding.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/artifact/encoding.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/artifact/identity.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/artifact/identity.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/artifact/identity.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/artifact/identity.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/artifact/model.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/artifact/model.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/artifact/model.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/artifact/model.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/artifact/scanner.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/artifact/scanner.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/artifact/scanner.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/artifact/scanner.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/build/autotools_backend.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/build/autotools_backend.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/build/autotools_backend.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/build/autotools_backend.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/build/builder.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/build/builder.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/build/builder.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/build/builder.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/build/cmake_backend.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/build/cmake_backend.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/build/cmake_backend.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/build/cmake_backend.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/cli/cli.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/cli/cli.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/cli/cli.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/cli/cli.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/cli/command_line.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/cli/command_line.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/cli/command_line.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/cli/command_line.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/core/arch_repository.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/core/arch_repository.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/core/arch_repository.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/core/arch_repository.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/core/config.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/core/config.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/core/config.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/core/config.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/core/detail/filesystem.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/core/detail/filesystem.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/core/detail/filesystem.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/core/detail/filesystem.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/core/install_plan.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/core/install_plan.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/core/install_plan.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/core/install_plan.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/core/local_repository.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/core/local_repository.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/core/local_repository.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/core/local_repository.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/core/locking.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/core/locking.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/core/locking.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/core/locking.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/core/path_layout.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/core/path_layout.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/core/path_layout.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/core/path_layout.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/core/repository.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/core/repository.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/core/repository.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/core/repository.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/core/schema.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/core/schema.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/core/schema.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/core/schema.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/core/selection.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/core/selection.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/core/selection.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/core/selection.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/dependency/constraint.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/dependency/constraint.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/dependency/constraint.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/dependency/constraint.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/dependency/expression_validation.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/dependency/expression_validation.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/dependency/expression_validation.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/dependency/expression_validation.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/dependency/installed_environment.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/dependency/installed_environment.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/dependency/installed_environment.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/dependency/installed_environment.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/dependency/parser.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/dependency/parser.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/dependency/parser.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/dependency/parser.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/dependency/resolver.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/dependency/resolver.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/dependency/resolver.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/dependency/resolver.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/dependency/serializer.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/dependency/serializer.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/dependency/serializer.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/dependency/serializer.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/dependency/validator.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/dependency/validator.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/dependency/validator.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/dependency/validator.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/download/downloader.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/download/downloader.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/download/downloader.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/download/downloader.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/generation/codec.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/generation/codec.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/generation/codec.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/generation/codec.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/generation/document.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/generation/document.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/generation/document.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/generation/document.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/generation/generation.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/generation/generation.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/generation/generation.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/generation/generation.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/generation/publication.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/generation/publication.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/generation/publication.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/generation/publication.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/hash/sha256.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/hash/sha256.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/hash/sha256.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/hash/sha256.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/install/generation_builder.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/install/generation_builder.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/install/generation_builder.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/install/generation_builder.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/install/install_plan.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/install/install_plan.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/install/install_plan.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/install/install_plan.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/install/installer.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/install/installer.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/install/installer.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/install/installer.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/install/removal_planner.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/install/removal_planner.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/install/removal_planner.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/install/removal_planner.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/install/remove_plan.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/install/remove_plan.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/install/remove_plan.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/install/remove_plan.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/install/remover.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/install/remover.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/install/remover.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/install/remover.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/install/transaction.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/install/transaction.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/install/transaction.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/install/transaction.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/installed/environment.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/installed/environment.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/installed/environment.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/installed/environment.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/installed/semantics.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/installed/semantics.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/installed/semantics.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/installed/semantics.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/package/package.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/package/package.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/package/package.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/package/package.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/package/package_loader.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/package/package_loader.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/package/package_loader.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/package/package_loader.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/parsing/bounded_toml.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/parsing/bounded_toml.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/parsing/bounded_toml.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/parsing/bounded_toml.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/paths/paths.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/paths/paths.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/paths/paths.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/paths/paths.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/realization/executor.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/realization/executor.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/realization/executor.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/realization/executor.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/realization/record.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/realization/record.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/realization/record.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/realization/record.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/repository/arch_repository.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/repository/arch_repository.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/repository/arch_repository.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/repository/arch_repository.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/repository/repository.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/repository/repository.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/repository/repository.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/repository/repository.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/repository/repository_index.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/repository/repository_index.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/repository/repository_index.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/repository/repository_index.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/repository/resolver_candidate.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/repository/resolver_candidate.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/repository/resolver_candidate.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/repository/resolver_candidate.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/repository/resolver_snapshot_adapter.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/repository/resolver_snapshot_adapter.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/repository/resolver_snapshot_adapter.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/repository/resolver_snapshot_adapter.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/store/gc.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/store/gc.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/store/gc.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/store/gc.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/store/gc_trash.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/store/gc_trash.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/store/gc_trash.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/store/gc_trash.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/store/manifest.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/store/manifest.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/store/manifest.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/store/manifest.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/store/metadata.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/store/metadata.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/store/metadata.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/store/metadata.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/store/object_store.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/store/object_store.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/store/object_store.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/store/object_store.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/store/store.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/store/store.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/store/store.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/store/store.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/store/transaction_pins.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/store/transaction_pins.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/store/transaction_pins.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/store/transaction_pins.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/verify/verifier.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/verify/verifier.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/verify/verifier.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/verify/verifier.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -Dathena_core_EXPORTS -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_core.dir/src/version/version.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/version/version.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/version/version.cpp",
+  "output": "CMakeFiles/athena_core.dir/src/version/version.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/athena.dir/src/main.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/src/main.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/src/main.cpp",
+  "output": "CMakeFiles/athena.dir/src/main.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/store_metadata_errors_test.dir/tests/store_metadata_errors_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/store_metadata_errors_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/store_metadata_errors_test.cpp",
+  "output": "CMakeFiles/store_metadata_errors_test.dir/tests/store_metadata_errors_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/bounded_toml_test.dir/tests/bounded_toml_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/bounded_toml_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/bounded_toml_test.cpp",
+  "output": "CMakeFiles/bounded_toml_test.dir/tests/bounded_toml_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/operational_request_codec_test.dir/tests/operational_request_codec_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/operational_request_codec_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/operational_request_codec_test.cpp",
+  "output": "CMakeFiles/operational_request_codec_test.dir/tests/operational_request_codec_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/operational_request_runtime_test.dir/tests/operational_request_runtime_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/operational_request_runtime_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/operational_request_runtime_test.cpp",
+  "output": "CMakeFiles/operational_request_runtime_test.dir/tests/operational_request_runtime_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/initial_activation_test.dir/tests/initial_activation_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/initial_activation_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/initial_activation_test.cpp",
+  "output": "CMakeFiles/initial_activation_test.dir/tests/initial_activation_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/operational_activation_test.dir/tests/operational_activation_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/operational_activation_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/operational_activation_test.cpp",
+  "output": "CMakeFiles/operational_activation_test.dir/tests/operational_activation_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/operational_plan_test.dir/tests/operational_plan_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/operational_plan_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/operational_plan_test.cpp",
+  "output": "CMakeFiles/operational_plan_test.dir/tests/operational_plan_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/activation_reconciliation_test.dir/tests/activation_reconciliation_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_reconciliation_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_reconciliation_test.cpp",
+  "output": "CMakeFiles/activation_reconciliation_test.dir/tests/activation_reconciliation_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/activation_selection_test.dir/tests/activation_selection_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_selection_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_selection_test.cpp",
+  "output": "CMakeFiles/activation_selection_test.dir/tests/activation_selection_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/activation_plan_retention_test.dir/tests/activation_plan_retention_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_plan_retention_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_plan_retention_test.cpp",
+  "output": "CMakeFiles/activation_plan_retention_test.dir/tests/activation_plan_retention_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -DATHENA_D4_LOCATOR_FAULT_LIBRARY -Dathena_d4_locator_fault_EXPORTS  -O3 -DNDEBUG -std=c++20 -fPIC -o CMakeFiles/athena_d4_locator_fault.dir/tests/activation_plan_persistence_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_plan_persistence_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_plan_persistence_test.cpp",
+  "output": "CMakeFiles/athena_d4_locator_fault.dir/tests/activation_plan_persistence_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/activation_plan_persistence_test.dir/tests/activation_plan_persistence_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_plan_persistence_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_plan_persistence_test.cpp",
+  "output": "CMakeFiles/activation_plan_persistence_test.dir/tests/activation_plan_persistence_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/legacy_d3_test.dir/tests/legacy_d3_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/legacy_d3_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/legacy_d3_test.cpp",
+  "output": "CMakeFiles/legacy_d3_test.dir/tests/legacy_d3_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/activation_projection_fs_test.dir/tests/activation_projection_fs_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_projection_fs_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_projection_fs_test.cpp",
+  "output": "CMakeFiles/activation_projection_fs_test.dir/tests/activation_projection_fs_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/activation_current_test.dir/tests/activation_current_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_current_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_current_test.cpp",
+  "output": "CMakeFiles/activation_current_test.dir/tests/activation_current_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/activation_schema_test.dir/tests/activation_schema_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_schema_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_schema_test.cpp",
+  "output": "CMakeFiles/activation_schema_test.dir/tests/activation_schema_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/activation_digest_test.dir/tests/activation_digest_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_digest_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_digest_test.cpp",
+  "output": "CMakeFiles/activation_digest_test.dir/tests/activation_digest_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/transaction_gc_fault_test.dir/tests/transaction_gc_fault_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/transaction_gc_fault_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/transaction_gc_fault_test.cpp",
+  "output": "CMakeFiles/transaction_gc_fault_test.dir/tests/transaction_gc_fault_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/transaction_gc_protocol_test.dir/tests/transaction_gc_protocol_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/transaction_gc_protocol_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/transaction_gc_protocol_test.cpp",
+  "output": "CMakeFiles/transaction_gc_protocol_test.dir/tests/transaction_gc_protocol_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/transaction_gc_test.dir/tests/transaction_gc_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/transaction_gc_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/transaction_gc_test.cpp",
+  "output": "CMakeFiles/transaction_gc_test.dir/tests/transaction_gc_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/immutable_publication_test.dir/tests/immutable_publication_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/immutable_publication_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/immutable_publication_test.cpp",
+  "output": "CMakeFiles/immutable_publication_test.dir/tests/immutable_publication_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/locking_test.dir/tests/locking_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/locking_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/locking_test.cpp",
+  "output": "CMakeFiles/locking_test.dir/tests/locking_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/durable_filesystem_test.dir/tests/durable_filesystem_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/durable_filesystem_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/durable_filesystem_test.cpp",
+  "output": "CMakeFiles/durable_filesystem_test.dir/tests/durable_filesystem_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/installed_semantics_regression_test.dir/tests/installed_semantics_regression_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/installed_semantics_regression_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/installed_semantics_regression_test.cpp",
+  "output": "CMakeFiles/installed_semantics_regression_test.dir/tests/installed_semantics_regression_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/installed_semantics_test.dir/tests/installed_semantics_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/installed_semantics_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/installed_semantics_test.cpp",
+  "output": "CMakeFiles/installed_semantics_test.dir/tests/installed_semantics_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/installed_semantics_integration_test.dir/tests/installed_semantics_integration_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/installed_semantics_integration_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/installed_semantics_integration_test.cpp",
+  "output": "CMakeFiles/installed_semantics_integration_test.dir/tests/installed_semantics_integration_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/cli_install_test.dir/tests/cli_install_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/cli_install_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/cli_install_test.cpp",
+  "output": "CMakeFiles/cli_install_test.dir/tests/cli_install_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/cli_install_integration_test.dir/tests/cli_install_integration_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/cli_install_integration_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/cli_install_integration_test.cpp",
+  "output": "CMakeFiles/cli_install_integration_test.dir/tests/cli_install_integration_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/install_transaction_test.dir/tests/install_transaction_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/install_transaction_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/install_transaction_test.cpp",
+  "output": "CMakeFiles/install_transaction_test.dir/tests/install_transaction_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/install_transaction_integration_test.dir/tests/install_transaction_integration_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/install_transaction_integration_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/install_transaction_integration_test.cpp",
+  "output": "CMakeFiles/install_transaction_integration_test.dir/tests/install_transaction_integration_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/activation_projection_test.dir/tests/activation_projection_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_projection_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_projection_test.cpp",
+  "output": "CMakeFiles/activation_projection_test.dir/tests/activation_projection_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/generation_activation_test.dir/tests/generation_activation_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/generation_activation_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/generation_activation_test.cpp",
+  "output": "CMakeFiles/generation_activation_test.dir/tests/generation_activation_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/generation_membership_test.dir/tests/generation_membership_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/generation_membership_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/generation_membership_test.cpp",
+  "output": "CMakeFiles/generation_membership_test.dir/tests/generation_membership_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/realization_executor_test.dir/tests/realization_executor_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/realization_executor_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/realization_executor_test.cpp",
+  "output": "CMakeFiles/realization_executor_test.dir/tests/realization_executor_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/realization_executor_integration_test.dir/tests/realization_executor_integration_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/realization_executor_integration_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/realization_executor_integration_test.cpp",
+  "output": "CMakeFiles/realization_executor_integration_test.dir/tests/realization_executor_integration_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/realization_record_test.dir/tests/realization_record_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/realization_record_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/realization_record_test.cpp",
+  "output": "CMakeFiles/realization_record_test.dir/tests/realization_record_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/object_store_test.dir/tests/object_store_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/object_store_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/object_store_test.cpp",
+  "output": "CMakeFiles/object_store_test.dir/tests/object_store_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/object_store_scanner_test.dir/tests/object_store_scanner_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/object_store_scanner_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/object_store_scanner_test.cpp",
+  "output": "CMakeFiles/object_store_scanner_test.dir/tests/object_store_scanner_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/artifact_encoding_test.dir/tests/artifact_encoding_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/artifact_encoding_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/artifact_encoding_test.cpp",
+  "output": "CMakeFiles/artifact_encoding_test.dir/tests/artifact_encoding_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/artifact_identity_test.dir/tests/artifact_identity_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/artifact_identity_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/artifact_identity_test.cpp",
+  "output": "CMakeFiles/artifact_identity_test.dir/tests/artifact_identity_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/artifact_identity_scanner_test.dir/tests/artifact_identity_scanner_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/artifact_identity_scanner_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/artifact_identity_scanner_test.cpp",
+  "output": "CMakeFiles/artifact_identity_scanner_test.dir/tests/artifact_identity_scanner_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/artifact_model_test.dir/tests/artifact_model_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/artifact_model_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/artifact_model_test.cpp",
+  "output": "CMakeFiles/artifact_model_test.dir/tests/artifact_model_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/artifact_scanner_test.dir/tests/artifact_scanner_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/artifact_scanner_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/artifact_scanner_test.cpp",
+  "output": "CMakeFiles/artifact_scanner_test.dir/tests/artifact_scanner_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/artifact_contract_test.dir/tests/artifact_contract_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/artifact_contract_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/artifact_contract_test.cpp",
+  "output": "CMakeFiles/artifact_contract_test.dir/tests/artifact_contract_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/arch_repository_test.dir/tests/arch_repository_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/arch_repository_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/arch_repository_test.cpp",
+  "output": "CMakeFiles/arch_repository_test.dir/tests/arch_repository_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/arch_repository_adapter_test.dir/tests/arch_repository_adapter_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/arch_repository_adapter_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/arch_repository_adapter_test.cpp",
+  "output": "CMakeFiles/arch_repository_adapter_test.dir/tests/arch_repository_adapter_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/arch_version_test.dir/tests/arch_version_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/arch_version_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/arch_version_test.cpp",
+  "output": "CMakeFiles/arch_version_test.dir/tests/arch_version_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/cmake_backend_test.dir/tests/cmake_backend_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/cmake_backend_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/cmake_backend_test.cpp",
+  "output": "CMakeFiles/cmake_backend_test.dir/tests/cmake_backend_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/version_test.dir/tests/version_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/version_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/version_test.cpp",
+  "output": "CMakeFiles/version_test.dir/tests/version_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/package_loader_test.dir/tests/package_loader_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/package_loader_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/package_loader_test.cpp",
+  "output": "CMakeFiles/package_loader_test.dir/tests/package_loader_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/dependency_resolver_test.dir/tests/dependency_resolver_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/dependency_resolver_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/dependency_resolver_test.cpp",
+  "output": "CMakeFiles/dependency_resolver_test.dir/tests/dependency_resolver_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/install_plan_test.dir/tests/install_plan_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/install_plan_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/install_plan_test.cpp",
+  "output": "CMakeFiles/install_plan_test.dir/tests/install_plan_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/generation_builder_test.dir/tests/generation_builder_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/generation_builder_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/generation_builder_test.cpp",
+  "output": "CMakeFiles/generation_builder_test.dir/tests/generation_builder_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/dependency_expression_test.dir/tests/dependency_expression_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/dependency_expression_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/dependency_expression_test.cpp",
+  "output": "CMakeFiles/dependency_expression_test.dir/tests/dependency_expression_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/dependency_roles_test.dir/tests/dependency_roles_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/dependency_roles_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/dependency_roles_test.cpp",
+  "output": "CMakeFiles/dependency_roles_test.dir/tests/dependency_roles_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/dependency_scope_precedence_test.dir/tests/dependency_scope_precedence_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/dependency_scope_precedence_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/dependency_scope_precedence_test.cpp",
+  "output": "CMakeFiles/dependency_scope_precedence_test.dir/tests/dependency_scope_precedence_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/dependency_expression_resolution_test.dir/tests/dependency_expression_resolution_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/dependency_expression_resolution_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/dependency_expression_resolution_test.cpp",
+  "output": "CMakeFiles/dependency_expression_resolution_test.dir/tests/dependency_expression_resolution_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/dependency_constraint_test.dir/tests/dependency_constraint_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/dependency_constraint_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/dependency_constraint_test.cpp",
+  "output": "CMakeFiles/dependency_constraint_test.dir/tests/dependency_constraint_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/dependency_parser_test.dir/tests/dependency_parser_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/dependency_parser_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/dependency_parser_test.cpp",
+  "output": "CMakeFiles/dependency_parser_test.dir/tests/dependency_parser_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/dependency_serializer_test.dir/tests/dependency_serializer_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/dependency_serializer_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/dependency_serializer_test.cpp",
+  "output": "CMakeFiles/dependency_serializer_test.dir/tests/dependency_serializer_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/dependency_validator_test.dir/tests/dependency_validator_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/dependency_validator_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/dependency_validator_test.cpp",
+  "output": "CMakeFiles/dependency_validator_test.dir/tests/dependency_validator_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/remove_plan_test.dir/tests/remove_plan_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/remove_plan_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/remove_plan_test.cpp",
+  "output": "CMakeFiles/remove_plan_test.dir/tests/remove_plan_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/removal_planner_test.dir/tests/removal_planner_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/removal_planner_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/removal_planner_test.cpp",
+  "output": "CMakeFiles/removal_planner_test.dir/tests/removal_planner_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/activation_test.dir/tests/activation_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_test.cpp",
+  "output": "CMakeFiles/activation_test.dir/tests/activation_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/generation_test.dir/tests/generation_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/generation_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/generation_test.cpp",
+  "output": "CMakeFiles/generation_test.dir/tests/generation_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/installer_e2e_test.dir/tests/installer_e2e_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/installer_e2e_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/installer_e2e_test.cpp",
+  "output": "CMakeFiles/installer_e2e_test.dir/tests/installer_e2e_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/store_metadata_test.dir/tests/store_metadata_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/store_metadata_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/store_metadata_test.cpp",
+  "output": "CMakeFiles/store_metadata_test.dir/tests/store_metadata_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/gc_test.dir/tests/gc_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/gc_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/gc_test.cpp",
+  "output": "CMakeFiles/gc_test.dir/tests/gc_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/repository_index_test.dir/tests/repository_index_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/repository_index_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/repository_index_test.cpp",
+  "output": "CMakeFiles/repository_index_test.dir/tests/repository_index_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/repository_test.dir/tests/repository_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/repository_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/repository_test.cpp",
+  "output": "CMakeFiles/repository_test.dir/tests/repository_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/repository_api_types_test.dir/tests/repository_api_types_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/repository_api_types_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/repository_api_types_test.cpp",
+  "output": "CMakeFiles/repository_api_types_test.dir/tests/repository_api_types_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/metadata_schema_test.dir/tests/metadata_schema_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/metadata_schema_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/metadata_schema_test.cpp",
+  "output": "CMakeFiles/metadata_schema_test.dir/tests/metadata_schema_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/repository_snapshot_test.dir/tests/repository_snapshot_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/repository_snapshot_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/repository_snapshot_test.cpp",
+  "output": "CMakeFiles/repository_snapshot_test.dir/tests/repository_snapshot_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/repository_selection_test.dir/tests/repository_selection_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/repository_selection_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/repository_selection_test.cpp",
+  "output": "CMakeFiles/repository_selection_test.dir/tests/repository_selection_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/resolver_candidate_test.dir/tests/resolver_candidate_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/resolver_candidate_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/resolver_candidate_test.cpp",
+  "output": "CMakeFiles/resolver_candidate_test.dir/tests/resolver_candidate_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/resolver_snapshot_adapter_test.dir/tests/resolver_snapshot_adapter_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/resolver_snapshot_adapter_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/resolver_snapshot_adapter_test.cpp",
+  "output": "CMakeFiles/resolver_snapshot_adapter_test.dir/tests/resolver_snapshot_adapter_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/install_request_resolution_test.dir/tests/install_request_resolution_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/install_request_resolution_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/install_request_resolution_test.cpp",
+  "output": "CMakeFiles/install_request_resolution_test.dir/tests/install_request_resolution_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/local_repository_test.dir/tests/local_repository_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/local_repository_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/local_repository_test.cpp",
+  "output": "CMakeFiles/local_repository_test.dir/tests/local_repository_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/removal_e2e_test.dir/tests/removal_e2e_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/removal_e2e_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/removal_e2e_test.cpp",
+  "output": "CMakeFiles/removal_e2e_test.dir/tests/removal_e2e_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/removal_realization_test.dir/tests/removal_realization_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/removal_realization_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/removal_realization_test.cpp",
+  "output": "CMakeFiles/removal_realization_test.dir/tests/removal_realization_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/core_foundation_test.dir/tests/core_foundation_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/core_foundation_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/core_foundation_test.cpp",
+  "output": "CMakeFiles/core_foundation_test.dir/tests/core_foundation_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/public_planning_test.dir/tests/public_planning_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/public_planning_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/public_planning_test.cpp",
+  "output": "CMakeFiles/public_planning_test.dir/tests/public_planning_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/public_install_plan_test.dir/tests/public_install_plan_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/public_install_plan_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/public_install_plan_test.cpp",
+  "output": "CMakeFiles/public_install_plan_test.dir/tests/public_install_plan_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -UNDEBUG -o CMakeFiles/resolution_result_test.dir/tests/resolution_result_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/resolution_result_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/resolution_result_test.cpp",
+  "output": "CMakeFiles/resolution_result_test.dir/tests/resolution_result_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/arch_repository_live_test.dir/tests/arch_repository_live.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/arch_repository_live.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/arch_repository_live.cpp",
+  "output": "CMakeFiles/arch_repository_live_test.dir/tests/arch_repository_live.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/activation_execution_privileged_test.dir/tests/activation_execution_privileged_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/activation_execution_privileged_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/activation_execution_privileged_test.cpp",
+  "output": "CMakeFiles/activation_execution_privileged_test.dir/tests/activation_execution_privileged_test.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++   -O3 -DNDEBUG -std=c++20 -o CMakeFiles/toml_upstream_probe.dir/tests/toml_probe.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/toml_probe.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/toml_probe.cpp",
+  "output": "CMakeFiles/toml_upstream_probe.dir/tests/toml_probe.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -DATHENA_TOML_PROBE -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/toml_athena_probe.dir/tests/toml_probe.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/toml_probe.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/toml_probe.cpp",
+  "output": "CMakeFiles/toml_athena_probe.dir/tests/toml_probe.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -o CMakeFiles/toml_coexistence_upstream_first.dir/tests/toml_coexistence_order.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/toml_coexistence_order.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/toml_coexistence_order.cpp",
+  "output": "CMakeFiles/toml_coexistence_upstream_first.dir/tests/toml_coexistence_order.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++ -DATHENA_FORK_FIRST -I/home/alessandro/Lab/Programming/athena-pm/include -I/home/alessandro/Lab/Programming/athena-pm/src -I/home/alessandro/Lab/Programming/athena-pm/third_party -O3 -DNDEBUG -std=c++20 -o CMakeFiles/toml_coexistence_athena_first.dir/tests/toml_coexistence_order.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/toml_coexistence_order.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/toml_coexistence_order.cpp",
+  "output": "CMakeFiles/toml_coexistence_athena_first.dir/tests/toml_coexistence_order.cpp.o"
+},
+{
+  "directory": "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+  "command": "/usr/bin/c++  -I/home/alessandro/Lab/Programming/athena-pm/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/toml_upstream_consumer_test.dir/tests/toml_upstream_consumer_test.cpp.o -c /home/alessandro/Lab/Programming/athena-pm/tests/toml_upstream_consumer_test.cpp",
+  "file": "/home/alessandro/Lab/Programming/athena-pm/tests/toml_upstream_consumer_test.cpp",
+  "output": "CMakeFiles/toml_upstream_consumer_test.dir/tests/toml_upstream_consumer_test.cpp.o"
+}
+]

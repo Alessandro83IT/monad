@@ -1,0 +1,24 @@
+{
+  "from": "docs/qualification/m2.5-d8-b1-runtime-20261015-1/SOURCE.sha256",
+  "from_sha256": "cdfc1dbebf8b737cfb88dc79709b8888101d7c49f7617f86f095a5c5067e036f",
+  "to_sha256": "de08ba33e30c09d0a529d1d44e172ea4422e25842cf40bcd6660e44b0841cf92",
+  "added": [],
+  "removed": [],
+  "changed": [
+    {
+      "path": "docs/m2.5-d8-b1-request-runtime.md",
+      "before": "d3eefcfb4c6e0a5e7c01eab027f9b9a40fd3e6325fa4e29007fe1ea7470066a4",
+      "after": "4b3288fd75da2484c3d4ea69a939f7cfb21dbe35753ae14f7bff8b1622dc0307"
+    },
+    {
+      "path": "src/activation/operational_request_runtime.hpp",
+      "before": "e8ba019635d66426274e955fa009e9337909e9f6daadfd03f923daaaccf922d6",
+      "after": "5d25d26ce5d86b1ab7c5eb420217df992a3ff9d578a9132fc0d91c7b9357d492"
+    },
+    {
+      "path": "tests/operational_request_runtime_test.cpp",
+      "before": "e54f2079c6e95cb9e0a1b36b083977fe11e040529ab8778b526627303b694d5c",
+      "after": "e3c0ce22390d48e636da2e41b9a62aef7dad2865bb93e9c0b971083df21f8877"
+    }
+  ]
+}

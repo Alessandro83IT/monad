@@ -1,0 +1,39 @@
+Command: nm -C --undefined-only /tmp/athena-b1-p166-qualified/debug/CMakeFiles/athena_core.dir/src/activation/operational_request_runtime.cpp.o
+                 U _GLOBAL_OFFSET_TABLE_
+                 U _Unwind_Resume
+                 U athena::activation::ExecutionError::ExecutionError(athena::activation::ExecutionCause, athena::activation::ProjectionOutcome, int, std::basic_string_view<char, std::char_traits<char> >)
+                 U athena::activation::inspect_selection(athena::activation::ProjectionContext&, athena::activation::ProjectionState const&)
+                 U athena::activation::activate_operational(athena::activation::ProjectionContext&, athena::activation::ProjectionState const&, athena::activation::OperationalPlanInput const&, std::optional<athena::activation::Sha256Digest<athena::activation::PlanDigestTag> > const&)
+                 U athena::activation::PreparedOperationalRequest::create(athena::activation::OperationalPlanInput const&, std::optional<athena::activation::Sha256Digest<athena::activation::PlanDigestTag> > const&)
+                 U athena::generation::read_generation_document(std::filesystem::__cxx11::path const&, unsigned long, std::function<long (int, void*, unsigned long)> const&)
+                 U std::filesystem::__cxx11::path::_List::_Impl_deleter::operator()(std::filesystem::__cxx11::path::_List::_Impl*) const
+                 U std::logic_error::what() const
+                 U std::runtime_error::what() const
+                 U std::filesystem::__cxx11::path::_M_split_cmpts()
+                 U std::filesystem::__cxx11::path::_List::_List()
+                 U std::runtime_error::~runtime_error()
+                 U std::invalid_argument::invalid_argument(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+                 U std::invalid_argument::~invalid_argument()
+                 U std::exception::~exception()
+                 U std::__throw_bad_alloc()
+                 U std::__throw_logic_error(char const*)
+                 U std::__throw_length_error(char const*)
+                 U std::__glibcxx_assert_fail(char const*, int, char const*, char const*)
+                 U typeinfo for std::runtime_error
+                 U typeinfo for std::invalid_argument
+                 U typeinfo for std::exception
+                 U vtable for __cxxabiv1::__pointer_type_info
+                 U vtable for __cxxabiv1::__function_type_info
+                 U vtable for __cxxabiv1::__si_class_type_info
+                 U vtable for std::exception
+                 U operator delete(void*, unsigned long)
+                 U operator new(unsigned long)
+                 U __cxa_allocate_exception
+                 U __cxa_free_exception
+                 U __cxa_throw
+                 U __gxx_personality_v0
+                 U __stack_chk_fail
+                 U memcmp
+                 U memcpy
+                 U read
+                 U strlen

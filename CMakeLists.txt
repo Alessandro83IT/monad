@@ -64,6 +64,7 @@ set(ATHENA_TESTS
     store_metadata_errors_test
     bounded_toml_test
     operational_request_codec_test
+    operational_request_runtime_test
     initial_activation_test
     operational_activation_test
     operational_plan_test
@@ -284,6 +285,7 @@ add_test(NAME activation_plan_persistence_qualification_cleanup_test
 set_tests_properties(activation_plan_persistence_qualification_cleanup_test PROPERTIES TIMEOUT 30)
 
 set_tests_properties(operational_activation_test PROPERTIES TIMEOUT 30)
+set_tests_properties(operational_request_runtime_test PROPERTIES TIMEOUT 30)
 
 set_tests_properties(initial_activation_test PROPERTIES TIMEOUT 30)
 add_test(NAME initial_activation_migration_test COMMAND initial_activation_test migration)

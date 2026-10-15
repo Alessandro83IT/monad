@@ -1,0 +1,817 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="116"
+	failures="0"
+	disabled="0"
+	skipped="10"
+	hostname=""
+	time="123"
+	timestamp="2026-10-15T09:04:25"
+	>
+	<testcase name="store_metadata_errors_test" classname="store_metadata_errors_test" time="0.00252609" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="bounded_toml_test" classname="bounded_toml_test" time="0.00384174" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="operational_request_codec_test" classname="operational_request_codec_test" time="7.49301" status="run">
+		<properties/>
+		<system-out>H1-R1 guard rejected embedded input containing 32 scalar nodes: 6 ordinary allocations, 431 requested bytes (not peak RSS).
+</system-out>
+	</testcase>
+	<testcase name="operational_request_runtime_test" classname="operational_request_runtime_test" time="0.166702" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="initial_activation_test" classname="initial_activation_test" time="0.268791" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="operational_activation_test" classname="operational_activation_test" time="0.112193" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="operational_plan_test" classname="operational_plan_test" time="0.0590194" status="run">
+		<properties/>
+		<system-out>PASS operational plan: transitions, membership, witnesses, canonical ordering, invalid inputs
+</system-out>
+	</testcase>
+	<testcase name="activation_reconciliation_test" classname="activation_reconciliation_test" time="0.0695161" status="run">
+		<properties/>
+		<system-out>D7 operation 0 fsync boundaries: 8
+D7 operation 1 fsync boundaries: 2
+D7 operation 2 fsync boundaries: 2
+</system-out>
+	</testcase>
+	<testcase name="activation_selection_test" classname="activation_selection_test" time="74.712" status="run">
+		<properties/>
+		<system-out>D6 fsync boundaries: 16
+D6 I/O kind 0 boundaries: 141
+D6 I/O kind 1 boundaries: 5529
+D6 I/O kind 2 boundaries: 90
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_retention_test" classname="activation_plan_retention_test" time="0.195754" status="run">
+		<properties/>
+		<system-out>D5: rejected 594 read/open/stat/enumeration fault boundaries without mutation
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_test" classname="activation_plan_persistence_test" time="11.385" status="run">
+		<properties/>
+		<system-out>R2-B4: seven recovery fsync faults, nine states, 72 file/directory statx omissions, two EMFILE cases; move/RAII/registry verified
+R2-B4: eight authority/binding/foreign substitutions; original anchors, opaque bytes and residue retained
+R2-B3: 5 publication paths, every fsync failure, actual instance/phase registry; fd peak 12/15, pins 11
+R2-B3: 24 mandatory-field/registry regressions, 4 rename error transitions, durable-bootstrap ledger, 3 EMFILE cases
+R2-B2 bootstrap fd peak 12/15 at 1 containers (target=0)
+R2-B2 bootstrap fd peak 12/15 at 4096 containers (target=0)
+R2-B2 bootstrap fd peak 12/15 at 4096 containers (target=1)
+R1 evidence: identity/binding/target/inventory/transitions/lifetime; fd peaks 12/12/14 for 1/4096/4096-with-target containers, bound 15
+R2-A.1: 12 missing-field cases; UnsafeEntry/errno=0/OutcomeUncertain; fsyncs before=0 after=1, recorded=0
+R2-B1.1: 12 single foreign statx omissions; UnsafeEntry/0/NotMutated, zero fsync, no leaks
+R2-B1 inspection: 10 scenarios and 6 missing-field cases;...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="legacy_d3_test" classname="legacy_d3_test" time="0.0610754" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="activation_projection_fs_test" classname="activation_projection_fs_test" time="0.0569902" status="run">
+		<properties/>
+		<system-out>D2 projection binding/security/witness/fault/process-death mechanics passed
+</system-out>
+	</testcase>
+	<testcase name="activation_current_test" classname="activation_current_test" time="0.00248707" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="activation_schema_test" classname="activation_schema_test" time="0.68108" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="activation_digest_test" classname="activation_digest_test" time="0.169576" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="transaction_gc_fault_test" classname="transaction_gc_fault_test" time="0.0344679" status="run">
+		<properties/>
+		<system-out>M2.5-C syscall/failure matrix passed
+</system-out>
+	</testcase>
+	<testcase name="transaction_gc_protocol_test" classname="transaction_gc_protocol_test" time="0.0215333" status="run">
+		<properties/>
+		<system-out>M2.5-C protocol/contention tests passed
+</system-out>
+	</testcase>
+	<testcase name="transaction_gc_test" classname="transaction_gc_test" time="0.0473345" status="run">
+		<properties/>
+		<system-out>M2.5-C pins passed
+</system-out>
+	</testcase>
+	<testcase name="immutable_publication_test" classname="immutable_publication_test" time="0.0147609" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="locking_test" classname="locking_test" time="0.0979864" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="durable_filesystem_test" classname="durable_filesystem_test" time="0.00280635" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="installed_semantics_regression_test" classname="installed_semantics_regression_test" time="0.0105538" status="run">
+		<properties/>
+		<system-out>H1 regression passed
+H2 regression passed
+H3 regression passed
+H4 regression passed
+H5 regression passed
+Attivazione del pacchetto: /tmp/athena-object-XhRiO6/historical-store
+M1 regression passed
+</system-out>
+	</testcase>
+	<testcase name="installed_semantics_test" classname="installed_semantics_test" time="0.0141483" status="run">
+		<properties/>
+		<system-out>installed semantic state, offline transitions and failure boundaries passed
+</system-out>
+	</testcase>
+	<testcase name="installed_semantics_integration_test" classname="installed_semantics_integration_test" time="0.00224677" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP installed semantic lifecycle: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+	<testcase name="cli_install_test" classname="cli_install_test" time="0.00569037" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="cli_install_integration_test" classname="cli_install_integration_test" time="0.0019752" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP CLI installation: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+	<testcase name="install_transaction_test" classname="install_transaction_test" time="0.0038503" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="install_transaction_integration_test" classname="install_transaction_integration_test" time="0.00205979" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP install transaction publication: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+	<testcase name="activation_projection_test" classname="activation_projection_test" time="0.00719782" status="run">
+		<properties/>
+		<system-out>Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/source
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/source
+Disattivazione del pacchetto: /tmp/athena-object-tZ7Jr9/source
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/source
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/source
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/source
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/source
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/source
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/old
+Disattivazione del pacchetto: /tmp/athena-object-tZ7Jr9/old
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/first
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/second
+Disattivazione del pacchetto: /tmp/athena-object-tZ7Jr9/first
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/old
+Disattivazione del pacchetto: /tmp/athena-object-tZ7Jr9/old
+Attivazione del pacchetto: /tmp/athena-object-tZ7Jr9/tree
+Disattivazione del pacchetto: /tmp/athena-object-tZ7Jr9/tree
+Attivaz...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="generation_activation_test" classname="generation_activation_test" time="0.00421175" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP generation ObjectStore activation integration: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+	<testcase name="generation_membership_test" classname="generation_membership_test" time="0.0101141" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="realization_executor_test" classname="realization_executor_test" time="0.477763" status="run">
+		<properties/>
+		<system-out>CMake Warning (dev) in CMakeLists.txt:
+  No project() command is present.  The top-level CMakeLists.txt file must
+  contain a literal, direct call to the project() command.  Add a line of
+  code such as
+
+    project(ProjectName)
+
+  near the top of the file, but after cmake_minimum_required().
+
+  CMake is pretending there is a "project(Project)" command on the first
+  line.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) in CMakeLists.txt:
+  cmake_minimum_required() should be called prior to this top-level project()
+  call.  Please see the cmake-commands(7) manual for usage documentation of
+  both commands.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- The C compiler identification is GNU 16.2.1
+-- The CXX compiler identification is GNU 16.2.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="realization_executor_integration_test" classname="realization_executor_integration_test" time="0.00255189" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP realization publication: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+	<testcase name="realization_record_test" classname="realization_record_test" time="0.00322904" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="object_store_test" classname="object_store_test" time="0.00697058" status="run">
+		<properties/>
+		<system-out>object store path/materialization/no-replace/process visibility mechanics passed
+</system-out>
+	</testcase>
+	<testcase name="object_store_scanner_test" classname="object_store_scanner_test" time="0.00322995" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP authoritative store/scanner publication, tampering and concurrency: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+	<testcase name="artifact_encoding_test" classname="artifact_encoding_test" time="0.00212991" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="artifact_identity_test" classname="artifact_identity_test" time="0.00282093" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="artifact_identity_scanner_test" classname="artifact_identity_scanner_test" time="0.00214086" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP scanner identity integration: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+	<testcase name="artifact_model_test" classname="artifact_model_test" time="0.00205574" status="run">
+		<properties/>
+		<system-out>Artifact model tests passed.
+</system-out>
+	</testcase>
+	<testcase name="artifact_contract_test" classname="artifact_contract_test" time="0.00359352" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="arch_repository_test" classname="arch_repository_test" time="0.00791749" status="run">
+		<properties/>
+		<system-out>Arch repository tests passed.
+</system-out>
+	</testcase>
+	<testcase name="arch_repository_adapter_test" classname="arch_repository_adapter_test" time="0.0644951" status="run">
+		<properties/>
+		<system-out>Arch repository adapter tests passed.
+</system-out>
+	</testcase>
+	<testcase name="arch_version_test" classname="arch_version_test" time="0.00243912" status="run">
+		<properties/>
+		<system-out>Arch version tests passed.
+</system-out>
+	</testcase>
+	<testcase name="cmake_backend_test" classname="cmake_backend_test" time="0.405558" status="run">
+		<properties/>
+		<system-out>-- The CXX compiler identification is GNU 16.2.1
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/athena-cmake-test-y4t6Fv/build
+[ 50%] Building CXX object CMakeFiles/athena-cmake-test.dir/main.cpp.o
+[100%] Linking CXX executable athena-cmake-test
+[100%] Built target athena-cmake-test
+-- Install configuration: "Release"
+-- Installing: /tmp/athena-cmake-test-y4t6Fv/staging/usr/bin/athena-cmake-test
+Testing CMake backend...
+Build completed.
+Installation into staging completed.
+CMake backend tests passed.
+</system-out>
+	</testcase>
+	<testcase name="version_test" classname="version_test" time="0.00224167" status="run">
+		<properties/>
+		<system-out>Version comparison tests passed.
+</system-out>
+	</testcase>
+	<testcase name="package_loader_test" classname="package_loader_test" time="0.00203773" status="run">
+		<properties/>
+		<system-out>Package loader dependency test passed.
+</system-out>
+	</testcase>
+	<testcase name="dependency_resolver_test" classname="dependency_resolver_test" time="0.0024675" status="run">
+		<properties/>
+		<system-out>Dependency resolver tests passed.
+</system-out>
+	</testcase>
+	<testcase name="install_plan_test" classname="install_plan_test" time="0.00212014" status="run">
+		<properties/>
+		<system-out>Install plan tests passed.
+</system-out>
+	</testcase>
+	<testcase name="generation_builder_test" classname="generation_builder_test" time="0.00193414" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="dependency_expression_test" classname="dependency_expression_test" time="0.00211833" status="run">
+		<properties/>
+		<system-out>Dependency expression tests passed.
+</system-out>
+	</testcase>
+	<testcase name="dependency_roles_test" classname="dependency_roles_test" time="0.00242531" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="dependency_scope_precedence_test" classname="dependency_scope_precedence_test" time="0.0021774" status="run">
+		<properties/>
+		<system-out>dependency_scope_precedence_test: passed
+</system-out>
+	</testcase>
+	<testcase name="dependency_expression_resolution_test" classname="dependency_expression_resolution_test" time="0.0025105" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="dependency_constraint_test" classname="dependency_constraint_test" time="0.00200274" status="run">
+		<properties/>
+		<system-out>Dependency constraint tests passed.
+</system-out>
+	</testcase>
+	<testcase name="dependency_parser_test" classname="dependency_parser_test" time="0.0022614" status="run">
+		<properties/>
+		<system-out>Dependency parser tests passed.
+</system-out>
+	</testcase>
+	<testcase name="dependency_serializer_test" classname="dependency_serializer_test" time="0.00200569" status="run">
+		<properties/>
+		<system-out>Dependency serializer tests passed.
+</system-out>
+	</testcase>
+	<testcase name="dependency_validator_test" classname="dependency_validator_test" time="0.00200555" status="run">
+		<properties/>
+		<system-out>dependency_validator_test: all checks passed
+</system-out>
+	</testcase>
+	<testcase name="remove_plan_test" classname="remove_plan_test" time="0.00198739" status="run">
+		<properties/>
+		<system-out>remove_plan_test: all checks passed
+</system-out>
+	</testcase>
+	<testcase name="removal_planner_test" classname="removal_planner_test" time="0.00221133" status="run">
+		<properties/>
+		<system-out>removal_planner_test: all checks passed
+</system-out>
+	</testcase>
+	<testcase name="activation_test" classname="activation_test" time="0.00244335" status="run">
+		<properties/>
+		<system-out>Attivazione del pacchetto: /tmp/athena-activation-test-yDT8BU/store
+Disattivazione del pacchetto: /tmp/athena-activation-test-yDT8BU/store
+Attivazione del pacchetto: /tmp/athena-activation-test-yDT8BU/rollback/store
+Activation tests passed.
+</system-out>
+	</testcase>
+	<testcase name="generation_test" classname="generation_test" time="0.00492761" status="run">
+		<properties/>
+		<system-out>Attivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/switch/store-a
+Disattivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/switch/store-a
+Attivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/switch/store-b
+Disattivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/switch/store-b
+Attivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/switch/rollback/store-a
+Disattivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/switch/rollback/store-a
+Attivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/switch/rollback/store-b
+Attivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/switch/rollback/store-a
+Disattivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/switch/rollback/store-a
+Attivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/transition/store-a-v1
+Attivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/transition/store-b
+Disattivazione del pacchetto: /tmp/athena-generation-test-NEkfG8/transition/store-a-v1
+Attivazione del pacche...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="installer_e2e_test" classname="installer_e2e_test" time="0.194" status="run">
+		<properties/>
+		<system-out>-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/athena-installer-e2e-test-lQolh5/athena/build/athena-e2e-a-1.0
+-- Install configuration: "Release"
+-- Installing: /tmp/athena-installer-e2e-test-lQolh5/athena/build/athena-e2e-a-1.0-install/usr/share/athena-e2e/a.txt
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/athena-installer-e2e-test-lQolh5/athena/build/athena-e2e-b-1.0
+-- Install configuration: "Release"
+-- Installing: /tmp/athena-installer-e2e-test-lQolh5/athena/build/athena-e2e-b-1.0-install/usr/share/athena-e2e/b.txt
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/athena-installer-e2e-test-lQolh5/athena/build/athena-e2e-a-2.0
+-- Install configuration: "Release"
+-- Installing: /tmp/athena-installer-e2e-test-lQolh5/athena/build/athena-e2e-a-2.0-install/usr/share/athena-e2e/a.txt
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="store_metadata_test" classname="store_metadata_test" time="0.00247637" status="run">
+		<properties/>
+		<system-out>store_metadata_test: OK
+</system-out>
+	</testcase>
+	<testcase name="gc_test" classname="gc_test" time="0.0105462" status="run">
+		<properties/>
+		<system-out>Attivazione del pacchetto: /tmp/athena-gc-test-aNBsiU/store/package-kept-1.0
+Disattivazione del pacchetto: /tmp/athena-gc-test-aNBsiU/store/package-kept-1.0
+Attivazione del pacchetto: /tmp/athena-gc-test-aNBsiU/store/package-historical-1.0
+Disattivazione del pacchetto: /tmp/athena-gc-test-aNBsiU/store/package-historical-1.0
+Attivazione del pacchetto: /tmp/athena-gc-test-aNBsiU/store/package-kept-1.0
+Garbage collector tests passed.
+</system-out>
+	</testcase>
+	<testcase name="repository_index_test" classname="repository_index_test" time="0.00206279" status="run">
+		<properties/>
+		<system-out>Repository index tests passed.
+</system-out>
+	</testcase>
+	<testcase name="repository_test" classname="repository_test" time="0.00210238" status="run">
+		<properties/>
+		<system-out>Repository tests passed.
+</system-out>
+	</testcase>
+	<testcase name="repository_api_types_test" classname="repository_api_types_test" time="0.00201569" status="run">
+		<properties/>
+		<system-out>repository_api_types_test: passed
+</system-out>
+	</testcase>
+	<testcase name="metadata_schema_test" classname="metadata_schema_test" time="0.00233517" status="run">
+		<properties/>
+		<system-out>metadata_schema_test: passed
+</system-out>
+	</testcase>
+	<testcase name="repository_snapshot_test" classname="repository_snapshot_test" time="0.0033155" status="run">
+		<properties/>
+		<system-out>repository_snapshot_test: passed
+</system-out>
+	</testcase>
+	<testcase name="repository_selection_test" classname="repository_selection_test" time="0.0030737" status="run">
+		<properties/>
+		<system-out>repository_selection_test: passed
+</system-out>
+	</testcase>
+	<testcase name="resolver_candidate_test" classname="resolver_candidate_test" time="0.00317219" status="run">
+		<properties/>
+		<system-out>resolver_candidate_test: passed
+</system-out>
+	</testcase>
+	<testcase name="resolver_snapshot_adapter_test" classname="resolver_snapshot_adapter_test" time="0.00353265" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="install_request_resolution_test" classname="install_request_resolution_test" time="0.00493195" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="local_repository_test" classname="local_repository_test" time="0.00381405" status="run">
+		<properties/>
+		<system-out>Local repository tests passed.
+</system-out>
+	</testcase>
+	<testcase name="removal_e2e_test" classname="removal_e2e_test" time="0.00397969" status="run">
+		<properties/>
+		<system-out>Attivazione del pacchetto: /tmp/athena-removal-e2e-DKF085/state/store/package-b-1.0
+Attivazione del pacchetto: /tmp/athena-removal-e2e-DKF085/state/store/package-a-1.0
+Disattivazione del pacchetto: /tmp/athena-removal-e2e-DKF085/state/store/package-a-1.0
+Rimozione completata. Nuova generation: 2
+Attivazione del pacchetto: /tmp/athena-removal-e2e-DKF085/state/store/package-a-1.0
+removal_e2e_test passed
+</system-out>
+	</testcase>
+	<testcase name="removal_realization_test" classname="removal_realization_test" time="0.00476403" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="core_foundation_test" classname="core_foundation_test" time="0.00284498" status="run">
+		<properties/>
+		<system-out>Athena Package Manager 0.1.0
+
+Usage:
+  athena &lt;command&gt; [options]
+
+Commands:
+  install     Install a package
+  remove      Remove a package
+  list        List installed packages
+  info        Show package information
+  generation  Manage package generations
+
+  config check Validate configuration without creating state
+
+Options:
+  -h, --help      Show this help message
+  -V, --version   Show version information
+      --config PATH  Load an explicit configuration file
+      --root PATH    Override the Athena root
+Athena Package Manager 0.1.0
+Configurazione valida (schema 1).
+build: command-line
+cache: command-line
+generation_state: command-line
+repository_snapshots: command-line
+repository_state: command-line
+root: command-line
+state: command-line
+store: command-line
+target_root: command-line
+core_foundation_test: passed
+</system-out>
+	</testcase>
+	<testcase name="public_planning_test" classname="public_planning_test" time="0.0195467" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="public_install_plan_test" classname="public_install_plan_test" time="0.00344649" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="resolution_result_test" classname="resolution_result_test" time="0.0109546" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="removal_realization_integration_test" classname="removal_realization_integration_test" time="0.0055434" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP removal ObjectStore integration: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+	<testcase name="packaging_install_test" classname="packaging_install_test" time="0.095437" status="run">
+		<properties>
+			<property name="cmake_labels" value="packaging"/>
+		</properties>
+		<system-out>-- Packaging staging root: /tmp/athena-b1-runtime-qualified-20261015-1/release/packaging stage.sy4yWqrSpA
+-- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+-- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+</system-out>
+	</testcase>
+	<testcase name="packaging_regression_test" classname="packaging_regression_test" time="5.76386" status="run">
+		<properties>
+			<property name="cmake_labels" value="packaging"/>
+		</properties>
+		<system-out>-- Regression artifacts: /tmp/athena-b1-runtime-qualified-20261015-1/release/packaging regression.3hH6H0vfVK
+-- /tmp/athena-b1-runtime-qualified-20261015-1/release/packaging regression.3hH6H0vfVK/default: UpdateCTestConfiguration  from :/tmp/athena-b1-runtime-qualified-20261015-1/release/packaging regression.3hH6H0vfVK/default/DartConfiguration.tcl
+Test project /tmp/athena-b1-runtime-qualified-20261015-1/release/packaging regression.3hH6H0vfVK/default
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Release" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=" "-P" "/tmp/athena-b1-runtime-qualified-20261015-1/release/packaging regression.3hH6H0vfVK/default/packaging_install_test.cmake"
+2: Working Director...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="immutable_object_publication_test" classname="immutable_object_publication_test" time="0.0032206" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP complete ArtifactId publication coverage: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+	<testcase name="transaction_gc_crash_test" classname="transaction_gc_crash_test" time="0.0224016" status="run">
+		<properties/>
+		<system-out>M2.5-C crash passed
+</system-out>
+	</testcase>
+	<testcase name="transaction_gc_concurrency_test" classname="transaction_gc_concurrency_test" time="0.00634841" status="run">
+		<properties/>
+		<system-out>M2.5-C concurrency passed
+</system-out>
+	</testcase>
+	<testcase name="transaction_gc_scanner_test" classname="transaction_gc_scanner_test" time="0.0026179" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP scanner-dependent M2.5-C publication: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+	<testcase name="activation_selection_metadata_test" classname="activation_selection_metadata_test" time="0.0144595" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="activation_plan_retention_limits_test" classname="activation_plan_retention_limits_test" time="3.1324" status="run">
+		<properties/>
+		<system-out>D5: 4096 pairs, additional descriptor peak 15/24; 4097th rejected
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_retention_budgets_test" classname="activation_plan_retention_budgets_test" time="6.20666" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="activation_plan_retention_processes_test" classname="activation_plan_retention_processes_test" time="0.0447054" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="activation_plan_retention_kills_test" classname="activation_plan_retention_kills_test" time="0.0455071" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_locator-cloexec_test" classname="activation_plan_persistence_locator-cloexec_test" time="0.018028" status="run">
+		<properties/>
+		<system-out>R3 locator CLOEXEC: injection=1, successful fsync=1, changing closes=271, Io/EACCES/OutcomeUncertain, registry=0, no leak; retry=7
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_filesystem-errors_test" classname="activation_plan_persistence_filesystem-errors_test" time="0.296034" status="run">
+		<properties/>
+		<system-out>R3-G fstatfs api=0 Io/5/NotMutated registry=0; retry=7
+R3-G fstatfs api=1 Io/5/NotMutated registry=0; retry=7
+R3-G fstatfs api=2 Io/5/NotMutated registry=0; retry=7
+R3-G fstatfs api=3 Io/5/NotMutated registry=0; retry=7
+R3-G fstatfs api=0 Io/9/NotMutated registry=0; retry=7
+R3-G fstatfs api=1 Io/9/NotMutated registry=0; retry=7
+R3-G fstatfs api=2 Io/9/NotMutated registry=0; retry=7
+R3-G fstatfs api=3 Io/9/NotMutated registry=0; retry=7
+R3-G fstatfs api=0 Io/13/NotMutated registry=0; retry=7
+R3-G fstatfs api=1 Io/13/NotMutated registry=0; retry=7
+R3-G fstatfs api=2 Io/13/NotMutated registry=0; retry=7
+R3-G fstatfs api=3 Io/13/NotMutated registry=0; retry=7
+R3-G openat after=0 Cause=12 errno=5 Outcome=0 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=0 Cause=12 errno=13 Outcome=0 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=0 Cause=12 errno=9 Outcome=0 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=0 Cause=...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_faults_test" classname="activation_plan_persistence_faults_test" time="0.957028" status="run">
+		<properties/>
+		<system-out>12 identical final-read substitutions rejected; fresh current-instance barriers verified (including plans during final plan.toml read after fsync 7)
+9 late bootstrap substitutions rejected; fresh current-inode barriers verified
+10 in-place binding changes during final read rejected with AuthorityMismatch, errno=0 and exact outcome
+10 in-place binding changes during final enumeration rejected with AuthorityMismatch, errno=0 and exact outcome
+6 bootstrap binding changes at final enumeration rejected
+6 readdir EOF insertions rejected, errno=0, residue and unrelated state verified
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_limits_test" classname="activation_plan_persistence_limits_test" time="0.298494" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_bounds_test" classname="activation_plan_persistence_bounds_test" time="2.45866" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_kills_test" classname="activation_plan_persistence_kills_test" time="0.923474" status="run">
+		<properties/>
+		<system-out>R3: 54 publication SIGKILL points; independent exec State, residue and container identity; process-death mechanics, not reboot/power-loss durability
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_processes_test" classname="activation_plan_persistence_processes_test" time="0.580677" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_publication-capacity_test" classname="activation_plan_persistence_publication-capacity_test" time="2.75515" status="run">
+		<properties/>
+		<system-out>R2-B3: 4096 containers, publication pins 11, additional fd peak 14/15, baseline 12, observed process peak 26
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_recovery-capacity_test" classname="activation_plan_persistence_recovery-capacity_test" time="5.52769" status="run">
+		<properties/>
+		<system-out>R2-B4.1: 4096 containers, target acquired after foreign containers, recovery pins 11, additional fd peak 14/15, foreign reads 0; 4097th rejected, no leak/current change
+R2-B4.1: 4096 containers, target acquired before foreign containers, recovery pins 11, additional fd peak 15/15, foreign reads 0; 4097th rejected, no leak/current change
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_recovery-cloexec_test" classname="activation_plan_persistence_recovery-cloexec_test" time="0.0404734" status="run">
+		<properties/>
+		<system-out>R2-B4.1 CLOEXEC authority: Cause=Io errno=5 Outcome=NotMutated registry=0 injection=1 no leak; retry=7
+R2-B4.1 CLOEXEC post-fsync1: Cause=Io errno=5 Outcome=OutcomeUncertain registry=0 injection=1 no leak; retry=7
+R2-B4.1 CLOEXEC authority: Cause=Io errno=13 Outcome=NotMutated registry=0 injection=1 no leak; retry=7
+R2-B4.1 non-CLOEXEC: Io/ENOSPC/NotMutated; IdentityMismatch/0/NotMutated; no leak
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_recovery-kills_test" classname="activation_plan_persistence_recovery-kills_test" time="0.335646" status="run">
+		<properties/>
+		<system-out>R3: 15 recovery SIGKILL points (before/after all seven fsyncs, after completion); fresh exec State, exact residue, ordered idempotent retries, no leaks
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_concluding_callback_diagnostics" classname="activation_plan_persistence_concluding_callback_diagnostics" time="0.0411503" status="run">
+		<properties>
+			<property name="cmake_labels" value="D4-A;diagnostic"/>
+		</properties>
+		<system-out>D4 A diagnostic target=intent recovery=REJECTED cause(enum)=10 errno=0 outcome(enum)=2 rejection=CONSISTENT_WITH_PERTURBATION
+D4 A diagnostic target=plan recovery=REJECTED cause(enum)=10 errno=0 outcome(enum)=2 rejection=CONSISTENT_WITH_PERTURBATION
+D4 A diagnostic target=inventory recovery=REJECTED cause(enum)=10 errno=0 outcome(enum)=2 rejection=CONSISTENT_WITH_PERTURBATION
+D4 A diagnostic target=binding recovery=REJECTED cause(enum)=2 errno=0 outcome(enum)=2 rejection=CONSISTENT_WITH_PERTURBATION
+D4 A: 4 diagnostics recorded; injection, seven barriers, residue and unrelated state verified; no conformance or durability claim
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_boundaries_fresh_test" classname="activation_plan_persistence_boundaries_fresh_test" time="30.9109" status="run">
+		<properties/>
+		<system-out>fresh: inventory=11424, checking inclusive interval 1..11424
+fresh: interval 1..11424 of 11424: 11424 selected faults; cause/errno/outcome/residue/protected state verified
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_boundaries_bootstrap_test" classname="activation_plan_persistence_boundaries_bootstrap_test" time="30.8194" status="run">
+		<properties/>
+		<system-out>bootstrap: inventory=11417, checking inclusive interval 1..11417
+bootstrap: interval 1..11417 of 11417: 11417 selected faults; cause/errno/outcome/residue/protected state verified
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_boundaries_reused_test" classname="activation_plan_persistence_boundaries_reused_test" time="26.6222" status="run">
+		<properties/>
+		<system-out>reused: inventory=10511, checking inclusive interval 1..10511
+reused: interval 1..10511 of 10511: 10511 selected faults; cause/errno/outcome/residue/protected state verified
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_boundaries_published_test" classname="activation_plan_persistence_boundaries_published_test" time="17.6205" status="run">
+		<properties/>
+		<system-out>published: inventory=6322, checking inclusive interval 1..6322
+published: interval 1..6322 of 6322: 6322 selected faults; cause/errno/outcome/residue/protected state verified
+recovery: inventory=5093, checking inclusive interval 1..5093
+recovery: interval 1..5093 of 5093: 5093 selected faults; cause/errno/outcome/residue/protected state verified
+</system-out>
+	</testcase>
+	<testcase name="activation_plan_persistence_qualification_cleanup_test" classname="activation_plan_persistence_qualification_cleanup_test" time="0.00482808" status="run">
+		<properties/>
+		<system-out>ERROR: T17 umount '/unused/nested': Device or resource busy (errno 16); preserving fixture '/unused'
+ERROR: T17 umount '/tmp/athena-d4-ILT7m8/container/athena-d4-t7w2Pj/nested': Device or resource busy (errno 16); preserving fixture '/tmp/athena-d4-ILT7m8/container/athena-d4-t7w2Pj'
+</system-out>
+	</testcase>
+	<testcase name="toml_differential_test" classname="toml_differential_test" time="0.164613" status="run">
+		<properties/>
+		<system-out>PASS any-grammar.toml profile=Any expected=ACCEPT
+PASS intent.toml profile=Intent expected=ACCEPT
+PASS plan.toml profile=Plan expected=ACCEPT
+PASS status.toml profile=Status expected=ACCEPT
+PASS current.toml profile=Current expected=ACCEPT
+PASS binding.toml profile=ProjectionBinding expected=ACCEPT
+PASS adoption.toml profile=Adoption expected=ACCEPT
+PASS generation-v1.toml profile=Generation expected=ACCEPT
+PASS generation-v2.toml profile=Generation expected=ACCEPT
+PASS generation-v3.toml profile=Generation expected=ACCEPT
+PASS record.toml profile=Record expected=ACCEPT
+PASS semantics.toml profile=Semantics expected=ACCEPT
+PASS policy.toml profile=Policy expected=ACCEPT
+PASS package.toml profile=Package expected=ACCEPT
+PASS manifest.toml profile=Manifest expected=ACCEPT
+PASS legacy.toml profile=LegacyMetadata expected=ACCEPT
+PASS store-binding.toml profile=StoreBinding expected=ACCEPT
+PASS pins.toml profile=Pins expected=ACCEPT
+PASS generation-bom.toml profile=Generation expected=ACCEPT
+PASS generation-dotted...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="toml_upstream_consumer_test" classname="toml_upstream_consumer_test" time="0.00225999" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="toml_vendor_reproduction_test" classname="toml_vendor_reproduction_test" time="0.0776255" status="run">
+		<properties/>
+		<system-out>patching file impl/parser.hpp
+patching file impl/parser.inl
+patching file toml.hpp
+PASS 51 exact upstream hashes; observer patch; complete namespace/macro transform
+</system-out>
+	</testcase>
+	<testcase name="toml_isolation_test" classname="toml_isolation_test" time="0.157487" status="run">
+		<properties/>
+		<system-out>PASS 11 fork translation units define no upstream toml symbols
+PASS original probe, public consumer include isolation, private headers, observer/parser namespace separation
+LIMIT: finite structural/symbol evidence; not a mathematical proof for every external consumer/configuration
+</system-out>
+	</testcase>
+	<testcase name="qualification_driver_test" classname="qualification_driver_test" time="0.35459" status="run">
+		<properties/>
+		<system-out>test_context_document_cannot_become_a_required_source (__main__.SourceClosureTest.test_context_document_cannot_become_a_required_source) ... ok
+test_missing_required_input_fails (__main__.SourceClosureTest.test_missing_required_input_fails) ... ok
+test_modified_input_fails (__main__.SourceClosureTest.test_modified_input_fails) ... ok
+test_new_unlisted_source_fails (__main__.SourceClosureTest.test_new_unlisted_source_fails) ... ok
+test_real_source_copy_qualifies_without_historical_cli_document (__main__.SourceClosureTest.test_real_source_copy_qualifies_without_historical_cli_document) ... ok
+test_removed_input_fails (__main__.SourceClosureTest.test_removed_input_fails) ... ok
+test_symlinked_source_fails (__main__.SourceClosureTest.test_symlinked_source_fails) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.307s
+
+OK
+</system-out>
+	</testcase>
+</testsuite>

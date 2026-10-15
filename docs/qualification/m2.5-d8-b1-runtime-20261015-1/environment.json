@@ -1,0 +1,28 @@
+{
+  "utc": "2026-10-15T06:57:43.825950+00:00",
+  "platform": "Linux-6.18.54-gentoo-gentoo-dist-arl005-x86_64-Intel-R-_Core-TM-_Ultra_9_275HX-with-glibc2.43",
+  "source": "/home/alessandro/Lab/Programming/athena-pm",
+  "build_root": "/tmp/athena-b1-runtime-qualified-20261015-1",
+  "source_manifest_sha256": "cdfc1dbebf8b737cfb88dc79709b8888101d7c49f7617f86f095a5c5067e036f",
+  "source_inventory": "tests/bounded_toml_sources.txt",
+  "source_scope": {
+    "roots": [
+      "src",
+      "include",
+      "tests",
+      "cmake",
+      "third_party",
+      "packaging",
+      "packages"
+    ],
+    "root_files": [
+      "CMakeLists.txt",
+      "docs/m2.5-d8-b1-parser-boundary.md",
+      "docs/m2.5-d8-b1-request-runtime.md"
+    ],
+    "generated_omission": "__pycache__ directories"
+  },
+  "head": "b10405756b4afad5d7ead7c6ac196c767bb9b41d",
+  "environment": {},
+  "excluded": "label privileged; exact artifact_scanner_test; unregistered network test; OOM stress"
+}

@@ -1,0 +1,52 @@
+{
+  "compile_command": [
+    "c++",
+    "-std=c++20",
+    "-g",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer",
+    "-I",
+    "src",
+    "-I",
+    "include",
+    "-I",
+    "third_party",
+    "tests/operational_request_runtime_test.cpp",
+    "src/activation/operational_request_runtime.cpp",
+    "-L",
+    "/tmp/athena-b1-runtime-dev",
+    "-Wl,-rpath,/tmp/athena-b1-runtime-dev",
+    "-lathena_core",
+    "-pthread",
+    "-o",
+    "/tmp/athena-b1-runtime-sanitized"
+  ],
+  "compile_exit": 0,
+  "attempts": [
+    {
+      "command": [
+        "/tmp/athena-b1-runtime-sanitized"
+      ],
+      "environment": {},
+      "exit": 1,
+      "result": "LeakSanitizer fatal: unsupported under ptrace; NOT QUALIFIED"
+    },
+    {
+      "command": [
+        "/tmp/athena-b1-runtime-sanitized"
+      ],
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "exit": 0,
+      "result": "PASS ASan/UBSan on instrumented runtime wrapper and test; leak detection NOT EXECUTED"
+    }
+  ],
+  "limit": "Shared athena_core dependencies are not sanitizer-instrumented; finite supplementary check, not full-library sanitizer qualification.",
+  "sha256": {
+    "tests/operational_request_runtime_test.cpp": "e54f2079c6e95cb9e0a1b36b083977fe11e040529ab8778b526627303b694d5c",
+    "src/activation/operational_request_runtime.cpp": "c2c078fd696055a43fdd649baad1064677c78d20ce1838abc400ac72800a5f36",
+    "/tmp/athena-b1-runtime-sanitized": "98125ef131d9f9cd66082456a413f4124967b789401f4abb47d5fe945c8d9020",
+    "/tmp/athena-b1-runtime-dev/libathena_core.so": "9ecde52f0c8ef3c1c31fbab965c22a8512ac47200666cbb0a27e7874d5734290"
+  }
+}

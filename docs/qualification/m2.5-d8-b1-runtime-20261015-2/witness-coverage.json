@@ -1,0 +1,39 @@
+[
+  {
+    "case": "B1.1/H3 and invalid_inputs old_witnesses",
+    "kind": "serialized/value claims",
+    "physical_witness": false,
+    "guarantee": "Structural references, ownership claims, immutable snapshot; no inode authorization"
+  },
+  {
+    "case": "physical_witness_is_not_observation_authority",
+    "kind": "real local filesystem",
+    "physical_witness": true,
+    "guarantee": "D2 hard-linked symlink dev/ino/nlink and stale same-target replacement rejection; B1 observation remains identity-only; D6 rejects nonempty projection for absent empty base",
+    "limit": "Not a nonempty source-authorized B1 transition"
+  },
+  {
+    "case": "activation_projection_fs_test mechanics/security/container_recovery/death",
+    "kind": "real local filesystem plus separately identified injected errors",
+    "physical_witness": true,
+    "guarantee": "Actual statx dev/ino/mount identity, literal target, nlink, successor and stale witness checks; SIGKILL is process death, not power loss"
+  },
+  {
+    "case": "activation_projection_fs_test uid/mount stat seam",
+    "kind": "simulated metadata",
+    "physical_witness": false,
+    "guarantee": "Fail-closed response to injected uid/mount mismatch; no privileged mount/ownership qualification"
+  },
+  {
+    "case": "decoded_claims_are_not_authority",
+    "kind": "missing-source negative observation",
+    "physical_witness": false,
+    "guarantee": "Historical generation reaches live D6 legacy source inode stat and ENOENT; no authority from claims"
+  },
+  {
+    "case": "privileged D6/D7 nonempty source-authorized witness transitions; D8-A migration; real mounts; power loss",
+    "kind": "NOT EXECUTED",
+    "physical_witness": false,
+    "guarantee": "No approval for these environments/operations"
+  }
+]

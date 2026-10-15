@@ -1,0 +1,49 @@
+{
+  "source": "/tmp/athena-b1-p166-candidate",
+  "build": "/tmp/athena-b1-p166-sanitized",
+  "configure": [
+    "cmake",
+    "-S",
+    "/tmp/athena-b1-p166-candidate",
+    "-B",
+    "/tmp/athena-b1-p166-sanitized",
+    "-DCMAKE_BUILD_TYPE=Debug",
+    "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer",
+    "-DCMAKE_SHARED_LINKER_FLAGS=-fsanitize=address,undefined",
+    "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"
+  ],
+  "build_command": [
+    "cmake",
+    "--build",
+    "/tmp/athena-b1-p166-sanitized",
+    "--target",
+    "operational_request_runtime_test",
+    "operational_activation_test",
+    "bounded_toml_test",
+    "-j2"
+  ],
+  "test_command": [
+    "ctest",
+    "--test-dir",
+    "/tmp/athena-b1-p166-sanitized",
+    "-R",
+    "^(operational_request_runtime_test|operational_activation_test|bounded_toml_test)$",
+    "--output-on-failure",
+    "--output-junit",
+    "/tmp/athena-b1-p166-sanitizer-junit.xml"
+  ],
+  "environment": {
+    "ASAN_OPTIONS": "detect_leaks=0",
+    "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+  },
+  "configure_exit": 0,
+  "build_exit": 0,
+  "test_exit": 0,
+  "result": {
+    "PASS": 3,
+    "FAIL": 0,
+    "SKIP": 0
+  },
+  "instrumented": "Entire athena_core and selected tests; system/external shared libraries are not rebuilt with sanitizers.",
+  "leak_sanitizer": "NOT EXECUTED: same ptrace environment failed in previous retained runtime -1 supplemental-lsan-attempt.txt; no leak-absence claim."
+}

@@ -1,0 +1,169 @@
+[
+  {
+    "command": [
+      "c++",
+      "--version"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "compiler.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "--version"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "cmake-version.txt"
+  },
+  {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "git-status-before.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/athena-b1-p166-candidate",
+      "-B",
+      "/tmp/athena-b1-p166-qualified/debug",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "Debug-configure.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/athena-b1-p166-qualified/debug",
+      "-j",
+      "4"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "Debug-build.txt"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b1-p166-qualified/debug",
+      "--show-only=json-v1"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "Debug-inventory.json"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b1-p166-qualified/debug",
+      "-LE",
+      "privileged",
+      "-E",
+      "^artifact_scanner_test$",
+      "--output-on-failure",
+      "--output-junit",
+      "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b1-runtime-20261015-2/Debug-junit.xml",
+      "-j",
+      "2"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "Debug-tests.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-LA",
+      "-N",
+      "/tmp/athena-b1-p166-qualified/debug"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "Debug-cache.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/athena-b1-p166-candidate",
+      "-B",
+      "/tmp/athena-b1-p166-qualified/release",
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "Release-configure.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/athena-b1-p166-qualified/release",
+      "-j",
+      "4"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "Release-build.txt"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b1-p166-qualified/release",
+      "--show-only=json-v1"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "Release-inventory.json"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b1-p166-qualified/release",
+      "-LE",
+      "privileged",
+      "-E",
+      "^artifact_scanner_test$",
+      "--output-on-failure",
+      "--output-junit",
+      "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b1-runtime-20261015-2/Release-junit.xml",
+      "-j",
+      "2"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "Release-tests.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-LA",
+      "-N",
+      "/tmp/athena-b1-p166-qualified/release"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "Release-cache.txt"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "git-diff-check.txt"
+  },
+  {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "cwd": "/tmp/athena-b1-p166-candidate",
+    "log": "git-status-after.txt"
+  }
+]

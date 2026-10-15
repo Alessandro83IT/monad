@@ -1,0 +1,9 @@
+ M CMakeLists.txt
+ M tests/bounded_toml_sources.txt
+ M tests/qualify_bounded_toml.py
+?? docs/m2.5-d8-b1-request-runtime.md
+?? docs/m2.5-d8-b1-runtime-qualification.md
+?? docs/qualification/m2.5-d8-b1-runtime-20261015-1/
+?? src/activation/operational_request_runtime.cpp
+?? src/activation/operational_request_runtime.hpp
+?? tests/operational_request_runtime_test.cpp

@@ -1,0 +1,2556 @@
+Start testing: Oct 15 09:15 CEST
+----------------------------------------------------------
+1/134 Testing: store_metadata_errors_test
+1/134 Test: store_metadata_errors_test
+Command: "/tmp/athena-b1-p166-qualified/debug/store_metadata_errors_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"store_metadata_errors_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"store_metadata_errors_test" end time: Oct 15 09:15 CEST
+"store_metadata_errors_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/134 Testing: bounded_toml_test
+2/134 Test: bounded_toml_test
+Command: "/tmp/athena-b1-p166-qualified/debug/bounded_toml_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"bounded_toml_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"bounded_toml_test" end time: Oct 15 09:15 CEST
+"bounded_toml_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/134 Testing: operational_request_runtime_test
+4/134 Test: operational_request_runtime_test
+Command: "/tmp/athena-b1-p166-qualified/debug/operational_request_runtime_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"operational_request_runtime_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.39 sec
+----------------------------------------------------------
+Test Passed.
+"operational_request_runtime_test" end time: Oct 15 09:15 CEST
+"operational_request_runtime_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/134 Testing: initial_activation_test
+5/134 Test: initial_activation_test
+Command: "/tmp/athena-b1-p166-qualified/debug/initial_activation_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"initial_activation_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.58 sec
+----------------------------------------------------------
+Test Passed.
+"initial_activation_test" end time: Oct 15 09:15 CEST
+"initial_activation_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/134 Testing: operational_activation_test
+6/134 Test: operational_activation_test
+Command: "/tmp/athena-b1-p166-qualified/debug/operational_activation_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"operational_activation_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.23 sec
+----------------------------------------------------------
+Test Passed.
+"operational_activation_test" end time: Oct 15 09:15 CEST
+"operational_activation_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/134 Testing: operational_plan_test
+7/134 Test: operational_plan_test
+Command: "/tmp/athena-b1-p166-qualified/debug/operational_plan_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"operational_plan_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+PASS operational plan: transitions, membership, witnesses, canonical ordering, invalid inputs
+<end of output>
+Test time =   0.31 sec
+----------------------------------------------------------
+Test Passed.
+"operational_plan_test" end time: Oct 15 09:15 CEST
+"operational_plan_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/134 Testing: activation_reconciliation_test
+8/134 Test: activation_reconciliation_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_reconciliation_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_reconciliation_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+D7 operation 0 fsync boundaries: 8
+D7 operation 1 fsync boundaries: 2
+D7 operation 2 fsync boundaries: 2
+<end of output>
+Test time =   0.15 sec
+----------------------------------------------------------
+Test Passed.
+"activation_reconciliation_test" end time: Oct 15 09:15 CEST
+"activation_reconciliation_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/134 Testing: operational_request_codec_test
+3/134 Test: operational_request_codec_test
+Command: "/tmp/athena-b1-p166-qualified/debug/operational_request_codec_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"operational_request_codec_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+H1-R1 guard rejected embedded input containing 32 scalar nodes: 6 ordinary allocations, 431 requested bytes (not peak RSS).
+<end of output>
+Test time =  26.85 sec
+----------------------------------------------------------
+Test Passed.
+"operational_request_codec_test" end time: Oct 15 09:15 CEST
+"operational_request_codec_test" time elapsed: 00:00:26
+----------------------------------------------------------
+
+10/134 Testing: activation_plan_retention_test
+10/134 Test: activation_plan_retention_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_retention_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_retention_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+D5: rejected 594 read/open/stat/enumeration fault boundaries without mutation
+<end of output>
+Test time =   0.63 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_retention_test" end time: Oct 15 09:15 CEST
+"activation_plan_retention_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/134 Testing: activation_plan_persistence_test
+11/134 Test: activation_plan_persistence_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+R2-B4: seven recovery fsync faults, nine states, 72 file/directory statx omissions, two EMFILE cases; move/RAII/registry verified
+R2-B4: eight authority/binding/foreign substitutions; original anchors, opaque bytes and residue retained
+R2-B3: 5 publication paths, every fsync failure, actual instance/phase registry; fd peak 12/15, pins 11
+R2-B3: 24 mandatory-field/registry regressions, 4 rename error transitions, durable-bootstrap ledger, 3 EMFILE cases
+R2-B2 bootstrap fd peak 12/15 at 1 containers (target=0)
+R2-B2 bootstrap fd peak 12/15 at 4096 containers (target=0)
+R2-B2 bootstrap fd peak 12/15 at 4096 containers (target=1)
+R1 evidence: identity/binding/target/inventory/transitions/lifetime; fd peaks 12/12/14 for 1/4096/4096-with-target containers, bound 15
+R2-A.1: 12 missing-field cases; UnsafeEntry/errno=0/OutcomeUncertain; fsyncs before=0 after=1, recorded=0
+R2-B1.1: 12 single foreign statx omissions; UnsafeEntry/0/NotMutated, zero fsync, no leaks
+R2-B1 inspection: 10 scenarios and 6 missing-field cases; no fsync, exact typed outcomes, preserved foreign state
+R2-B2: 36 bootstrap mask cases, fresh/resumed/existing retries, typed ledger faults; fd peak 10/15
+<end of output>
+Test time =  14.25 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_test" end time: Oct 15 09:16 CEST
+"activation_plan_persistence_test" time elapsed: 00:00:14
+----------------------------------------------------------
+
+12/134 Testing: legacy_d3_test
+12/134 Test: legacy_d3_test
+Command: "/tmp/athena-b1-p166-qualified/debug/legacy_d3_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"legacy_d3_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.16 sec
+----------------------------------------------------------
+Test Passed.
+"legacy_d3_test" end time: Oct 15 09:16 CEST
+"legacy_d3_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/134 Testing: activation_projection_fs_test
+13/134 Test: activation_projection_fs_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_projection_fs_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_projection_fs_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+D2 projection binding/security/witness/fault/process-death mechanics passed
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"activation_projection_fs_test" end time: Oct 15 09:16 CEST
+"activation_projection_fs_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+14/134 Testing: activation_current_test
+14/134 Test: activation_current_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_current_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_current_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"activation_current_test" end time: Oct 15 09:16 CEST
+"activation_current_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+15/134 Testing: activation_schema_test
+15/134 Test: activation_schema_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_schema_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_schema_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   4.80 sec
+----------------------------------------------------------
+Test Passed.
+"activation_schema_test" end time: Oct 15 09:16 CEST
+"activation_schema_test" time elapsed: 00:00:04
+----------------------------------------------------------
+
+16/134 Testing: activation_digest_test
+16/134 Test: activation_digest_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_digest_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_digest_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.29 sec
+----------------------------------------------------------
+Test Passed.
+"activation_digest_test" end time: Oct 15 09:16 CEST
+"activation_digest_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+17/134 Testing: transaction_gc_fault_test
+17/134 Test: transaction_gc_fault_test
+Command: "/tmp/athena-b1-p166-qualified/debug/transaction_gc_fault_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"transaction_gc_fault_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+M2.5-C syscall/failure matrix passed
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"transaction_gc_fault_test" end time: Oct 15 09:16 CEST
+"transaction_gc_fault_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+18/134 Testing: transaction_gc_protocol_test
+18/134 Test: transaction_gc_protocol_test
+Command: "/tmp/athena-b1-p166-qualified/debug/transaction_gc_protocol_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"transaction_gc_protocol_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+M2.5-C protocol/contention tests passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"transaction_gc_protocol_test" end time: Oct 15 09:16 CEST
+"transaction_gc_protocol_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+19/134 Testing: transaction_gc_test
+19/134 Test: transaction_gc_test
+Command: "/tmp/athena-b1-p166-qualified/debug/transaction_gc_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"transaction_gc_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+M2.5-C pins passed
+<end of output>
+Test time =   0.08 sec
+----------------------------------------------------------
+Test Passed.
+"transaction_gc_test" end time: Oct 15 09:16 CEST
+"transaction_gc_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+20/134 Testing: immutable_publication_test
+20/134 Test: immutable_publication_test
+Command: "/tmp/athena-b1-p166-qualified/debug/immutable_publication_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"immutable_publication_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"immutable_publication_test" end time: Oct 15 09:16 CEST
+"immutable_publication_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+21/134 Testing: locking_test
+21/134 Test: locking_test
+Command: "/tmp/athena-b1-p166-qualified/debug/locking_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"locking_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"locking_test" end time: Oct 15 09:16 CEST
+"locking_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+22/134 Testing: durable_filesystem_test
+22/134 Test: durable_filesystem_test
+Command: "/tmp/athena-b1-p166-qualified/debug/durable_filesystem_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"durable_filesystem_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"durable_filesystem_test" end time: Oct 15 09:16 CEST
+"durable_filesystem_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+23/134 Testing: installed_semantics_regression_test
+23/134 Test: installed_semantics_regression_test
+Command: "/tmp/athena-b1-p166-qualified/debug/installed_semantics_regression_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"installed_semantics_regression_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+H1 regression passed
+H2 regression passed
+H3 regression passed
+H4 regression passed
+H5 regression passed
+Attivazione del pacchetto: /tmp/athena-object-ws3D88/historical-store
+M1 regression passed
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"installed_semantics_regression_test" end time: Oct 15 09:16 CEST
+"installed_semantics_regression_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+24/134 Testing: installed_semantics_test
+24/134 Test: installed_semantics_test
+Command: "/tmp/athena-b1-p166-qualified/debug/installed_semantics_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"installed_semantics_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+installed semantic state, offline transitions and failure boundaries passed
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"installed_semantics_test" end time: Oct 15 09:16 CEST
+"installed_semantics_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+25/134 Testing: installed_semantics_integration_test
+25/134 Test: installed_semantics_integration_test
+Command: "/tmp/athena-b1-p166-qualified/debug/installed_semantics_integration_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"installed_semantics_integration_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+SKIP installed semantic lifecycle: artifact <root>: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"installed_semantics_integration_test" end time: Oct 15 09:16 CEST
+"installed_semantics_integration_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+26/134 Testing: cli_install_test
+26/134 Test: cli_install_test
+Command: "/tmp/athena-b1-p166-qualified/debug/cli_install_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"cli_install_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"cli_install_test" end time: Oct 15 09:16 CEST
+"cli_install_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+27/134 Testing: cli_install_integration_test
+27/134 Test: cli_install_integration_test
+Command: "/tmp/athena-b1-p166-qualified/debug/cli_install_integration_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"cli_install_integration_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+SKIP CLI installation: artifact <root>: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"cli_install_integration_test" end time: Oct 15 09:16 CEST
+"cli_install_integration_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+28/134 Testing: install_transaction_test
+28/134 Test: install_transaction_test
+Command: "/tmp/athena-b1-p166-qualified/debug/install_transaction_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"install_transaction_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"install_transaction_test" end time: Oct 15 09:16 CEST
+"install_transaction_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+29/134 Testing: install_transaction_integration_test
+29/134 Test: install_transaction_integration_test
+Command: "/tmp/athena-b1-p166-qualified/debug/install_transaction_integration_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"install_transaction_integration_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+SKIP install transaction publication: artifact <root>: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"install_transaction_integration_test" end time: Oct 15 09:16 CEST
+"install_transaction_integration_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+30/134 Testing: activation_projection_test
+30/134 Test: activation_projection_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_projection_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_projection_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/source
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/source
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/source
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/source
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/source
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/source
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/source
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/source
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/old
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/old
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/first
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/second
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/first
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/old
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/old
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/tree
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/tree
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/replacement
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/replacement
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/tree
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/tree
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/replacement
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/replacement
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/replacement
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/tree
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/peer
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/tree
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/peer
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/replacement
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/peer
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/replacement
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/replacement
+Attivazione del pacchetto: /tmp/athena-object-d6rD8L/replacement
+Disattivazione del pacchetto: /tmp/athena-object-d6rD8L/replacement
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"activation_projection_test" end time: Oct 15 09:16 CEST
+"activation_projection_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+31/134 Testing: generation_activation_test
+31/134 Test: generation_activation_test
+Command: "/tmp/athena-b1-p166-qualified/debug/generation_activation_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"generation_activation_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+SKIP generation ObjectStore activation integration: artifact <root>: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"generation_activation_test" end time: Oct 15 09:16 CEST
+"generation_activation_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+32/134 Testing: generation_membership_test
+32/134 Test: generation_membership_test
+Command: "/tmp/athena-b1-p166-qualified/debug/generation_membership_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"generation_membership_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"generation_membership_test" end time: Oct 15 09:16 CEST
+"generation_membership_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+33/134 Testing: realization_executor_test
+33/134 Test: realization_executor_test
+Command: "/tmp/athena-b1-p166-qualified/debug/realization_executor_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"realization_executor_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+CMake Warning (dev) in CMakeLists.txt:
+  No project() command is present.  The top-level CMakeLists.txt file must
+  contain a literal, direct call to the project() command.  Add a line of
+  code such as
+
+    project(ProjectName)
+
+  near the top of the file, but after cmake_minimum_required().
+
+  CMake is pretending there is a "project(Project)" command on the first
+  line.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) in CMakeLists.txt:
+  cmake_minimum_required() should be called prior to this top-level project()
+  call.  Please see the cmake-commands(7) manual for usage documentation of
+  both commands.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- The C compiler identification is GNU 16.2.1
+-- The CXX compiler identification is GNU 16.2.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+CMake Error at CMakeLists.txt:1 (invalid_cmake_command):
+  Unknown CMake command "invalid_cmake_command".
+
+
+CMake Error in CMakeLists.txt:
+  No cmake_minimum_required command is present.  A line of code such as
+
+    cmake_minimum_required(VERSION 4.3)
+
+  should be added at the top of the file.  The version specified may be lower
+  if you wish to support older CMake versions for this project.  For more
+  information run "cmake --help-policy CMP0000".
+
+
+-- Configuring incomplete, errors occurred!
+CMake Warning (dev) in CMakeLists.txt:
+  No project() command is present.  The top-level CMakeLists.txt file must
+  contain a literal, direct call to the project() command.  Add a line of
+  code such as
+
+    project(ProjectName)
+
+  near the top of the file, but after cmake_minimum_required().
+
+  CMake is pretending there is a "project(Project)" command on the first
+  line.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) in CMakeLists.txt:
+  cmake_minimum_required() should be called prior to this top-level project()
+  call.  Please see the cmake-commands(7) manual for usage documentation of
+  both commands.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- The C compiler identification is GNU 16.2.1
+-- The CXX compiler identification is GNU 16.2.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+CMake Error at CMakeLists.txt:1 (invalid_cmake_command):
+  Unknown CMake command "invalid_cmake_command".
+
+
+CMake Error in CMakeLists.txt:
+  No cmake_minimum_required command is present.  A line of code such as
+
+    cmake_minimum_required(VERSION 4.3)
+
+  should be added at the top of the file.  The version specified may be lower
+  if you wish to support older CMake versions for this project.  For more
+  information run "cmake --help-policy CMP0000".
+
+
+-- Configuring incomplete, errors occurred!
+<end of output>
+Test time =   0.50 sec
+----------------------------------------------------------
+Test Passed.
+"realization_executor_test" end time: Oct 15 09:16 CEST
+"realization_executor_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+34/134 Testing: realization_executor_integration_test
+34/134 Test: realization_executor_integration_test
+Command: "/tmp/athena-b1-p166-qualified/debug/realization_executor_integration_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"realization_executor_integration_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+SKIP realization publication: artifact <root>: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"realization_executor_integration_test" end time: Oct 15 09:16 CEST
+"realization_executor_integration_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+35/134 Testing: realization_record_test
+35/134 Test: realization_record_test
+Command: "/tmp/athena-b1-p166-qualified/debug/realization_record_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"realization_record_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"realization_record_test" end time: Oct 15 09:16 CEST
+"realization_record_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+36/134 Testing: object_store_test
+36/134 Test: object_store_test
+Command: "/tmp/athena-b1-p166-qualified/debug/object_store_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"object_store_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+object store path/materialization/no-replace/process visibility mechanics passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"object_store_test" end time: Oct 15 09:16 CEST
+"object_store_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+37/134 Testing: object_store_scanner_test
+37/134 Test: object_store_scanner_test
+Command: "/tmp/athena-b1-p166-qualified/debug/object_store_scanner_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"object_store_scanner_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+SKIP authoritative store/scanner publication, tampering and concurrency: artifact <root>: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"object_store_scanner_test" end time: Oct 15 09:16 CEST
+"object_store_scanner_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+38/134 Testing: artifact_encoding_test
+38/134 Test: artifact_encoding_test
+Command: "/tmp/athena-b1-p166-qualified/debug/artifact_encoding_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"artifact_encoding_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"artifact_encoding_test" end time: Oct 15 09:16 CEST
+"artifact_encoding_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+39/134 Testing: artifact_identity_test
+39/134 Test: artifact_identity_test
+Command: "/tmp/athena-b1-p166-qualified/debug/artifact_identity_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"artifact_identity_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"artifact_identity_test" end time: Oct 15 09:16 CEST
+"artifact_identity_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+40/134 Testing: artifact_identity_scanner_test
+40/134 Test: artifact_identity_scanner_test
+Command: "/tmp/athena-b1-p166-qualified/debug/artifact_identity_scanner_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"artifact_identity_scanner_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+SKIP scanner identity integration: artifact <root>: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"artifact_identity_scanner_test" end time: Oct 15 09:16 CEST
+"artifact_identity_scanner_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+41/134 Testing: artifact_model_test
+41/134 Test: artifact_model_test
+Command: "/tmp/athena-b1-p166-qualified/debug/artifact_model_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"artifact_model_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Artifact model tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"artifact_model_test" end time: Oct 15 09:16 CEST
+"artifact_model_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+42/134 Testing: artifact_contract_test
+42/134 Test: artifact_contract_test
+Command: "/tmp/athena-b1-p166-qualified/debug/artifact_contract_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"artifact_contract_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"artifact_contract_test" end time: Oct 15 09:16 CEST
+"artifact_contract_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+43/134 Testing: arch_repository_test
+43/134 Test: arch_repository_test
+Command: "/tmp/athena-b1-p166-qualified/debug/arch_repository_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"arch_repository_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Arch repository tests passed.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"arch_repository_test" end time: Oct 15 09:16 CEST
+"arch_repository_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+44/134 Testing: arch_repository_adapter_test
+44/134 Test: arch_repository_adapter_test
+Command: "/tmp/athena-b1-p166-qualified/debug/arch_repository_adapter_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"arch_repository_adapter_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Arch repository adapter tests passed.
+<end of output>
+Test time =   0.10 sec
+----------------------------------------------------------
+Test Passed.
+"arch_repository_adapter_test" end time: Oct 15 09:16 CEST
+"arch_repository_adapter_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+45/134 Testing: arch_version_test
+45/134 Test: arch_version_test
+Command: "/tmp/athena-b1-p166-qualified/debug/arch_version_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"arch_version_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Arch version tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"arch_version_test" end time: Oct 15 09:16 CEST
+"arch_version_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+46/134 Testing: cmake_backend_test
+46/134 Test: cmake_backend_test
+Command: "/tmp/athena-b1-p166-qualified/debug/cmake_backend_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"cmake_backend_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+-- The CXX compiler identification is GNU 16.2.1
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/athena-cmake-test-hhH2Ei/build
+[ 50%] Building CXX object CMakeFiles/athena-cmake-test.dir/main.cpp.o
+[100%] Linking CXX executable athena-cmake-test
+[100%] Built target athena-cmake-test
+-- Install configuration: "Release"
+-- Installing: /tmp/athena-cmake-test-hhH2Ei/staging/usr/bin/athena-cmake-test
+Testing CMake backend...
+Build completed.
+Installation into staging completed.
+CMake backend tests passed.
+<end of output>
+Test time =   0.41 sec
+----------------------------------------------------------
+Test Passed.
+"cmake_backend_test" end time: Oct 15 09:16 CEST
+"cmake_backend_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+47/134 Testing: version_test
+47/134 Test: version_test
+Command: "/tmp/athena-b1-p166-qualified/debug/version_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"version_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Version comparison tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"version_test" end time: Oct 15 09:16 CEST
+"version_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+48/134 Testing: package_loader_test
+48/134 Test: package_loader_test
+Command: "/tmp/athena-b1-p166-qualified/debug/package_loader_test"
+Directory: /tmp/athena-b1-p166-candidate
+"package_loader_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Package loader dependency test passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"package_loader_test" end time: Oct 15 09:16 CEST
+"package_loader_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+49/134 Testing: dependency_resolver_test
+49/134 Test: dependency_resolver_test
+Command: "/tmp/athena-b1-p166-qualified/debug/dependency_resolver_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"dependency_resolver_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Dependency resolver tests passed.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"dependency_resolver_test" end time: Oct 15 09:16 CEST
+"dependency_resolver_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+50/134 Testing: install_plan_test
+50/134 Test: install_plan_test
+Command: "/tmp/athena-b1-p166-qualified/debug/install_plan_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"install_plan_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Install plan tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"install_plan_test" end time: Oct 15 09:16 CEST
+"install_plan_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+51/134 Testing: generation_builder_test
+51/134 Test: generation_builder_test
+Command: "/tmp/athena-b1-p166-qualified/debug/generation_builder_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"generation_builder_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"generation_builder_test" end time: Oct 15 09:16 CEST
+"generation_builder_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+52/134 Testing: dependency_expression_test
+52/134 Test: dependency_expression_test
+Command: "/tmp/athena-b1-p166-qualified/debug/dependency_expression_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"dependency_expression_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Dependency expression tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"dependency_expression_test" end time: Oct 15 09:16 CEST
+"dependency_expression_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+53/134 Testing: dependency_roles_test
+53/134 Test: dependency_roles_test
+Command: "/tmp/athena-b1-p166-qualified/debug/dependency_roles_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"dependency_roles_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"dependency_roles_test" end time: Oct 15 09:16 CEST
+"dependency_roles_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+54/134 Testing: dependency_scope_precedence_test
+54/134 Test: dependency_scope_precedence_test
+Command: "/tmp/athena-b1-p166-qualified/debug/dependency_scope_precedence_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"dependency_scope_precedence_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+dependency_scope_precedence_test: passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"dependency_scope_precedence_test" end time: Oct 15 09:16 CEST
+"dependency_scope_precedence_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+55/134 Testing: dependency_expression_resolution_test
+55/134 Test: dependency_expression_resolution_test
+Command: "/tmp/athena-b1-p166-qualified/debug/dependency_expression_resolution_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"dependency_expression_resolution_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"dependency_expression_resolution_test" end time: Oct 15 09:16 CEST
+"dependency_expression_resolution_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+56/134 Testing: dependency_constraint_test
+56/134 Test: dependency_constraint_test
+Command: "/tmp/athena-b1-p166-qualified/debug/dependency_constraint_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"dependency_constraint_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Dependency constraint tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"dependency_constraint_test" end time: Oct 15 09:16 CEST
+"dependency_constraint_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+57/134 Testing: dependency_parser_test
+57/134 Test: dependency_parser_test
+Command: "/tmp/athena-b1-p166-qualified/debug/dependency_parser_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"dependency_parser_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Dependency parser tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"dependency_parser_test" end time: Oct 15 09:16 CEST
+"dependency_parser_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+58/134 Testing: dependency_serializer_test
+58/134 Test: dependency_serializer_test
+Command: "/tmp/athena-b1-p166-qualified/debug/dependency_serializer_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"dependency_serializer_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Dependency serializer tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"dependency_serializer_test" end time: Oct 15 09:16 CEST
+"dependency_serializer_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+59/134 Testing: dependency_validator_test
+59/134 Test: dependency_validator_test
+Command: "/tmp/athena-b1-p166-qualified/debug/dependency_validator_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"dependency_validator_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+dependency_validator_test: all checks passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"dependency_validator_test" end time: Oct 15 09:16 CEST
+"dependency_validator_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+60/134 Testing: remove_plan_test
+60/134 Test: remove_plan_test
+Command: "/tmp/athena-b1-p166-qualified/debug/remove_plan_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"remove_plan_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+remove_plan_test: all checks passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"remove_plan_test" end time: Oct 15 09:16 CEST
+"remove_plan_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+61/134 Testing: removal_planner_test
+61/134 Test: removal_planner_test
+Command: "/tmp/athena-b1-p166-qualified/debug/removal_planner_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"removal_planner_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+removal_planner_test: all checks passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"removal_planner_test" end time: Oct 15 09:16 CEST
+"removal_planner_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+62/134 Testing: activation_test
+62/134 Test: activation_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Attivazione del pacchetto: /tmp/athena-activation-test-3mKuFk/store
+Disattivazione del pacchetto: /tmp/athena-activation-test-3mKuFk/store
+Attivazione del pacchetto: /tmp/athena-activation-test-3mKuFk/rollback/store
+Activation tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"activation_test" end time: Oct 15 09:16 CEST
+"activation_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+63/134 Testing: generation_test
+63/134 Test: generation_test
+Command: "/tmp/athena-b1-p166-qualified/debug/generation_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"generation_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Attivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/switch/store-a
+Disattivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/switch/store-a
+Attivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/switch/store-b
+Disattivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/switch/store-b
+Attivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/switch/rollback/store-a
+Disattivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/switch/rollback/store-a
+Attivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/switch/rollback/store-b
+Attivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/switch/rollback/store-a
+Disattivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/switch/rollback/store-a
+Attivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/transition/store-a-v1
+Attivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/transition/store-b
+Disattivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/transition/store-a-v1
+Attivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/transition/store-a-v2
+Attivazione del pacchetto: /tmp/athena-generation-test-Z5hvG1/transition/store-c
+Generation tests passed.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"generation_test" end time: Oct 15 09:16 CEST
+"generation_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+64/134 Testing: installer_e2e_test
+64/134 Test: installer_e2e_test
+Command: "/tmp/athena-b1-p166-qualified/debug/installer_e2e_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"installer_e2e_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-a-1.0
+-- Install configuration: "Release"
+-- Installing: /tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-a-1.0-install/usr/share/athena-e2e/a.txt
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-b-1.0
+-- Install configuration: "Release"
+-- Installing: /tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-b-1.0-install/usr/share/athena-e2e/b.txt
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-a-2.0
+-- Install configuration: "Release"
+-- Installing: /tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-a-2.0-install/usr/share/athena-e2e/a.txt
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-c-1.0
+-- Install configuration: "Release"
+-- Installing: /tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-c-1.0-install/usr/share/athena-e2e/c.txt
+Installazione di: athena-e2e-a 1.0
+Download: file:///tmp/athena-installer-e2e-test-XSP1C7/fixture/athena-e2e-a-1.0.tar.gz
+Download completato: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/downloads/athena-athena-e2e-a-1.0.tar.gz"
+Verifica SHA-256...
+SHA-256 verificato correttamente.
+Estrazione in: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/sources"
+Estrazione completata: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/sources/.athena-athena-e2e-a-1.0-extract/athena-e2e-a-1.0"
+Directory di build: "/tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-a-1.0"
+Compilazione...
+Compilazione completata.
+Installazione nello staging: "/tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-a-1.0-install"
+Installazione nello staging completata.
+Installazione nello store completata: "/tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-a-1.0"
+Installazione di: athena-e2e-b 1.0
+Download: file:///tmp/athena-installer-e2e-test-XSP1C7/fixture/athena-e2e-b-1.0.tar.gz
+Download completato: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/downloads/athena-athena-e2e-b-1.0.tar.gz"
+Verifica SHA-256...
+SHA-256 verificato correttamente.
+Estrazione in: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/sources"
+Estrazione completata: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/sources/.athena-athena-e2e-b-1.0-extract/athena-e2e-b-1.0"
+Directory di build: "/tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-b-1.0"
+Compilazione...
+Compilazione completata.
+Installazione nello staging: "/tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-b-1.0-install"
+Installazione nello staging completata.
+Installazione nello store completata: "/tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-b-1.0"
+Nuova generation: 1
+Attivazione della generation 1...
+Attivazione del pacchetto: /tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-a-1.0
+Attivazione del pacchetto: /tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-b-1.0
+Generation 1 attivata.
+Installazione di: athena-e2e-a 2.0
+Download: file:///tmp/athena-installer-e2e-test-XSP1C7/fixture/athena-e2e-a-2.0.tar.gz
+Download completato: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/downloads/athena-athena-e2e-a-2.0.tar.gz"
+Verifica SHA-256...
+SHA-256 verificato correttamente.
+Estrazione in: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/sources"
+Estrazione completata: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/sources/.athena-athena-e2e-a-2.0-extract/athena-e2e-a-2.0"
+Directory di build: "/tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-a-2.0"
+Compilazione...
+Compilazione completata.
+Installazione nello staging: "/tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-a-2.0-install"
+Installazione nello staging completata.
+Installazione nello store completata: "/tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-a-2.0"
+Installazione di: athena-e2e-c 1.0
+Download: file:///tmp/athena-installer-e2e-test-XSP1C7/fixture/athena-e2e-c-1.0.tar.gz
+Download completato: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/downloads/athena-athena-e2e-c-1.0.tar.gz"
+Verifica SHA-256...
+SHA-256 verificato correttamente.
+Estrazione in: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/sources"
+Estrazione completata: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/sources/.athena-athena-e2e-c-1.0-extract/athena-e2e-c-1.0"
+Directory di build: "/tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-c-1.0"
+Compilazione...
+Compilazione completata.
+Installazione nello staging: "/tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-c-1.0-install"
+Installazione nello staging completata.
+Installazione nello store completata: "/tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-c-1.0"
+Nuova generation: 2
+Attivazione della generation 2...
+Disattivazione del pacchetto: /tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-a-1.0
+Attivazione del pacchetto: /tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-a-2.0
+Attivazione del pacchetto: /tmp/at-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-d-1.0
+-- Install configuration: "Release"
+-- Installing: /tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-d-1.0-install/usr/share/athena-e2e/d.txt
+hena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-c-1.0
+Generation 2 attivata.
+Disattivazione del pacchetto: /tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-a-2.0
+Disattivazione del pacchetto: /tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-c-1.0
+Attivazione del pacchetto: /tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-a-1.0
+Installazione di: athena-e2e-d 1.0
+Download: file:///tmp/athena-installer-e2e-test-XSP1C7/fixture/athena-e2e-d-1.0.tar.gz
+Download completato: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/downloads/athena-athena-e2e-d-1.0.tar.gz"
+Verifica SHA-256...
+SHA-256 verificato correttamente.
+Estrazione in: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/sources"
+Estrazione completata: "/tmp/athena-installer-e2e-test-XSP1C7/athena/cache/sources/.athena-athena-e2e-d-1.0-extract/athena-e2e-d-1.0"
+Directory di build: "/tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-d-1.0"
+Compilazione...
+Compilazione completata.
+Installazione nello staging: "/tmp/athena-installer-e2e-test-XSP1C7/athena/build/athena-e2e-d-1.0-install"
+Installazione nello staging completata.
+Installazione nello store completata: "/tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-d-1.0"
+Nuova generation: 3
+Attivazione della generation 3...
+Attivazione del pacchetto: /tmp/athena-installer-e2e-test-XSP1C7/athena/store/athena-e2e-d-1.0
+<end of output>
+Test time =   0.20 sec
+----------------------------------------------------------
+Test Passed.
+"installer_e2e_test" end time: Oct 15 09:16 CEST
+"installer_e2e_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+65/134 Testing: store_metadata_test
+65/134 Test: store_metadata_test
+Command: "/tmp/athena-b1-p166-qualified/debug/store_metadata_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"store_metadata_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+store_metadata_test: OK
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"store_metadata_test" end time: Oct 15 09:16 CEST
+"store_metadata_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+66/134 Testing: gc_test
+66/134 Test: gc_test
+Command: "/tmp/athena-b1-p166-qualified/debug/gc_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"gc_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Attivazione del pacchetto: /tmp/athena-gc-test-umOX2v/store/package-kept-1.0
+Disattivazione del pacchetto: /tmp/athena-gc-test-umOX2v/store/package-kept-1.0
+Attivazione del pacchetto: /tmp/athena-gc-test-umOX2v/store/package-historical-1.0
+Disattivazione del pacchetto: /tmp/athena-gc-test-umOX2v/store/package-historical-1.0
+Attivazione del pacchetto: /tmp/athena-gc-test-umOX2v/store/package-kept-1.0
+Garbage collector tests passed.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"gc_test" end time: Oct 15 09:16 CEST
+"gc_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+67/134 Testing: repository_index_test
+67/134 Test: repository_index_test
+Command: "/tmp/athena-b1-p166-qualified/debug/repository_index_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"repository_index_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Repository index tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"repository_index_test" end time: Oct 15 09:16 CEST
+"repository_index_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+68/134 Testing: repository_test
+68/134 Test: repository_test
+Command: "/tmp/athena-b1-p166-qualified/debug/repository_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"repository_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Repository tests passed.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"repository_test" end time: Oct 15 09:16 CEST
+"repository_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+69/134 Testing: repository_api_types_test
+69/134 Test: repository_api_types_test
+Command: "/tmp/athena-b1-p166-qualified/debug/repository_api_types_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"repository_api_types_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+repository_api_types_test: passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"repository_api_types_test" end time: Oct 15 09:16 CEST
+"repository_api_types_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+70/134 Testing: metadata_schema_test
+70/134 Test: metadata_schema_test
+Command: "/tmp/athena-b1-p166-qualified/debug/metadata_schema_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"metadata_schema_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+metadata_schema_test: passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"metadata_schema_test" end time: Oct 15 09:16 CEST
+"metadata_schema_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+71/134 Testing: repository_snapshot_test
+71/134 Test: repository_snapshot_test
+Command: "/tmp/athena-b1-p166-qualified/debug/repository_snapshot_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"repository_snapshot_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+repository_snapshot_test: passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"repository_snapshot_test" end time: Oct 15 09:16 CEST
+"repository_snapshot_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+72/134 Testing: repository_selection_test
+72/134 Test: repository_selection_test
+Command: "/tmp/athena-b1-p166-qualified/debug/repository_selection_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"repository_selection_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+repository_selection_test: passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"repository_selection_test" end time: Oct 15 09:16 CEST
+"repository_selection_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+73/134 Testing: resolver_candidate_test
+73/134 Test: resolver_candidate_test
+Command: "/tmp/athena-b1-p166-qualified/debug/resolver_candidate_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"resolver_candidate_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+resolver_candidate_test: passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"resolver_candidate_test" end time: Oct 15 09:16 CEST
+"resolver_candidate_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+74/134 Testing: resolver_snapshot_adapter_test
+74/134 Test: resolver_snapshot_adapter_test
+Command: "/tmp/athena-b1-p166-qualified/debug/resolver_snapshot_adapter_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"resolver_snapshot_adapter_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"resolver_snapshot_adapter_test" end time: Oct 15 09:16 CEST
+"resolver_snapshot_adapter_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+75/134 Testing: install_request_resolution_test
+75/134 Test: install_request_resolution_test
+Command: "/tmp/athena-b1-p166-qualified/debug/install_request_resolution_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"install_request_resolution_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"install_request_resolution_test" end time: Oct 15 09:16 CEST
+"install_request_resolution_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+76/134 Testing: local_repository_test
+76/134 Test: local_repository_test
+Command: "/tmp/athena-b1-p166-qualified/debug/local_repository_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"local_repository_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Local repository tests passed.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"local_repository_test" end time: Oct 15 09:16 CEST
+"local_repository_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+77/134 Testing: removal_e2e_test
+77/134 Test: removal_e2e_test
+Command: "/tmp/athena-b1-p166-qualified/debug/removal_e2e_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"removal_e2e_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Attivazione del pacchetto: /tmp/athena-removal-e2e-pR0FIG/state/store/package-b-1.0
+Attivazione del pacchetto: /tmp/athena-removal-e2e-pR0FIG/state/store/package-a-1.0
+Disattivazione del pacchetto: /tmp/athena-removal-e2e-pR0FIG/state/store/package-a-1.0
+Rimozione completata. Nuova generation: 2
+Attivazione del pacchetto: /tmp/athena-removal-e2e-pR0FIG/state/store/package-a-1.0
+removal_e2e_test passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"removal_e2e_test" end time: Oct 15 09:16 CEST
+"removal_e2e_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+78/134 Testing: removal_realization_test
+78/134 Test: removal_realization_test
+Command: "/tmp/athena-b1-p166-qualified/debug/removal_realization_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"removal_realization_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"removal_realization_test" end time: Oct 15 09:16 CEST
+"removal_realization_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+79/134 Testing: core_foundation_test
+79/134 Test: core_foundation_test
+Command: "/tmp/athena-b1-p166-qualified/debug/core_foundation_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"core_foundation_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+Athena Package Manager 0.1.0
+
+Usage:
+  athena <command> [options]
+
+Commands:
+  install     Install a package
+  remove      Remove a package
+  list        List installed packages
+  info        Show package information
+  generation  Manage package generations
+
+  config check Validate configuration without creating state
+
+Options:
+  -h, --help      Show this help message
+  -V, --version   Show version information
+      --config PATH  Load an explicit configuration file
+      --root PATH    Override the Athena root
+Athena Package Manager 0.1.0
+Configurazione valida (schema 1).
+build: command-line
+cache: command-line
+generation_state: command-line
+repository_snapshots: command-line
+repository_state: command-line
+root: command-line
+state: command-line
+store: command-line
+target_root: command-line
+core_foundation_test: passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"core_foundation_test" end time: Oct 15 09:16 CEST
+"core_foundation_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+81/134 Testing: public_install_plan_test
+81/134 Test: public_install_plan_test
+Command: "/tmp/athena-b1-p166-qualified/debug/public_install_plan_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"public_install_plan_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"public_install_plan_test" end time: Oct 15 09:16 CEST
+"public_install_plan_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+83/134 Testing: removal_realization_integration_test
+83/134 Test: removal_realization_integration_test
+Command: "/tmp/athena-b1-p166-qualified/debug/removal_realization_test" "integration"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"removal_realization_integration_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+SKIP removal ObjectStore integration: artifact <root>: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"removal_realization_integration_test" end time: Oct 15 09:16 CEST
+"removal_realization_integration_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+84/134 Testing: packaging_install_test
+84/134 Test: packaging_install_test
+Command: "/usr/bin/cmake" "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging_install_test.cmake"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"packaging_install_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+-- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging stage.TZaH0IAMK5
+-- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+-- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+<end of output>
+Test time =   0.15 sec
+----------------------------------------------------------
+Test Passed.
+"packaging_install_test" end time: Oct 15 09:16 CEST
+"packaging_install_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+85/134 Testing: packaging_regression_test
+85/134 Test: packaging_regression_test
+Command: "/usr/bin/cmake" "-DCONFIG=Debug" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging_regression_test.cmake"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"packaging_regression_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+-- Regression artifacts: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5
+-- /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/default: UpdateCTestConfiguration  from :/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/default/DartConfiguration.tcl
+Test project /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/default
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/default/packaging_install_test.cmake"
+2: Working Directory: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/default
+2: Test timeout computed to be: 90
+2: -- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/default/packaging stage.7YCoKi2bwp
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+1/1 Test #2: packaging_install_test ...........   Passed    0.09 sec
+
+The following tests passed:
+	packaging_install_test
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+packaging    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.09 sec
+
+-- /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/custom: UpdateCTestConfiguration  from :/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/custom/DartConfiguration.tcl
+Test project /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/custom
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/custom/packaging_install_test.cmake"
+2: Working Directory: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/custom
+2: Test timeout computed to be: 90
+2: -- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/custom/packaging stage.t7AMfdmHHC
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+1/1 Test #2: packaging_install_test ...........   Passed    0.09 sec
+
+The following tests passed:
+	packaging_install_test
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+packaging    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.09 sec
+
+-- /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nested: UpdateCTestConfiguration  from :/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nested/DartConfiguration.tcl
+Test project /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nested
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nested/packaging_install_test.cmake"
+2: Working Directory: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nested
+2: Test timeout computed to be: 90
+2: -- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nested/packaging stage.FXMmwP8Ffe
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+1/1 Test #2: packaging_install_test ...........   Passed    0.09 sec
+
+The following tests passed:
+	packaging_install_test
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+packaging    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.09 sec
+
+-- /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/sbin: UpdateCTestConfiguration  from :/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/sbin/DartConfiguration.tcl
+Test project /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/sbin
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/sbin/packaging_install_test.cmake"
+2: Working Directory: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/sbin
+2: Test timeout computed to be: 90
+2: -- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/sbin/packaging stage.Ve6EJCR6MO
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+1/1 Test #2: packaging_install_test ...........   Passed    0.09 sec
+
+The following tests passed:
+	packaging_install_test
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+packaging    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.09 sec
+
+-- /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/normalized: UpdateCTestConfiguration  from :/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/normalized/DartConfiguration.tcl
+Test project /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/normalized
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/normalized/packaging_install_test.cmake"
+2: Working Directory: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/normalized
+2: Test timeout computed to be: 90
+2: -- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/normalized/packaging stage.OmpuIhiuZq
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+1/1 Test #2: packaging_install_test ...........   Passed    0.09 sec
+
+The following tests passed:
+	packaging_install_test
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+packaging    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.09 sec
+
+-- /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/root: UpdateCTestConfiguration  from :/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/root/DartConfiguration.tcl
+Test project /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/root
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/root/packaging_install_test.cmake"
+2: Working Directory: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/root
+2: Test timeout computed to be: 90
+2: -- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/root/packaging stage.01UhVKdcdC
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+1/1 Test #2: packaging_install_test ...........   Passed    0.09 sec
+
+The following tests passed:
+	packaging_install_test
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+packaging    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.09 sec
+
+-- /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/relative_home: UpdateCTestConfiguration  from :/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/relative_home/DartConfiguration.tcl
+Test project /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/relative_home
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/relative_home/packaging_install_test.cmake"
+2: Working Directory: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/relative_home
+2: Test timeout computed to be: 90
+2: -- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/relative_home/packaging stage.rjIXSBKokt
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+1/1 Test #2: packaging_install_test ...........   Passed    0.09 sec
+
+The following tests passed:
+	packaging_install_test
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+packaging    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.09 sec
+
+-- /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit: UpdateCTestConfiguration  from :/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit/DartConfiguration.tcl
+Test project /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=$ORIGIN/../vendor/lib;${ORIGIN}/../vendor/alternate;${ORIGIN}/../vendor/alternate" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit/packaging_install_test.cmake"
+2: Working Directory: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit
+2: Test timeout computed to be: 90
+2: -- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit/packaging stage.wu3WdsW1Xy
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+1/1 Test #2: packaging_install_test ...........   Passed    0.09 sec
+
+The following tests passed:
+	packaging_install_test
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+packaging    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.09 sec
+
+-- /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit_genex: UpdateCTestConfiguration  from :/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit_genex/DartConfiguration.tcl
+Test project /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit_genex
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=$ORIGIN/../vendor/debug;;" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit_genex/packaging_install_test.cmake"
+2: Working Directory: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit_genex
+2: Test timeout computed to be: 90
+2: -- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/explicit_genex/packaging stage.SANO0tBONj
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+1/1 Test #2: packaging_install_test ...........   Passed    0.09 sec
+
+The following tests passed:
+	packaging_install_test
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+packaging    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.09 sec
+
+-- /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nonstandard: UpdateCTestConfiguration  from :/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nonstandard/DartConfiguration.tcl
+Test project /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nonstandard
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packaging_install_test
+
+2: Test command: /usr/bin/cmake "-DCONFIG=Debug" "-DCORE_NAME=libathena_core.so" "-DCORE_SONAME=libathena_core.so" "-DCORE_LINK_NAME=libathena_core.so" "-DCORE_RPATH=" "-P" "/tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nonstandard/packaging_install_test.cmake"
+2: Working Directory: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nonstandard
+2: Test timeout computed to be: 90
+2: -- Packaging staging root: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/nonstandard/packaging stage.tDqgcvSh3H
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /usr
+2: -- Staged layout, ELF metadata, dependency resolution and CLI passed: /opt/athena
+1/1 Test #2: packaging_install_test ...........   Passed    0.09 sec
+
+The following tests passed:
+	packaging_install_test
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+packaging    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.09 sec
+
+-- Concurrent staging roots differed and were cleaned: /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/default/packaging stage.kEFTmP2VCw; /tmp/athena-b1-p166-qualified/debug/packaging regression.ILpSTkOUw5/default/packaging stage.f7hz2IoFUG
+<end of output>
+Test time =   5.69 sec
+----------------------------------------------------------
+Test Passed.
+"packaging_regression_test" end time: Oct 15 09:16 CEST
+"packaging_regression_test" time elapsed: 00:00:05
+----------------------------------------------------------
+
+86/134 Testing: immutable_object_publication_test
+86/134 Test: immutable_object_publication_test
+Command: "/tmp/athena-b1-p166-qualified/debug/immutable_publication_test" "objects"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"immutable_object_publication_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+SKIP complete ArtifactId publication coverage: artifact <root>: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"immutable_object_publication_test" end time: Oct 15 09:16 CEST
+"immutable_object_publication_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+87/134 Testing: transaction_gc_crash_test
+87/134 Test: transaction_gc_crash_test
+Command: "/tmp/athena-b1-p166-qualified/debug/transaction_gc_test" "crash"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"transaction_gc_crash_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+M2.5-C crash passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"transaction_gc_crash_test" end time: Oct 15 09:16 CEST
+"transaction_gc_crash_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+88/134 Testing: transaction_gc_concurrency_test
+88/134 Test: transaction_gc_concurrency_test
+Command: "/tmp/athena-b1-p166-qualified/debug/transaction_gc_test" "concurrency"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"transaction_gc_concurrency_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+M2.5-C concurrency passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"transaction_gc_concurrency_test" end time: Oct 15 09:16 CEST
+"transaction_gc_concurrency_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+89/134 Testing: transaction_gc_scanner_test
+89/134 Test: transaction_gc_scanner_test
+Command: "/tmp/athena-b1-p166-qualified/debug/transaction_gc_test" "scanner"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"transaction_gc_scanner_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+SKIP scanner-dependent M2.5-C publication: artifact <root>: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"transaction_gc_scanner_test" end time: Oct 15 09:16 CEST
+"transaction_gc_scanner_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+96/134 Testing: activation_selection_metadata_test
+96/134 Test: activation_selection_metadata_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_selection_test" "metadata"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_selection_metadata_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"activation_selection_metadata_test" end time: Oct 15 09:16 CEST
+"activation_selection_metadata_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+97/134 Testing: activation_plan_retention_limits_test
+97/134 Test: activation_plan_retention_limits_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_retention_test" "limits"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_retention_limits_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+D5: 4096 pairs, additional descriptor peak 15/24; 4097th rejected
+<end of output>
+Test time =   6.23 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_retention_limits_test" end time: Oct 15 09:16 CEST
+"activation_plan_retention_limits_test" time elapsed: 00:00:06
+----------------------------------------------------------
+
+98/134 Testing: activation_plan_retention_budgets_test
+98/134 Test: activation_plan_retention_budgets_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_retention_test" "budgets"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_retention_budgets_test" start time: Oct 15 09:16 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =  35.25 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_retention_budgets_test" end time: Oct 15 09:17 CEST
+"activation_plan_retention_budgets_test" time elapsed: 00:00:35
+----------------------------------------------------------
+
+99/134 Testing: activation_plan_retention_processes_test
+99/134 Test: activation_plan_retention_processes_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_retention_test" "processes"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_retention_processes_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.09 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_retention_processes_test" end time: Oct 15 09:17 CEST
+"activation_plan_retention_processes_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+100/134 Testing: activation_plan_retention_kills_test
+100/134 Test: activation_plan_retention_kills_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_retention_test" "kills"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_retention_kills_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.10 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_retention_kills_test" end time: Oct 15 09:17 CEST
+"activation_plan_retention_kills_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+105/134 Testing: activation_plan_persistence_locator-cloexec_test
+105/134 Test: activation_plan_persistence_locator-cloexec_test
+Command: "/usr/bin/cmake" "-E" "env" "LD_PRELOAD=/tmp/athena-b1-p166-qualified/debug/libathena_d4_locator_fault.so" "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "locator-cloexec"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_locator-cloexec_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+R3 locator CLOEXEC: injection=1, successful fsync=1, changing closes=271, Io/EACCES/OutcomeUncertain, registry=0, no leak; retry=7
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_locator-cloexec_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_locator-cloexec_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+106/134 Testing: activation_plan_persistence_filesystem-errors_test
+106/134 Test: activation_plan_persistence_filesystem-errors_test
+Command: "/usr/bin/cmake" "-E" "env" "LD_PRELOAD=/tmp/athena-b1-p166-qualified/debug/libathena_d4_locator_fault.so" "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "filesystem-errors"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_filesystem-errors_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+R3-G fstatfs api=0 Io/5/NotMutated registry=0; retry=7
+R3-G fstatfs api=1 Io/5/NotMutated registry=0; retry=7
+R3-G fstatfs api=2 Io/5/NotMutated registry=0; retry=7
+R3-G fstatfs api=3 Io/5/NotMutated registry=0; retry=7
+R3-G fstatfs api=0 Io/9/NotMutated registry=0; retry=7
+R3-G fstatfs api=1 Io/9/NotMutated registry=0; retry=7
+R3-G fstatfs api=2 Io/9/NotMutated registry=0; retry=7
+R3-G fstatfs api=3 Io/9/NotMutated registry=0; retry=7
+R3-G fstatfs api=0 Io/13/NotMutated registry=0; retry=7
+R3-G fstatfs api=1 Io/13/NotMutated registry=0; retry=7
+R3-G fstatfs api=2 Io/13/NotMutated registry=0; retry=7
+R3-G fstatfs api=3 Io/13/NotMutated registry=0; retry=7
+R3-G openat after=0 Cause=12 errno=5 Outcome=0 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=0 Cause=12 errno=13 Outcome=0 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=0 Cause=12 errno=9 Outcome=0 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=0 Cause=12 errno=2 Outcome=0 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=0 Cause=12 errno=20 Outcome=0 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=0 Cause=12 errno=40 Outcome=0 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=1 Cause=12 errno=5 Outcome=2 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=1 Cause=12 errno=13 Outcome=2 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=1 Cause=12 errno=9 Outcome=2 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=1 Cause=10 errno=2 Outcome=2 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=1 Cause=10 errno=20 Outcome=2 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=1 Cause=10 errno=40 Outcome=2 registry=0 secondary close failures=1 primary retained; retry=7
+R3-G openat after=3 Cause=12 errno=5 Outcome=2 registry=2 secondary close failures=1 primary retained; retry=7
+R3-G openat after=3 Cause=12 errno=13 Outcome=2 registry=2 secondary close failures=1 primary retained; retry=7
+R3-G openat after=3 Cause=12 errno=9 Outcome=2 registry=2 secondary close failures=1 primary retained; retry=7
+R3-G openat after=3 Cause=10 errno=2 Outcome=2 registry=2 secondary close failures=1 primary retained; retry=7
+R3-G openat after=3 Cause=10 errno=20 Outcome=2 registry=2 secondary close failures=1 primary retained; retry=7
+R3-G openat after=3 Cause=10 errno=40 Outcome=2 registry=2 secondary close failures=1 primary retained; retry=7
+R3-G openat after=7 Cause=12 errno=5 Outcome=2 registry=6 secondary close failures=1 primary retained; retry=7
+R3-G openat after=7 Cause=12 errno=13 Outcome=2 registry=6 secondary close failures=1 primary retained; retry=7
+R3-G openat after=7 Cause=12 errno=9 Outcome=2 registry=6 secondary close failures=1 primary retained; retry=7
+R3-G openat after=7 Cause=10 errno=2 Outcome=2 registry=6 secondary close failures=1 primary retained; retry=7
+R3-G openat after=7 Cause=10 errno=20 Outcome=2 registry=6 secondary close failures=1 primary retained; retry=7
+R3-G openat after=7 Cause=10 errno=40 Outcome=2 registry=6 secondary close failures=1 primary retained; retry=7
+R3-G fstatfs after arm: NOT APPLICABLE (preflight only); 12 query failures + 24 native openat/unwind failures
+<end of output>
+Test time =   0.58 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_filesystem-errors_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_filesystem-errors_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+107/134 Testing: activation_plan_persistence_faults_test
+107/134 Test: activation_plan_persistence_faults_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "faults"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_faults_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+12 identical final-read substitutions rejected; fresh current-instance barriers verified (including plans during final plan.toml read after fsync 7)
+9 late bootstrap substitutions rejected; fresh current-inode barriers verified
+10 in-place binding changes during final read rejected with AuthorityMismatch, errno=0 and exact outcome
+10 in-place binding changes during final enumeration rejected with AuthorityMismatch, errno=0 and exact outcome
+6 bootstrap binding changes at final enumeration rejected
+6 readdir EOF insertions rejected, errno=0, residue and unrelated state verified
+<end of output>
+Test time =   2.00 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_faults_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_faults_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+108/134 Testing: activation_plan_persistence_limits_test
+108/134 Test: activation_plan_persistence_limits_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "limits"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_limits_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.59 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_limits_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_limits_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+109/134 Testing: activation_plan_persistence_bounds_test
+109/134 Test: activation_plan_persistence_bounds_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "bounds"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_bounds_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =  13.80 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_bounds_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_bounds_test" time elapsed: 00:00:13
+----------------------------------------------------------
+
+110/134 Testing: activation_plan_persistence_kills_test
+110/134 Test: activation_plan_persistence_kills_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "kills"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_kills_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+R3: 54 publication SIGKILL points; independent exec State, residue and container identity; process-death mechanics, not reboot/power-loss durability
+<end of output>
+Test time =   1.78 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_kills_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_kills_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+111/134 Testing: activation_plan_persistence_processes_test
+111/134 Test: activation_plan_persistence_processes_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "processes"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_processes_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   1.06 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_processes_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_processes_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+113/134 Testing: activation_plan_persistence_publication-capacity_test
+113/134 Test: activation_plan_persistence_publication-capacity_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "publication-capacity"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_publication-capacity_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+R2-B3: 4096 containers, publication pins 11, additional fd peak 14/15, baseline 12, observed process peak 26
+<end of output>
+Test time =   3.08 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_publication-capacity_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_publication-capacity_test" time elapsed: 00:00:03
+----------------------------------------------------------
+
+114/134 Testing: activation_plan_persistence_recovery-capacity_test
+114/134 Test: activation_plan_persistence_recovery-capacity_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "recovery-capacity"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_recovery-capacity_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+R2-B4.1: 4096 containers, target acquired after foreign containers, recovery pins 11, additional fd peak 14/15, foreign reads 0; 4097th rejected, no leak/current change
+R2-B4.1: 4096 containers, target acquired before foreign containers, recovery pins 11, additional fd peak 15/15, foreign reads 0; 4097th rejected, no leak/current change
+<end of output>
+Test time =   7.17 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_recovery-capacity_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_recovery-capacity_test" time elapsed: 00:00:07
+----------------------------------------------------------
+
+115/134 Testing: activation_plan_persistence_recovery-cloexec_test
+115/134 Test: activation_plan_persistence_recovery-cloexec_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "recovery-cloexec"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_recovery-cloexec_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+R2-B4.1 CLOEXEC authority: Cause=Io errno=5 Outcome=NotMutated registry=0 injection=1 no leak; retry=7
+R2-B4.1 CLOEXEC post-fsync1: Cause=Io errno=5 Outcome=OutcomeUncertain registry=0 injection=1 no leak; retry=7
+R2-B4.1 CLOEXEC authority: Cause=Io errno=13 Outcome=NotMutated registry=0 injection=1 no leak; retry=7
+R2-B4.1 non-CLOEXEC: Io/ENOSPC/NotMutated; IdentityMismatch/0/NotMutated; no leak
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_recovery-cloexec_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_recovery-cloexec_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+116/134 Testing: activation_plan_persistence_recovery-kills_test
+116/134 Test: activation_plan_persistence_recovery-kills_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "recovery-kills"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_recovery-kills_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+R3: 15 recovery SIGKILL points (before/after all seven fsyncs, after completion); fresh exec State, exact residue, ordered idempotent retries, no leaks
+<end of output>
+Test time =   0.71 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_recovery-kills_test" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_recovery-kills_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+117/134 Testing: activation_plan_persistence_concluding_callback_diagnostics
+117/134 Test: activation_plan_persistence_concluding_callback_diagnostics
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "concluding-callback-diagnostics"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_concluding_callback_diagnostics" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+D4 A diagnostic target=intent recovery=REJECTED cause(enum)=10 errno=0 outcome(enum)=2 rejection=CONSISTENT_WITH_PERTURBATION
+D4 A diagnostic target=plan recovery=REJECTED cause(enum)=10 errno=0 outcome(enum)=2 rejection=CONSISTENT_WITH_PERTURBATION
+D4 A diagnostic target=inventory recovery=REJECTED cause(enum)=10 errno=0 outcome(enum)=2 rejection=CONSISTENT_WITH_PERTURBATION
+D4 A diagnostic target=binding recovery=REJECTED cause(enum)=2 errno=0 outcome(enum)=2 rejection=CONSISTENT_WITH_PERTURBATION
+D4 A: 4 diagnostics recorded; injection, seven barriers, residue and unrelated state verified; no conformance or durability claim
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_concluding_callback_diagnostics" end time: Oct 15 09:17 CEST
+"activation_plan_persistence_concluding_callback_diagnostics" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/134 Testing: activation_selection_test
+9/134 Test: activation_selection_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_selection_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_selection_test" start time: Oct 15 09:15 CEST
+Output:
+----------------------------------------------------------
+D6 fsync boundaries: 16
+D6 I/O kind 0 boundaries: 141
+D6 I/O kind 1 boundaries: 5529
+D6 I/O kind 2 boundaries: 90
+<end of output>
+Test time = 162.18 sec
+----------------------------------------------------------
+Test Passed.
+"activation_selection_test" end time: Oct 15 09:18 CEST
+"activation_selection_test" time elapsed: 00:02:42
+----------------------------------------------------------
+
+118/134 Testing: activation_plan_persistence_boundaries_fresh_test
+118/134 Test: activation_plan_persistence_boundaries_fresh_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "boundaries-fresh"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_boundaries_fresh_test" start time: Oct 15 09:17 CEST
+Output:
+----------------------------------------------------------
+fresh: inventory=11424, checking inclusive interval 1..11424
+fresh: interval 1..11424 of 11424: 11424 selected faults; cause/errno/outcome/residue/protected state verified
+<end of output>
+Test time =  65.10 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_boundaries_fresh_test" end time: Oct 15 09:18 CEST
+"activation_plan_persistence_boundaries_fresh_test" time elapsed: 00:01:05
+----------------------------------------------------------
+
+119/134 Testing: activation_plan_persistence_boundaries_bootstrap_test
+119/134 Test: activation_plan_persistence_boundaries_bootstrap_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "boundaries-bootstrap"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_boundaries_bootstrap_test" start time: Oct 15 09:18 CEST
+Output:
+----------------------------------------------------------
+bootstrap: inventory=11417, checking inclusive interval 1..11417
+bootstrap: interval 1..11417 of 11417: 11417 selected faults; cause/errno/outcome/residue/protected state verified
+<end of output>
+Test time =  65.11 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_boundaries_bootstrap_test" end time: Oct 15 09:19 CEST
+"activation_plan_persistence_boundaries_bootstrap_test" time elapsed: 00:01:05
+----------------------------------------------------------
+
+120/134 Testing: activation_plan_persistence_boundaries_reused_test
+120/134 Test: activation_plan_persistence_boundaries_reused_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "boundaries-reused"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_boundaries_reused_test" start time: Oct 15 09:18 CEST
+Output:
+----------------------------------------------------------
+reused: inventory=10511, checking inclusive interval 1..10511
+reused: interval 1..10511 of 10511: 10511 selected faults; cause/errno/outcome/residue/protected state verified
+<end of output>
+Test time =  59.75 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_boundaries_reused_test" end time: Oct 15 09:19 CEST
+"activation_plan_persistence_boundaries_reused_test" time elapsed: 00:00:59
+----------------------------------------------------------
+
+128/134 Testing: activation_plan_persistence_qualification_cleanup_test
+128/134 Test: activation_plan_persistence_qualification_cleanup_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "qualification-cleanup"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_qualification_cleanup_test" start time: Oct 15 09:19 CEST
+Output:
+----------------------------------------------------------
+ERROR: T17 umount '/unused/nested': Device or resource busy (errno 16); preserving fixture '/unused'
+ERROR: T17 umount '/tmp/athena-d4-YIKQLC/container/athena-d4-9qczek/nested': Device or resource busy (errno 16); preserving fixture '/tmp/athena-d4-YIKQLC/container/athena-d4-9qczek'
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_qualification_cleanup_test" end time: Oct 15 09:19 CEST
+"activation_plan_persistence_qualification_cleanup_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+130/134 Testing: toml_differential_test
+130/134 Test: toml_differential_test
+Command: "/usr/bin/python3.14" "/tmp/athena-b1-p166-candidate/tests/toml_differential_test.py" "/tmp/athena-b1-p166-qualified/debug/toml_upstream_probe" "/tmp/athena-b1-p166-qualified/debug/toml_athena_probe" "/tmp/athena-b1-p166-candidate/tests/toml_fixtures"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"toml_differential_test" start time: Oct 15 09:19 CEST
+Output:
+----------------------------------------------------------
+PASS any-grammar.toml profile=Any expected=ACCEPT
+PASS intent.toml profile=Intent expected=ACCEPT
+PASS plan.toml profile=Plan expected=ACCEPT
+PASS status.toml profile=Status expected=ACCEPT
+PASS current.toml profile=Current expected=ACCEPT
+PASS binding.toml profile=ProjectionBinding expected=ACCEPT
+PASS adoption.toml profile=Adoption expected=ACCEPT
+PASS generation-v1.toml profile=Generation expected=ACCEPT
+PASS generation-v2.toml profile=Generation expected=ACCEPT
+PASS generation-v3.toml profile=Generation expected=ACCEPT
+PASS record.toml profile=Record expected=ACCEPT
+PASS semantics.toml profile=Semantics expected=ACCEPT
+PASS policy.toml profile=Policy expected=ACCEPT
+PASS package.toml profile=Package expected=ACCEPT
+PASS manifest.toml profile=Manifest expected=ACCEPT
+PASS legacy.toml profile=LegacyMetadata expected=ACCEPT
+PASS store-binding.toml profile=StoreBinding expected=ACCEPT
+PASS pins.toml profile=Pins expected=ACCEPT
+PASS generation-bom.toml profile=Generation expected=ACCEPT
+PASS generation-dotted.toml profile=Generation expected=ACCEPT
+PASS package-dotted.toml profile=Package expected=ACCEPT
+PASS unknown-payload.toml profile=Generation expected=REJECT_STRUCTURE
+PASS wrong-type.toml profile=Generation expected=REJECT_STRUCTURE
+PASS oversized-id.toml profile=Plan expected=REJECT_IDENTITY
+PASS malformed-duplicate.toml profile=Any expected=REJECT_GRAMMAR
+PASS malformed-escape.toml profile=Any expected=REJECT_GRAMMAR
+PASS malformed-truncated.toml profile=Any expected=REJECT_GRAMMAR
+PASS malformed-utf8-surrogate.toml profile=Any expected=REJECT_GRAMMAR
+PASS malformed-inline-duplicate.toml profile=Any expected=REJECT_GRAMMAR
+PASS plan-nonempty.toml profile=Plan expected=ACCEPT
+PASS package-dynamic-key.toml profile=Package expected=ACCEPT
+PASS generation-nested-record.toml profile=Generation expected=ACCEPT
+PASS semantics-dotted-target.toml profile=Semantics expected=ACCEPT
+PASS malformed-vertical-tab.toml profile=Any expected=REJECT_GRAMMAR
+PASS malformed-escape-x.toml profile=Any expected=REJECT_GRAMMAR
+PASS 35 independent differential fixtures; budget rejection checked for every valid fixture
+<end of output>
+Test time =   0.28 sec
+----------------------------------------------------------
+Test Passed.
+"toml_differential_test" end time: Oct 15 09:19 CEST
+"toml_differential_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+131/134 Testing: toml_upstream_consumer_test
+131/134 Test: toml_upstream_consumer_test
+Command: "/tmp/athena-b1-p166-qualified/debug/toml_upstream_consumer_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"toml_upstream_consumer_test" start time: Oct 15 09:19 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"toml_upstream_consumer_test" end time: Oct 15 09:19 CEST
+"toml_upstream_consumer_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+132/134 Testing: toml_vendor_reproduction_test
+132/134 Test: toml_vendor_reproduction_test
+Command: "/usr/bin/python3.14" "/tmp/athena-b1-p166-candidate/third_party/athena_toml/vendor.py" "/usr/include/toml++"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"toml_vendor_reproduction_test" start time: Oct 15 09:19 CEST
+Output:
+----------------------------------------------------------
+patching file impl/parser.hpp
+patching file impl/parser.inl
+patching file toml.hpp
+PASS 51 exact upstream hashes; observer patch; complete namespace/macro transform
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"toml_vendor_reproduction_test" end time: Oct 15 09:19 CEST
+"toml_vendor_reproduction_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+133/134 Testing: toml_isolation_test
+133/134 Test: toml_isolation_test
+Command: "/usr/bin/python3.14" "/tmp/athena-b1-p166-candidate/tests/toml_isolation_test.py" "/tmp/athena-b1-p166-candidate" "/tmp/athena-b1-p166-qualified/debug" "/tmp/athena-b1-p166-qualified/debug/libathena_core.so" "/tmp/athena-b1-p166-qualified/debug/toml_upstream_probe"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"toml_isolation_test" start time: Oct 15 09:19 CEST
+Output:
+----------------------------------------------------------
+PASS 11 fork translation units define no upstream toml symbols
+PASS original probe, public consumer include isolation, private headers, observer/parser namespace separation
+LIMIT: finite structural/symbol evidence; not a mathematical proof for every external consumer/configuration
+<end of output>
+Test time =   0.38 sec
+----------------------------------------------------------
+Test Passed.
+"toml_isolation_test" end time: Oct 15 09:19 CEST
+"toml_isolation_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+134/134 Testing: qualification_driver_test
+134/134 Test: qualification_driver_test
+Command: "/usr/bin/python3.14" "/tmp/athena-b1-p166-candidate/tests/qualification_driver_test.py"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"qualification_driver_test" start time: Oct 15 09:19 CEST
+Output:
+----------------------------------------------------------
+test_context_document_cannot_become_a_required_source (__main__.SourceClosureTest.test_context_document_cannot_become_a_required_source) ... ok
+test_missing_required_input_fails (__main__.SourceClosureTest.test_missing_required_input_fails) ... ok
+test_modified_input_fails (__main__.SourceClosureTest.test_modified_input_fails) ... ok
+test_new_unlisted_source_fails (__main__.SourceClosureTest.test_new_unlisted_source_fails) ... ok
+test_real_source_copy_qualifies_without_historical_cli_document (__main__.SourceClosureTest.test_real_source_copy_qualifies_without_historical_cli_document) ... ok
+test_removed_input_fails (__main__.SourceClosureTest.test_removed_input_fails) ... ok
+test_symlinked_source_fails (__main__.SourceClosureTest.test_symlinked_source_fails) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.301s
+
+OK
+<end of output>
+Test time =   0.35 sec
+----------------------------------------------------------
+Test Passed.
+"qualification_driver_test" end time: Oct 15 09:19 CEST
+"qualification_driver_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+121/134 Testing: activation_plan_persistence_boundaries_published_test
+121/134 Test: activation_plan_persistence_boundaries_published_test
+Command: "/tmp/athena-b1-p166-qualified/debug/activation_plan_persistence_test" "boundaries-published"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"activation_plan_persistence_boundaries_published_test" start time: Oct 15 09:19 CEST
+Output:
+----------------------------------------------------------
+published: inventory=6322, checking inclusive interval 1..6322
+published: interval 1..6322 of 6322: 6322 selected faults; cause/errno/outcome/residue/protected state verified
+recovery: inventory=5093, checking inclusive interval 1..5093
+recovery: interval 1..5093 of 5093: 5093 selected faults; cause/errno/outcome/residue/protected state verified
+<end of output>
+Test time =  42.08 sec
+----------------------------------------------------------
+Test Passed.
+"activation_plan_persistence_boundaries_published_test" end time: Oct 15 09:19 CEST
+"activation_plan_persistence_boundaries_published_test" time elapsed: 00:00:42
+----------------------------------------------------------
+
+80/134 Testing: public_planning_test
+80/134 Test: public_planning_test
+Command: "/tmp/athena-b1-p166-qualified/debug/public_planning_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"public_planning_test" start time: Oct 15 09:19 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.08 sec
+----------------------------------------------------------
+Test Passed.
+"public_planning_test" end time: Oct 15 09:19 CEST
+"public_planning_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+82/134 Testing: resolution_result_test
+82/134 Test: resolution_result_test
+Command: "/tmp/athena-b1-p166-qualified/debug/resolution_result_test"
+Directory: /tmp/athena-b1-p166-qualified/debug
+"resolution_result_test" start time: Oct 15 09:19 CEST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"resolution_result_test" end time: Oct 15 09:19 CEST
+"resolution_result_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 15 09:19 CEST
+
+D4-A =   0.07 sec*proc
+
+diagnostic =   0.07 sec*proc
+
+packaging =   5.84 sec*proc
+

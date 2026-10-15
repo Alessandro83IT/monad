@@ -1,0 +1,4423 @@
+{
+  "backtraceGraph" : 
+  {
+    "commands" : 
+    [
+      "add_test",
+      "add_athena_test",
+      "athena_add_packaging_smoke_test"
+    ],
+    "files" : 
+    [
+      "/home/alessandro/Lab/Programming/athena-pm/CMakeLists.txt",
+      "/home/alessandro/Lab/Programming/athena-pm/cmake/AthenaPackaging.cmake"
+    ],
+    "nodes" : 
+    [
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 1
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 3
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 4
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 6
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 7
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 9
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 10
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 12
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 13
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 15
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 16
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 18
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 19
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 21
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 22
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 24
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 25
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 27
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 28
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 30
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 31
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 33
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 34
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 36
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 37
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 39
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 40
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 42
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 43
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 45
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 46
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 48
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 49
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 51
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 52
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 54
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 55
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 57
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 58
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 60
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 61
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 63
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 64
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 66
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 67
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 69
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 70
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 72
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 73
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 75
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 76
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 78
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 79
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 81
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 82
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 84
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 85
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 87
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 88
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 90
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 91
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 93
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 94
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 96
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 97
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 99
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 100
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 102
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 103
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 105
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 106
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 108
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 109
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 111
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 112
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 114
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 115
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 117
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 118
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 120
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 121
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 123
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 124
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 126
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 127
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 129
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 130
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 132
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 133
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 135
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 136
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 138
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 139
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 141
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 142
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 144
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 145
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 147
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 148
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 150
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 151
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 153
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 154
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 156
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 157
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 159
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 160
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 162
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 163
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 165
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 166
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 168
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 169
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 171
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 172
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 174
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 175
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 177
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 178
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 180
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 181
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 183
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 184
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 186
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 187
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 189
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 190
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 192
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 193
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 195
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 196
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 198
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 199
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 201
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 202
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 204
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 205
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 207
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 208
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 210
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 211
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 213
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 214
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 216
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 217
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 219
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 220
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 222
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 223
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 225
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 226
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 228
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 229
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 231
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 232
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 234
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 235
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 237
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 238
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 240
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 241
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 243
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 244
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 150,
+        "parent" : 246
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 247
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 177,
+        "parent" : 249
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 2,
+        "file" : 0,
+        "line" : 181,
+        "parent" : 251
+      },
+      {
+        "command" : 0,
+        "file" : 1,
+        "line" : 52,
+        "parent" : 252
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 184,
+        "parent" : 254
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 195,
+        "parent" : 256
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 198,
+        "parent" : 258
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 199,
+        "parent" : 260
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 200,
+        "parent" : 262
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 216,
+        "parent" : 264
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 216,
+        "parent" : 266
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 216,
+        "parent" : 268
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 216,
+        "parent" : 270
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 216,
+        "parent" : 272
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 216,
+        "parent" : 274
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 221,
+        "parent" : 276
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 230,
+        "parent" : 278
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 230,
+        "parent" : 280
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 230,
+        "parent" : 282
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 230,
+        "parent" : 284
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 234,
+        "parent" : 286
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 234,
+        "parent" : 288
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 234,
+        "parent" : 290
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 234,
+        "parent" : 292
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 245,
+        "parent" : 294
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 249,
+        "parent" : 296
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 298
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 300
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 302
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 304
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 306
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 308
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 310
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 312
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 314
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 316
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 259,
+        "parent" : 318
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 264,
+        "parent" : 320
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 264,
+        "parent" : 322
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 264,
+        "parent" : 324
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 264,
+        "parent" : 326
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 270,
+        "parent" : 328
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 275,
+        "parent" : 330
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 275,
+        "parent" : 332
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 275,
+        "parent" : 334
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 275,
+        "parent" : 336
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 275,
+        "parent" : 338
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 283,
+        "parent" : 340
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 291,
+        "parent" : 342
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 304,
+        "parent" : 344
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 321,
+        "parent" : 346
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 323,
+        "parent" : 348
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 326,
+        "parent" : 350
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 331,
+        "parent" : 352
+      }
+    ]
+  },
+  "kind" : "ctestInfo",
+  "tests" : 
+  [
+    {
+      "backtrace" : 2,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/store_metadata_errors_test"
+      ],
+      "name" : "store_metadata_errors_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 5,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/bounded_toml_test"
+      ],
+      "name" : "bounded_toml_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 8,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/operational_request_codec_test"
+      ],
+      "name" : "operational_request_codec_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 11,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/operational_request_runtime_test"
+      ],
+      "name" : "operational_request_runtime_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 30.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 14,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/initial_activation_test"
+      ],
+      "name" : "initial_activation_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 30.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 17,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/operational_activation_test"
+      ],
+      "name" : "operational_activation_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 30.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 20,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/operational_plan_test"
+      ],
+      "name" : "operational_plan_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 23,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_reconciliation_test"
+      ],
+      "name" : "activation_reconciliation_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 26,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_selection_test"
+      ],
+      "name" : "activation_selection_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 600.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 29,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_retention_test"
+      ],
+      "name" : "activation_plan_retention_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 32,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test"
+      ],
+      "name" : "activation_plan_persistence_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 120.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 35,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/legacy_d3_test"
+      ],
+      "name" : "legacy_d3_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 38,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_projection_fs_test"
+      ],
+      "name" : "activation_projection_fs_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 41,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_current_test"
+      ],
+      "name" : "activation_current_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 44,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_schema_test"
+      ],
+      "name" : "activation_schema_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 47,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_digest_test"
+      ],
+      "name" : "activation_digest_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 50,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/transaction_gc_fault_test"
+      ],
+      "name" : "transaction_gc_fault_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 53,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/transaction_gc_protocol_test"
+      ],
+      "name" : "transaction_gc_protocol_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 56,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/transaction_gc_test"
+      ],
+      "name" : "transaction_gc_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 59,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/immutable_publication_test"
+      ],
+      "name" : "immutable_publication_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 62,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/locking_test"
+      ],
+      "name" : "locking_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 30.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 65,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/durable_filesystem_test"
+      ],
+      "name" : "durable_filesystem_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 30.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 68,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/installed_semantics_regression_test"
+      ],
+      "name" : "installed_semantics_regression_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 71,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/installed_semantics_test"
+      ],
+      "name" : "installed_semantics_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 74,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/installed_semantics_integration_test"
+      ],
+      "name" : "installed_semantics_integration_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 90.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 77,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/cli_install_test"
+      ],
+      "name" : "cli_install_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 80,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/cli_install_integration_test"
+      ],
+      "name" : "cli_install_integration_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 90.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 83,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/install_transaction_test"
+      ],
+      "name" : "install_transaction_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 86,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/install_transaction_integration_test"
+      ],
+      "name" : "install_transaction_integration_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 90.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 89,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_projection_test"
+      ],
+      "name" : "activation_projection_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 92,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/generation_activation_test"
+      ],
+      "name" : "generation_activation_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 90.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 95,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/generation_membership_test"
+      ],
+      "name" : "generation_membership_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 98,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/realization_executor_test"
+      ],
+      "name" : "realization_executor_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 101,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/realization_executor_integration_test"
+      ],
+      "name" : "realization_executor_integration_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 90.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 104,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/realization_record_test"
+      ],
+      "name" : "realization_record_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 107,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/object_store_test"
+      ],
+      "name" : "object_store_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 90.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 110,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/object_store_scanner_test"
+      ],
+      "name" : "object_store_scanner_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 90.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 113,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/artifact_encoding_test"
+      ],
+      "name" : "artifact_encoding_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 116,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/artifact_identity_test"
+      ],
+      "name" : "artifact_identity_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 119,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/artifact_identity_scanner_test"
+      ],
+      "name" : "artifact_identity_scanner_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 122,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/artifact_model_test"
+      ],
+      "name" : "artifact_model_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 125,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/artifact_scanner_test"
+      ],
+      "name" : "artifact_scanner_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 128,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/artifact_contract_test"
+      ],
+      "name" : "artifact_contract_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 131,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/arch_repository_test"
+      ],
+      "name" : "arch_repository_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 134,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/arch_repository_adapter_test"
+      ],
+      "name" : "arch_repository_adapter_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 137,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/arch_version_test"
+      ],
+      "name" : "arch_version_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 140,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/cmake_backend_test"
+      ],
+      "name" : "cmake_backend_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 143,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/version_test"
+      ],
+      "name" : "version_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 146,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/package_loader_test"
+      ],
+      "name" : "package_loader_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/alessandro/Lab/Programming/athena-pm"
+        }
+      ]
+    },
+    {
+      "backtrace" : 149,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/dependency_resolver_test"
+      ],
+      "name" : "dependency_resolver_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 152,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/install_plan_test"
+      ],
+      "name" : "install_plan_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 155,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/generation_builder_test"
+      ],
+      "name" : "generation_builder_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 158,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/dependency_expression_test"
+      ],
+      "name" : "dependency_expression_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 161,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/dependency_roles_test"
+      ],
+      "name" : "dependency_roles_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 164,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/dependency_scope_precedence_test"
+      ],
+      "name" : "dependency_scope_precedence_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 167,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/dependency_expression_resolution_test"
+      ],
+      "name" : "dependency_expression_resolution_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 170,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/dependency_constraint_test"
+      ],
+      "name" : "dependency_constraint_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 173,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/dependency_parser_test"
+      ],
+      "name" : "dependency_parser_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 176,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/dependency_serializer_test"
+      ],
+      "name" : "dependency_serializer_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 179,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/dependency_validator_test"
+      ],
+      "name" : "dependency_validator_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 182,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/remove_plan_test"
+      ],
+      "name" : "remove_plan_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 185,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/removal_planner_test"
+      ],
+      "name" : "removal_planner_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 188,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_test"
+      ],
+      "name" : "activation_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 191,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/generation_test"
+      ],
+      "name" : "generation_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 194,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/installer_e2e_test"
+      ],
+      "name" : "installer_e2e_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 197,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/store_metadata_test"
+      ],
+      "name" : "store_metadata_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 200,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/gc_test"
+      ],
+      "name" : "gc_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 203,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/repository_index_test"
+      ],
+      "name" : "repository_index_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 206,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/repository_test"
+      ],
+      "name" : "repository_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 209,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/repository_api_types_test"
+      ],
+      "name" : "repository_api_types_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 212,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/metadata_schema_test"
+      ],
+      "name" : "metadata_schema_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 215,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/repository_snapshot_test"
+      ],
+      "name" : "repository_snapshot_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 218,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/repository_selection_test"
+      ],
+      "name" : "repository_selection_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 221,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/resolver_candidate_test"
+      ],
+      "name" : "resolver_candidate_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 224,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/resolver_snapshot_adapter_test"
+      ],
+      "name" : "resolver_snapshot_adapter_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 227,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/install_request_resolution_test"
+      ],
+      "name" : "install_request_resolution_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 230,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/local_repository_test"
+      ],
+      "name" : "local_repository_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 233,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/removal_e2e_test"
+      ],
+      "name" : "removal_e2e_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 236,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/removal_realization_test"
+      ],
+      "name" : "removal_realization_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 239,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/core_foundation_test"
+      ],
+      "name" : "core_foundation_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 242,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/public_planning_test"
+      ],
+      "name" : "public_planning_test",
+      "properties" : 
+      [
+        {
+          "name" : "RUN_SERIAL",
+          "value" : true
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 245,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/public_install_plan_test"
+      ],
+      "name" : "public_install_plan_test",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 248,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/resolution_result_test"
+      ],
+      "name" : "resolution_result_test",
+      "properties" : 
+      [
+        {
+          "name" : "RUN_SERIAL",
+          "value" : true
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 250,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/removal_realization_test",
+        "integration"
+      ],
+      "name" : "removal_realization_integration_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 90.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 253,
+      "command" : 
+      [
+        "/usr/bin/cmake",
+        "-DCONFIG=Release",
+        "-DCORE_NAME=libathena_core.so",
+        "-DCORE_SONAME=libathena_core.so",
+        "-DCORE_LINK_NAME=libathena_core.so",
+        "-DCORE_RPATH=",
+        "-P",
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/packaging_install_test.cmake"
+      ],
+      "name" : "packaging_install_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "packaging"
+          ]
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 90.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 255,
+      "command" : 
+      [
+        "/usr/bin/cmake",
+        "-DCONFIG=Release",
+        "-P",
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/packaging_regression_test.cmake"
+      ],
+      "name" : "packaging_regression_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "packaging"
+          ]
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 257,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/immutable_publication_test",
+        "objects"
+      ],
+      "name" : "immutable_object_publication_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 259,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/transaction_gc_test",
+        "crash"
+      ],
+      "name" : "transaction_gc_crash_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 261,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/transaction_gc_test",
+        "concurrency"
+      ],
+      "name" : "transaction_gc_concurrency_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 263,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/transaction_gc_test",
+        "scanner"
+      ],
+      "name" : "transaction_gc_scanner_test",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 90.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 265,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_execution_privileged_test",
+        "sources"
+      ],
+      "name" : "activation_execution_privileged_sources_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 267,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_execution_privileged_test",
+        "legacy"
+      ],
+      "name" : "activation_execution_privileged_legacy_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 269,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_execution_privileged_test",
+        "owner"
+      ],
+      "name" : "activation_execution_privileged_owner_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 271,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_execution_privileged_test",
+        "bind"
+      ],
+      "name" : "activation_execution_privileged_bind_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 273,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_execution_privileged_test",
+        "nested"
+      ],
+      "name" : "activation_execution_privileged_nested_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 275,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_execution_privileged_test",
+        "ext4"
+      ],
+      "name" : "activation_execution_privileged_ext4_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 277,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_selection_test",
+        "metadata"
+      ],
+      "name" : "activation_selection_metadata_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 30.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 279,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_retention_test",
+        "limits"
+      ],
+      "name" : "activation_plan_retention_limits_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 300.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 281,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_retention_test",
+        "budgets"
+      ],
+      "name" : "activation_plan_retention_budgets_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 300.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 283,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_retention_test",
+        "processes"
+      ],
+      "name" : "activation_plan_retention_processes_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 300.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 285,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_retention_test",
+        "kills"
+      ],
+      "name" : "activation_plan_retention_kills_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 300.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 287,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_retention_test",
+        "privileged-owner"
+      ],
+      "name" : "activation_plan_retention_privileged_owner_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 289,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_retention_test",
+        "privileged-bind"
+      ],
+      "name" : "activation_plan_retention_privileged_bind_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 291,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_retention_test",
+        "privileged-nested"
+      ],
+      "name" : "activation_plan_retention_privileged_nested_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 293,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_retention_test",
+        "privileged-ext4"
+      ],
+      "name" : "activation_plan_retention_privileged_ext4_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 295,
+      "command" : 
+      [
+        "/usr/bin/cmake",
+        "-E",
+        "env",
+        "LD_PRELOAD=/tmp/athena-b1-runtime-qualified-20261015-1/release/libathena_d4_locator_fault.so",
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "locator-cloexec"
+      ],
+      "name" : "activation_plan_persistence_locator-cloexec_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 297,
+      "command" : 
+      [
+        "/usr/bin/cmake",
+        "-E",
+        "env",
+        "LD_PRELOAD=/tmp/athena-b1-runtime-qualified-20261015-1/release/libathena_d4_locator_fault.so",
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "filesystem-errors"
+      ],
+      "name" : "activation_plan_persistence_filesystem-errors_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 299,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "faults"
+      ],
+      "name" : "activation_plan_persistence_faults_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 301,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "limits"
+      ],
+      "name" : "activation_plan_persistence_limits_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 303,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "bounds"
+      ],
+      "name" : "activation_plan_persistence_bounds_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 600.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 305,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "kills"
+      ],
+      "name" : "activation_plan_persistence_kills_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 307,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "processes"
+      ],
+      "name" : "activation_plan_persistence_processes_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 309,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "privileged"
+      ],
+      "name" : "activation_plan_persistence_privileged_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 311,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "publication-capacity"
+      ],
+      "name" : "activation_plan_persistence_publication-capacity_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 313,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "recovery-capacity"
+      ],
+      "name" : "activation_plan_persistence_recovery-capacity_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 315,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "recovery-cloexec"
+      ],
+      "name" : "activation_plan_persistence_recovery-cloexec_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 317,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "recovery-kills"
+      ],
+      "name" : "activation_plan_persistence_recovery-kills_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 319,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "concluding-callback-diagnostics"
+      ],
+      "name" : "activation_plan_persistence_concluding_callback_diagnostics",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "D4-A",
+            "diagnostic"
+          ]
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 321,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "boundaries-fresh"
+      ],
+      "name" : "activation_plan_persistence_boundaries_fresh_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 600.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 323,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "boundaries-bootstrap"
+      ],
+      "name" : "activation_plan_persistence_boundaries_bootstrap_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 600.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 325,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "boundaries-reused"
+      ],
+      "name" : "activation_plan_persistence_boundaries_reused_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 600.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 327,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "boundaries-published"
+      ],
+      "name" : "activation_plan_persistence_boundaries_published_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 600.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 329,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/legacy_d3_test",
+        "scanner"
+      ],
+      "name" : "legacy_d3_scanner_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 331,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "privileged-owner"
+      ],
+      "name" : "activation_plan_persistence_privileged_owner_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 333,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "privileged-bind"
+      ],
+      "name" : "activation_plan_persistence_privileged_bind_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 335,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "privileged-nested"
+      ],
+      "name" : "activation_plan_persistence_privileged_nested_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 337,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "privileged-tmpfs"
+      ],
+      "name" : "activation_plan_persistence_privileged_tmpfs_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 339,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "privileged-ext4"
+      ],
+      "name" : "activation_plan_persistence_privileged_ext4_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 341,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/activation_plan_persistence_test",
+        "qualification-cleanup"
+      ],
+      "name" : "activation_plan_persistence_qualification_cleanup_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 30.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 343,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/initial_activation_test",
+        "migration"
+      ],
+      "name" : "initial_activation_migration_test",
+      "properties" : 
+      [
+        {
+          "name" : "LABELS",
+          "value" : 
+          [
+            "privileged"
+          ]
+        },
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 345,
+      "command" : 
+      [
+        "/usr/bin/python3.14",
+        "/home/alessandro/Lab/Programming/athena-pm/tests/toml_differential_test.py",
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/toml_upstream_probe",
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/toml_athena_probe",
+        "/home/alessandro/Lab/Programming/athena-pm/tests/toml_fixtures"
+      ],
+      "name" : "toml_differential_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 347,
+      "command" : 
+      [
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/toml_upstream_consumer_test"
+      ],
+      "name" : "toml_upstream_consumer_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 30.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 349,
+      "command" : 
+      [
+        "/usr/bin/python3.14",
+        "/home/alessandro/Lab/Programming/athena-pm/third_party/athena_toml/vendor.py",
+        "/usr/include/toml++"
+      ],
+      "name" : "toml_vendor_reproduction_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 351,
+      "command" : 
+      [
+        "/usr/bin/python3.14",
+        "/home/alessandro/Lab/Programming/athena-pm/tests/toml_isolation_test.py",
+        "/home/alessandro/Lab/Programming/athena-pm",
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release",
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/libathena_core.so",
+        "/tmp/athena-b1-runtime-qualified-20261015-1/release/toml_upstream_probe"
+      ],
+      "name" : "toml_isolation_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 353,
+      "command" : 
+      [
+        "/usr/bin/python3.14",
+        "/home/alessandro/Lab/Programming/athena-pm/tests/qualification_driver_test.py"
+      ],
+      "name" : "qualification_driver_test",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/athena-b1-runtime-qualified-20261015-1/release"
+        }
+      ]
+    }
+  ],
+  "version" : 
+  {
+    "major" : 1,
+    "minor" : 0
+  }
+}
