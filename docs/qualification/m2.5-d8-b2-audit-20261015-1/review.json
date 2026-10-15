@@ -1,0 +1,50 @@
+{
+  "scope": "New B2 archive, its test, CMake and qualification inventory/driver; unchanged B1/D4-D8 production sources cross-checked against committed qualification.",
+  "resolved_design_findings": [
+    {
+      "severity": "MEDIUM",
+      "file": "src/activation/operational_request_archive.cpp",
+      "lines": "241-249",
+      "scenario": "Same D8 plan can have different canonical B1 inventory/declaration bytes. PlanIdentity alone is insufficient to pin an original envelope.",
+      "resolution": "Require an independently known typed SHA-256 of exact canonical B1.1 bytes as well as PlanIdentity, before decode/revalidation. No existing digest/codec changes.",
+      "regression": "equivalent_plan_different_envelope"
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "src/activation/operational_request_archive.cpp",
+      "lines": "199-208",
+      "scenario": "Exclusive pending creation can have occurred before adoption/stat validation fails; post-open-only uncertainty would misclassify residue.",
+      "resolution": "Arm archive uncertainty before the create attempt, preserve residue under all exceptions.",
+      "regression": "pre-write process-death/fault matrix; conservative outcome inspection"
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "src/activation/operational_request_archive.cpp",
+      "lines": "102-176",
+      "scenario": "A replaced named file/root or a conflicting final must not be overwritten or incorrectly acknowledged by barrier completion.",
+      "resolution": "Constrained opens, strict metadata/mount/size gates, pinned/named instance/content rechecks, RENAME_NOREPLACE, exact-only cleanup.",
+      "regression": "unsafe_entries, substitutions, publication_collision, cleanup_faults"
+    }
+  ],
+  "open_critical_high_medium": [],
+  "residual_limits": [
+    "No physical power-loss, privileged mount/owner/source-scanner qualification or nonempty authoritative B2-to-D7 transition.",
+    "Caller must provision a durable dedicated root and independently retain/reference the expected original request; no self-authorizing enumeration or archive-root binding bootstrap.",
+    "Archive is not a GC root. Caller generation/source lifetime protection remains necessary across State intervals/restarts; missing/stale generations reject.",
+    "Writer/mount exclusion and trusted ancestry/configuration are prerequisites. No universal ABA, hostile same-UID/mount-provider or arbitrary concurrency proof.",
+    "384 MiB file/envelope bound inherited; multiple bounded strings and canonical decoding can coexist. No aggregate RSS/disk quota or worst-case performance certification.",
+    "Cleanup only exact duplicate pending; final record lifecycle, scheduling, B3/B4 and CLI deliberately absent.",
+    "LeakSanitizer disabled; ASan/UBSan passes do not prove leak freedom."
+  ],
+  "fault_coverage": {
+    "write_file_fsync_preparation_directory_fsync_rename_final_fsync_final_directory_fsync_parent_fsync": 7,
+    "injected_before_after_IO_failures": 14,
+    "fresh_exec_SIGKILL_before_after_boundaries": 14,
+    "injected_cleanup_unlink_directory_fsync_before_after_cases": 4,
+    "additional": "zero/invalid-count writes, short-write/EINTR, short-read/EINTR, partial prefix, wrong bytes/identity, corruption, stale request, missing generations, inode/root substitution, no-replace collision, two fresh-process State-serialized recoveries",
+    "power_loss": "NOT EXECUTED; no equivalence claimed"
+  },
+  "physical_witness_distinction": "B2 execution roundtrip uses an empty source projection. Same-plan substitution uses intentionally fabricated historical source claims and never executes them. Existing D2/D7 suite exercises local physical witness primitives; these do not qualify a nonempty authoritative B2 source transition.",
+  "contract_changes": "None to existing production modules/installed public headers/D4-D8 contracts. New internal B2 API and documented caller prerequisites only.",
+  "verdict_scope": "Nonprivileged implementation qualification under documented filesystem and caller prerequisites."
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "path": "src/activation/operational_request_archive.hpp",
+    "lines": 88,
+    "sha256": "790d35526fd1067bc11f0dc80299a22b7a7cefcb2601320a5fd1e6fd21694db6"
+  },
+  {
+    "path": "src/activation/operational_request_archive.cpp",
+    "lines": 255,
+    "sha256": "68a1c73ff48ea32f255693ab7d85f2bd2ff608017f4ea85e77b805b5410dd0c4"
+  },
+  {
+    "path": "tests/operational_request_archive_test.cpp",
+    "lines": 300,
+    "sha256": "c5b5ff49bba70876eb2a2d88f831c40597ebf0f6a9952cff0ce31bab95092c29"
+  }
+]

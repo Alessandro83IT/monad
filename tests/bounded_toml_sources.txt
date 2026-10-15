@@ -6,6 +6,7 @@ CMakeLists.txt
 cmake/AthenaPackaging.cmake
 docs/m2.5-d8-b1-parser-boundary.md
 docs/m2.5-d8-b1-request-runtime.md
+docs/m2.5-d8-b2-request-archive.md
 include/athena/core/api.hpp
 include/athena/core/config.hpp
 include/athena/core/dependency.hpp
@@ -46,6 +47,8 @@ src/activation/operational_plan.cpp
 src/activation/operational_plan.hpp
 src/activation/operational_request.cpp
 src/activation/operational_request.hpp
+src/activation/operational_request_archive.cpp
+src/activation/operational_request_archive.hpp
 src/activation/operational_request_codec.cpp
 src/activation/operational_request_codec.hpp
 src/activation/operational_request_runtime.cpp
@@ -264,6 +267,7 @@ tests/object_store_test.cpp
 tests/object_store_test_support.hpp
 tests/operational_activation_test.cpp
 tests/operational_plan_test.cpp
+tests/operational_request_archive_test.cpp
 tests/operational_request_codec_test.cpp
 tests/operational_request_runtime_test.cpp
 tests/package_loader_test.cpp

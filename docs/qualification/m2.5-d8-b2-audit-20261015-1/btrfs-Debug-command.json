@@ -1,0 +1,19 @@
+{
+  "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+  "command": [
+    "ctest",
+    "--test-dir",
+    "/tmp/athena-b2-qualified-20261015-1/debug",
+    "-R",
+    "^(operational_request_archive_test|operational_request_runtime_test|operational_activation_test)$",
+    "--output-on-failure",
+    "--output-junit",
+    "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b2-audit-20261015-1/btrfs-Debug-junit.xml"
+  ],
+  "environment_override": {
+    "ATHENA_EXECUTION_TEST_TMPDIR": "/home/alessandro/Lab/Programming/athena-pm/.athena-b2-qualification-655qc3_i"
+  },
+  "temporary_directory": "created with tempfile.TemporaryDirectory on workspace btrfs; removed after test",
+  "exit_code": 0,
+  "physical_power_loss": "NOT EXECUTED"
+}

@@ -1,0 +1,15 @@
+{
+  "results": {
+    "operational_request_runtime_test": "PASS",
+    "operational_request_archive_test": "PASS",
+    "operational_activation_test": "PASS"
+  },
+  "counts": {
+    "PASS": 3,
+    "FAIL": 0,
+    "SKIP": 0
+  },
+  "LeakSanitizer": "NOT EXECUTED: disabled explicitly; no leak-freedom claim",
+  "physical_power_loss": "NOT EXECUTED",
+  "privileged_tests": "NOT EXECUTED"
+}

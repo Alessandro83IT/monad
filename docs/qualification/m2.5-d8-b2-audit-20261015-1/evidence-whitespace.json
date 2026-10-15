@@ -1,0 +1,78 @@
+{
+  "files": [
+    {
+      "path": "docs/qualification/m2.5-d8-b2-20261015-1/Debug-CMakeCache.txt",
+      "diagnostic_count": 1,
+      "categories": [
+        "new blank line at EOF."
+      ],
+      "sha256": "229bb9a32c3ea18ae82f76427264c351ee38514bb99284ead63411cc821c097f",
+      "nature": "unaltered generated build/CTest/compiler JSON or raw log bytes"
+    },
+    {
+      "path": "docs/qualification/m2.5-d8-b2-20261015-1/Debug-ctest-full.txt",
+      "diagnostic_count": 1,
+      "categories": [
+        "new blank line at EOF."
+      ],
+      "sha256": "50117723fdf7e71aa12803fa70dd540d14e427d4c4fec3e2e3f0608e39b50a8e",
+      "nature": "unaltered generated build/CTest/compiler JSON or raw log bytes"
+    },
+    {
+      "path": "docs/qualification/m2.5-d8-b2-20261015-1/Debug-inventory.json",
+      "diagnostic_count": 299,
+      "categories": [
+        "trailing whitespace."
+      ],
+      "sha256": "ec88d67a125165951f44f08be6fa86fdf2ac823be95d4a9ea4e047b9b5023991",
+      "nature": "unaltered generated build/CTest/compiler JSON or raw log bytes"
+    },
+    {
+      "path": "docs/qualification/m2.5-d8-b2-20261015-1/Release-CMakeCache.txt",
+      "diagnostic_count": 1,
+      "categories": [
+        "new blank line at EOF."
+      ],
+      "sha256": "0eb10f3e3bdeb0a32e29fba5b8ae942ac9601e6d642155e97ad10559857e2c0a",
+      "nature": "unaltered generated build/CTest/compiler JSON or raw log bytes"
+    },
+    {
+      "path": "docs/qualification/m2.5-d8-b2-20261015-1/Release-ctest-full.txt",
+      "diagnostic_count": 1,
+      "categories": [
+        "new blank line at EOF."
+      ],
+      "sha256": "96dcce4294fc9ac51932aea00736af4baf8dd5e3d8c615c3fbcae2bb84c592a7",
+      "nature": "unaltered generated build/CTest/compiler JSON or raw log bytes"
+    },
+    {
+      "path": "docs/qualification/m2.5-d8-b2-20261015-1/Release-inventory.json",
+      "diagnostic_count": 299,
+      "categories": [
+        "trailing whitespace."
+      ],
+      "sha256": "66f4044d30ba407746e03b07eb7483d804ccae04f85dc323c768fd3ee367de5d",
+      "nature": "unaltered generated build/CTest/compiler JSON or raw log bytes"
+    },
+    {
+      "path": "docs/qualification/m2.5-d8-b2-20261015-1/compiler.txt",
+      "diagnostic_count": 1,
+      "categories": [
+        "new blank line at EOF."
+      ],
+      "sha256": "ccf48e8893ab4ac6f796c26c78cba2445dc56dbf84c5f210aeabf057271a69ba",
+      "nature": "unaltered generated build/CTest/compiler JSON or raw log bytes"
+    },
+    {
+      "path": "docs/qualification/m2.5-d8-b2-audit-20261015-1/sanitizer-CMakeCache.txt",
+      "diagnostic_count": 1,
+      "categories": [
+        "new blank line at EOF."
+      ],
+      "sha256": "1142bbe52b5d5f43edcad4984ebb1a240de67283bd8191aa124cac394d6774b6",
+      "nature": "unaltered generated build/CTest/compiler JSON or raw log bytes"
+    }
+  ],
+  "total_diagnostics": 604,
+  "policy": "Preserve original qualification log/JSON bytes; no whitespace normalization. Ordinary code/documentation checked separately."
+}

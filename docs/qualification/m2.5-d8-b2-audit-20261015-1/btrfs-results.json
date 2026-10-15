@@ -1,0 +1,12 @@
+{
+  "Debug": {
+    "operational_request_runtime_test": "PASS",
+    "operational_request_archive_test": "PASS",
+    "operational_activation_test": "PASS"
+  },
+  "Release": {
+    "operational_request_runtime_test": "PASS",
+    "operational_request_archive_test": "PASS",
+    "operational_activation_test": "PASS"
+  }
+}

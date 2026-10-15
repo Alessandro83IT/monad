@@ -1,0 +1,20 @@
+{
+  "head": "816e4fd48d31a1dbc81332eb9e36ad69159e3348",
+  "qualified_inputs_verified": 399,
+  "qualification_evidence_hashes_verified": 29,
+  "Debug_binary_hashes_verified": 11,
+  "Release_binary_hashes_verified": 11,
+  "sanitizer_binary_hashes_verified": 4,
+  "protected_historical_hashes_verified": 172,
+  "forbidden_paths_remain_untracked": true,
+  "index_empty": true,
+  "git_diff_check": "PASS (exit 0, no diagnostics)",
+  "ordinary_new_code_documentation_whitespace": "PASS (5 files)",
+  "evidence_whitespace": "604 intentional diagnostics in 8 generated log/cache/CTest JSON files; preserved byte-for-byte",
+  "source_snapshot_unchanged": "PASS",
+  "btrfs_focused_tests": "3/3 PASS per configuration",
+  "uid": 1000,
+  "privileged_tests": "NOT EXECUTED",
+  "physical_power_loss": "NOT EXECUTED",
+  "leak_sanitizer": "NOT EXECUTED"
+}

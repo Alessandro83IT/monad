@@ -1,0 +1,31 @@
+{
+  "B2_inputs": 399,
+  "B2_manifest_sha256": "cf32a5af983724b47a6f2d14ce9995ffa21c1bb2f816d63841f12bab050b1edf",
+  "added_inputs": {
+    "docs/m2.5-d8-b2-request-archive.md": "09f8410a1d15849c830b184ac86275adacfcf32cac30ae8479de3d68bb0fcb50",
+    "src/activation/operational_request_archive.cpp": "68a1c73ff48ea32f255693ab7d85f2bd2ff608017f4ea85e77b805b5410dd0c4",
+    "src/activation/operational_request_archive.hpp": "790d35526fd1067bc11f0dc80299a22b7a7cefcb2601320a5fd1e6fd21694db6",
+    "tests/operational_request_archive_test.cpp": "c5b5ff49bba70876eb2a2d88f831c40597ebf0f6a9952cff0ce31bab95092c29"
+  },
+  "baseline_committed_sources_verified": 395,
+  "baseline_head": "816e4fd48d31a1dbc81332eb9e36ad69159e3348",
+  "baseline_manifest": "docs/qualification/m2.5-d8-b1-runtime-20261015-2/SOURCE.sha256",
+  "baseline_manifest_sha256": "de08ba33e30c09d0a529d1d44e172ea4422e25842cf40bcd6660e44b0841cf92",
+  "changed_existing_inputs": {
+    "CMakeLists.txt": {
+      "B2": "8a65eb5ebdf6ba3850cdadee67f0021374e6b403b710d899e28e58920289ebd9",
+      "baseline": "7c50416bc84cc98f3f9eb2009bfce4205b513b0f7f33ae434124d5535a6d3066"
+    },
+    "tests/bounded_toml_sources.txt": {
+      "B2": "9728eff900eee3e7dc3e6a2fb2209e0da1c24045e73f40c84133e006b90ca4e6",
+      "baseline": "a7cff5ebefe1a7fda2bb27064e5510b4e62a8ccde0bcc507fc15a8a2894a6e31"
+    },
+    "tests/qualify_bounded_toml.py": {
+      "B2": "71ac16fead97bc823f23ec63973ecb1500c9319b64dfca8f8442e33dff9439e0",
+      "baseline": "895242b6c4bb7ba0eeac281126cd36de925b11909a6b008372beda4ccc4c0bb3"
+    }
+  },
+  "existing_production_src_include_third_party": "all unchanged",
+  "removed_inputs": [],
+  "unchanged_existing_inputs": 392
+}

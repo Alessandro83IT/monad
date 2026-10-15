@@ -22,7 +22,7 @@ def sha(path):
 
 SOURCE_ROOTS = ('src', 'include', 'tests', 'cmake', 'third_party', 'packaging', 'packages')
 ROOT_FILES = ('CMakeLists.txt', 'docs/m2.5-d8-b1-parser-boundary.md',
-              'docs/m2.5-d8-b1-request-runtime.md')
+              'docs/m2.5-d8-b1-request-runtime.md', 'docs/m2.5-d8-b2-request-archive.md')
 SOURCE_INVENTORY = 'tests/bounded_toml_sources.txt'
 
 
@@ -146,7 +146,8 @@ def main():
             (output / f'{config}-{name}').write_bytes((build / name).read_bytes())
         artifacts = ('libathena_core.so', 'toml_upstream_probe', 'toml_athena_probe', 'toml_upstream_consumer_test',
                      'bounded_toml_test', 'store_metadata_errors_test', 'operational_request_codec_test',
-                     'operational_plan_test', 'operational_activation_test', 'operational_request_runtime_test')
+                     'operational_plan_test', 'operational_activation_test', 'operational_request_runtime_test',
+                     'operational_request_archive_test')
         (output / f'{config}-BUILD.sha256').write_text(''.join(f'{sha(build / name)}  {name}\n' for name in artifacts))
         run(['cmake', '-LA', '-N', build], f'{config}-cache.txt')
     # Confirm that the exact compiled source set stayed fixed during both builds.

@@ -1,0 +1,13 @@
+{
+  "current_source_hashes": 399,
+  "head": "816e4fd48d31a1dbc81332eb9e36ad69159e3348",
+  "uid": 1000,
+  "euid": 1000,
+  "filesystems": {
+    "/tmp": "tmpfs",
+    ".": "btrfs"
+  },
+  "no_existing_production_source_modified": true,
+  "index_empty": true,
+  "source_hash_verification": "PASS"
+}

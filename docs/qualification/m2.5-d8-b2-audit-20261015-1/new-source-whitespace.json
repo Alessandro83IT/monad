@@ -1,0 +1,22 @@
+{
+  "src/activation/operational_request_archive.hpp": {
+    "exit": 1,
+    "diagnostics": 0
+  },
+  "src/activation/operational_request_archive.cpp": {
+    "exit": 1,
+    "diagnostics": 0
+  },
+  "tests/operational_request_archive_test.cpp": {
+    "exit": 1,
+    "diagnostics": 0
+  },
+  "docs/m2.5-d8-b2-request-archive.md": {
+    "exit": 1,
+    "diagnostics": 0
+  },
+  "docs/m2.5-d8-b2-qualification.md": {
+    "exit": 1,
+    "diagnostics": 0
+  }
+}

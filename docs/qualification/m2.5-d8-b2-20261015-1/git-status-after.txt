@@ -1,0 +1,11 @@
+ M CMakeLists.txt
+ M tests/bounded_toml_sources.txt
+ M tests/qualify_bounded_toml.py
+?? docs/m2.5-d8-b2-request-archive.md
+?? docs/m2.5-d8b-cli-integration.md
+?? docs/qualification/m2.5-d8-b1-toml-20261015-1/
+?? docs/qualification/m2.5-d8-b2-20261015-1/
+?? docs/qualification/m2.5-d8-b2-audit-20261015-1/
+?? src/activation/operational_request_archive.cpp
+?? src/activation/operational_request_archive.hpp
+?? tests/operational_request_archive_test.cpp
