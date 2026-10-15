@@ -1,0 +1,13 @@
+Test project /tmp/athena-b3-mutation-build
+    Start 6: generation_operation_test
+1/1 Test #6: generation_operation_test ........***Failed    0.41 sec
+Expected rejection
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.41 sec
+
+The following tests FAILED:
+	  6 - generation_operation_test (Failed)
+Errors while running CTest

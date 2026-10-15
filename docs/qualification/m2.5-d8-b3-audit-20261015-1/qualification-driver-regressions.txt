@@ -1,0 +1,12 @@
+test_context_document_cannot_become_a_required_source (__main__.SourceClosureTest.test_context_document_cannot_become_a_required_source) ... ok
+test_missing_required_input_fails (__main__.SourceClosureTest.test_missing_required_input_fails) ... ok
+test_modified_input_fails (__main__.SourceClosureTest.test_modified_input_fails) ... ok
+test_new_unlisted_source_fails (__main__.SourceClosureTest.test_new_unlisted_source_fails) ... ok
+test_real_source_copy_qualifies_without_historical_cli_document (__main__.SourceClosureTest.test_real_source_copy_qualifies_without_historical_cli_document) ... ok
+test_removed_input_fails (__main__.SourceClosureTest.test_removed_input_fails) ... ok
+test_symlinked_source_fails (__main__.SourceClosureTest.test_symlinked_source_fails) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.312s
+
+OK

@@ -1,0 +1,96 @@
+{
+  "review_method": "Second autonomous source/contract review, complete new module/test/build diffs, source-hash comparison to B2, positive/negative/fault tests, isolated deliberate mutation sensitivity. No independent human review or universal safety proof claimed.",
+  "open_findings": {
+    "CRITICAL": [],
+    "HIGH": [],
+    "MEDIUM": []
+  },
+  "development_test_findings_fixed": [
+    {
+      "severity": "LOW",
+      "file": "tests/generation_operation_test.cpp",
+      "scenario": "An initial assertion rejected fresh explicit preparation after valid document bytes changed. New preparation is permitted; only the old frozen operation must reject changed bytes.",
+      "correction": "Assert new preparation gets a different plan digest; original recovery/activation still refuses and collision checks preserve immutable ID."
+    },
+    {
+      "severity": "LOW",
+      "file": "tests/generation_operation_test.cpp",
+      "scenario": "Initial physical-witness assertion expected selected-base D6 to reject an unrelated entry globally. Existing D6/D7 operates on the plan and preserves unrelated entries.",
+      "correction": "Test direct D2 stale-witness rejection and preservation of the unrelated physical inode across B3; no historical production policy was changed."
+    }
+  ],
+  "reviewed_boundaries": [
+    {
+      "file": "src/activation/generation_operation.cpp:35",
+      "finding": "Authority checked before reading IDs/paths; only existing validated documents under held State. No GenerationManager or TransactionPins calls."
+    },
+    {
+      "file": "src/activation/generation_operation.cpp:18",
+      "finding": "Rollback direction uses original SelectedBase; rejects equal/higher targets; selected-target retries preserve original base. Independent mutant allowing equality is detected."
+    },
+    {
+      "file": "src/activation/generation_operation.cpp:60",
+      "finding": "B2 record revalidated through B1.3 and B3 shape on recovery. Independent missing-shape mutant is detected."
+    },
+    {
+      "file": "src/activation/generation_operation.cpp:67",
+      "finding": "Activation always recovers again then solely delegates B1/D8.2. Corruption after earlier recovery blocks execution. No legacy fallback or additional authority."
+    },
+    {
+      "file": "tests/generation_operation_test.cpp",
+      "finding": "Same-generation different-ID replay, stale bases, nested value detachment, independent expected hashes, collision and fresh source observation checked."
+    },
+    {
+      "file": "docs/m2.5-d8-b3-generation-operations.md",
+      "finding": "State/TransactionLease/StoreGc hierarchy and external-writer exclusion unchanged; archive not GC root; independent reference and lifetime remain caller prerequisites."
+    }
+  ],
+  "fault_injection": {
+    "persist": {
+      "both_kinds": true,
+      "events": 7,
+      "before_after": true,
+      "cases": 28
+    },
+    "recover": {
+      "both_kinds": true,
+      "final_barriers": 3,
+      "before_after": true,
+      "cases": 12
+    },
+    "activate": {
+      "both_kinds": true,
+      "D4_publication_before_after_rename": 4,
+      "D6_current_before_after_rename": 4,
+      "D7_selected_file_barrier": 2,
+      "cases": 10
+    },
+    "total_cases": 50,
+    "physical_power_loss": "NOT EXECUTED",
+    "existing_B2_SIGKILL": "Required regression in full suites; not a new B3 power-loss proof"
+  },
+  "lifetime_evidence": "Real metadata discard after State release succeeds for B2-only target; B3 then refuses missing target. Inactive target after D4 publication is retained by existing D4/D5. Process-wide State reentry rejects. No changed GC contract or manufactured lifetime token.",
+  "concurrency_evidence": "Two fresh exec processes use distinct pinned requests with the same base; State serialization yields exactly one winner and one SelectionConflict, no loser D4 publication/rebase. Does not cover arbitrary hostile writers or simultaneous C++ mutation.",
+  "physical_witness_scope": "Actual D2 hard-linked symlink inode and same-text replacement; direct D2 rejects stale witness, B3 preserves unrelated inode. Successful B3 payload projections remain empty. Fabricated source-claim tests actually reach D6 inode observation and ENOENT, not physical source authorization.",
+  "residual_LOW": [
+    "Multiple bounded full strings/encodings; no aggregate RSS/disk quota or worst-case performance certificate.",
+    "Independent kind is caller intent, not serialized B1 authority; caller must retain/authorize it independently together with B2 reference.",
+    "No scheduler, lifecycle/delete policy, automatic rollback target selection or CLI; B4/B5/B6 not started."
+  ],
+  "not_qualified": [
+    "Physical power-loss/storage retention",
+    "Privileged scanner/source/owner/mount/migration",
+    "Fully authorized nonempty B3 switch/rollback and payload GC",
+    "LeakSanitizer (explicitly disabled)",
+    "OOM stress"
+  ],
+  "preconditions": [
+    "Existing bound operational CurrentV1 base",
+    "Preverified complete inventories, independently supplied identity/binding/base/target/witnesses",
+    "Durable dedicated private B2 root and independently retained reference/kind",
+    "Exclusive State after TransactionLease before StoreGc, writer/mount exclusion",
+    "Existing generation/source retention/pins across State intervals until D4 references"
+  ],
+  "incompatible_contract_changes": "None; all existing production sources and installed headers unchanged.",
+  "scope": "Internal B3 implementation and finite nonprivileged qualification under documented prerequisites."
+}

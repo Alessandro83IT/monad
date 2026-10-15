@@ -1,0 +1,29 @@
+{
+  "head": "fe3d626cb998f1d279d1f2531cc6eabb584aae28",
+  "baseline_manifest_sha256": "cf32a5af983724b47a6f2d14ce9995ffa21c1bb2f816d63841f12bab050b1edf",
+  "baseline_inputs_verified_against_HEAD": 399,
+  "B3_manifest_sha256": "d8a9e3c39ac21cfbde790e66a7ee5480ddb18a5daa0c651675a8ca2c729c4378",
+  "B3_inputs": 403,
+  "existing_unchanged": 396,
+  "changed_existing": {
+    "CMakeLists.txt": {
+      "baseline": "8a65eb5ebdf6ba3850cdadee67f0021374e6b403b710d899e28e58920289ebd9",
+      "B3": "a861090016e68e8f1c664558cd645a11a545e552c2db9cded4d469ca8ac5ee0f"
+    },
+    "tests/bounded_toml_sources.txt": {
+      "baseline": "9728eff900eee3e7dc3e6a2fb2209e0da1c24045e73f40c84133e006b90ca4e6",
+      "B3": "2b9955af5aab97dfbe8e2a468b4d189e4f492768f97b0a6e8609ce217cb62e2c"
+    },
+    "tests/qualify_bounded_toml.py": {
+      "baseline": "71ac16fead97bc823f23ec63973ecb1500c9319b64dfca8f8442e33dff9439e0",
+      "B3": "6ac571d75e37f4df16557ea30ba0655cedd40a8f14e4f00d8098a2e68334bd44"
+    }
+  },
+  "new_inputs": {
+    "docs/m2.5-d8-b3-generation-operations.md": "c1bc93706ad6b0ca169a953dac5989ccf1390b5eeed7ee2a3203ff592c126490",
+    "src/activation/generation_operation.cpp": "46a2bafd084360501a6c17507d32103fc69d8c12359ea3ae9ef07a83ff79fce8",
+    "src/activation/generation_operation.hpp": "88eb54b19b0615d13b9e38590908ce6f860d91a28c7dc9fd6fa76effb3ec2330",
+    "tests/generation_operation_test.cpp": "6a58a37dd2b90c541189b9b4b201a145f90ca395611e53ff694a17df94c3d8dd"
+  },
+  "existing_production_src_include_third_party": "all unchanged"
+}

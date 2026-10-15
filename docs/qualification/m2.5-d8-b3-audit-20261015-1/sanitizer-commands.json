@@ -1,0 +1,44 @@
+{
+  "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+  "commands": [
+    [
+      "cmake",
+      "-S",
+      ".",
+      "-B",
+      "/tmp/athena-b3-sanitized",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+      "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer",
+      "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined",
+      "-DCMAKE_SHARED_LINKER_FLAGS=-fsanitize=address,undefined"
+    ],
+    [
+      "cmake",
+      "--build",
+      "/tmp/athena-b3-sanitized",
+      "--target",
+      "generation_operation_test",
+      "operational_request_archive_test",
+      "operational_request_runtime_test",
+      "operational_activation_test",
+      "-j3"
+    ],
+    [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b3-sanitized",
+      "-R",
+      "^(generation_operation_test|operational_request_archive_test|operational_request_runtime_test|operational_activation_test)$",
+      "--output-on-failure",
+      "--output-junit",
+      "/tmp/athena-b3-sanitized-junit.xml"
+    ]
+  ],
+  "test_environment": {
+    "ASAN_OPTIONS": "detect_leaks=0",
+    "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+  },
+  "result": "4 PASS / 0 FAIL / 0 SKIP",
+  "LeakSanitizer": "NOT EXECUTED"
+}

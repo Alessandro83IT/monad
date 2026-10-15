@@ -1,0 +1,15 @@
+{
+  "head": "fe3d626cb998f1d279d1f2531cc6eabb584aae28",
+  "uid": 1000,
+  "euid": 1000,
+  "filesystems": {
+    "/tmp": "tmpfs",
+    ".": "btrfs"
+  },
+  "index_empty": true,
+  "protected_historical_file_count": 234,
+  "full_suite": "fresh Debug/Release, privileged label and exact artifact_scanner_test excluded",
+  "physical_power_loss": "NOT EXECUTED",
+  "privileged_authorized_nonempty_switch_rollback": "NOT EXECUTED",
+  "OOM_stress": "NOT EXECUTED"
+}

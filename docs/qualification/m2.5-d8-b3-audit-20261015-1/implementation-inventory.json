@@ -1,0 +1,22 @@
+[
+  {
+    "path": "src/activation/generation_operation.hpp",
+    "lines": 69,
+    "sha256": "88eb54b19b0615d13b9e38590908ce6f860d91a28c7dc9fd6fa76effb3ec2330"
+  },
+  {
+    "path": "src/activation/generation_operation.cpp",
+    "lines": 70,
+    "sha256": "46a2bafd084360501a6c17507d32103fc69d8c12359ea3ae9ef07a83ff79fce8"
+  },
+  {
+    "path": "tests/generation_operation_test.cpp",
+    "lines": 357,
+    "sha256": "6a58a37dd2b90c541189b9b4b201a145f90ca395611e53ff694a17df94c3d8dd"
+  },
+  {
+    "path": "docs/m2.5-d8-b3-generation-operations.md",
+    "lines": 162,
+    "sha256": "c1bc93706ad6b0ca169a953dac5989ccf1390b5eeed7ee2a3203ff592c126490"
+  }
+]

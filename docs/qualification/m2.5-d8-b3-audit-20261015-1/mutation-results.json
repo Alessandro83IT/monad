@@ -1,0 +1,24 @@
+{
+  "control": "PASS",
+  "isolated_source": "/tmp/athena-b3-mutation-source",
+  "qualified_workspace_inputs_unchanged": 403,
+  "results": [
+    {
+      "mutation": "missing-recovery-shape",
+      "mutated_file": "/tmp/athena-b3-mutation-source/src/activation/generation_operation.cpp",
+      "mutated_sha256": "49363c44d3bd6817aa015d9e7a65915b138c2e63bf3c8d0a44ae3aa38be95541",
+      "expected_test_status": "FAIL",
+      "qualification_of_sensitivity": "PASS: mutation detected",
+      "failure": "Expected rejection"
+    },
+    {
+      "mutation": "equal-rollback-allowed",
+      "mutated_file": "/tmp/athena-b3-mutation-source/src/activation/generation_operation.cpp",
+      "mutated_sha256": "07ff8cc93d8e468d88c84a0087a31956e5e9bf16201c89f49bb3c2e15a955437",
+      "expected_test_status": "FAIL",
+      "qualification_of_sensitivity": "PASS: mutation detected",
+      "failure": "Expected rejection"
+    }
+  ],
+  "note": "Expected mutant failures demonstrate guard sensitivity; they are not product qualification failures or physical power-loss evidence."
+}

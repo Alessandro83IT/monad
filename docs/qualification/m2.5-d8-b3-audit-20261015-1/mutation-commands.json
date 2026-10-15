@@ -1,0 +1,99 @@
+[
+  {
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/athena-b3-mutation-source",
+      "-B",
+      "/tmp/athena-b3-mutation-build",
+      "-DCMAKE_BUILD_TYPE=Debug"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "mutation-configure.txt",
+    "expected_exit": 0
+  },
+  {
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/athena-b3-mutation-build",
+      "--target",
+      "generation_operation_test",
+      "-j3"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "mutation-control-build.txt",
+    "expected_exit": 0
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b3-mutation-build",
+      "-R",
+      "^generation_operation_test$",
+      "--output-on-failure",
+      "--output-junit",
+      "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b3-audit-20261015-1/mutation-control-junit.xml"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "mutation-control-test.txt",
+    "expected_exit": 0
+  },
+  {
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/athena-b3-mutation-build",
+      "--target",
+      "generation_operation_test",
+      "-j3"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "missing-recovery-shape-build.txt",
+    "expected_exit": 0
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b3-mutation-build",
+      "-R",
+      "^generation_operation_test$",
+      "--output-on-failure",
+      "--output-junit",
+      "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b3-audit-20261015-1/missing-recovery-shape-junit.xml"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "missing-recovery-shape-test.txt",
+    "expected_exit": 8
+  },
+  {
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/athena-b3-mutation-build",
+      "--target",
+      "generation_operation_test",
+      "-j3"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "equal-rollback-allowed-build.txt",
+    "expected_exit": 0
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b3-mutation-build",
+      "-R",
+      "^generation_operation_test$",
+      "--output-on-failure",
+      "--output-junit",
+      "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b3-audit-20261015-1/equal-rollback-allowed-junit.xml"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "equal-rollback-allowed-test.txt",
+    "expected_exit": 8
+  }
+]

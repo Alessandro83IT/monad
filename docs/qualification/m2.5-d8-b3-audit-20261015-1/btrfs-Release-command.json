@@ -1,0 +1,20 @@
+{
+  "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+  "command": [
+    "ctest",
+    "--test-dir",
+    "/tmp/athena-b3-qualified-20261015-1/release",
+    "-R",
+    "^(generation_operation_test|operational_request_archive_test|operational_request_runtime_test|operational_activation_test)$",
+    "--output-on-failure",
+    "--output-junit",
+    "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b3-audit-20261015-1/btrfs-Release-junit.xml"
+  ],
+  "environment": {
+    "ATHENA_EXECUTION_TEST_TMPDIR": "/home/alessandro/Lab/Programming/athena-pm/.athena-b3-qualification-om26qa9l"
+  },
+  "filesystem": "btrfs",
+  "directory": "tempfile.TemporaryDirectory; removed after test",
+  "exit": 0,
+  "physical_power_loss": "NOT EXECUTED"
+}

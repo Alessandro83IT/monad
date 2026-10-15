@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="4"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="21"
+	timestamp="2026-10-15T10:37:57"
+	>
+	<testcase name="operational_request_runtime_test" classname="operational_request_runtime_test" time="1.28473" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="operational_request_archive_test" classname="operational_request_archive_test" time="2.4262" status="run">
+		<properties/>
+		<system-out>B2 fault boundaries: 7 x before/after
+</system-out>
+	</testcase>
+	<testcase name="generation_operation_test" classname="generation_operation_test" time="16.8769" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="operational_activation_test" classname="operational_activation_test" time="0.764427" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+</testsuite>

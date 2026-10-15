@@ -1,0 +1,5 @@
+[  0%] Building CXX object CMakeFiles/athena_core.dir/src/activation/generation_operation.cpp.o
+[  0%] Linking CXX shared library libathena_core.so
+[ 96%] Built target athena_core
+[ 96%] Linking CXX executable generation_operation_test
+[100%] Built target generation_operation_test

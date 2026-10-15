@@ -1,0 +1,22 @@
+{
+  "src/activation/generation_operation.cpp": {
+    "exit": 1,
+    "diagnostics": 0
+  },
+  "src/activation/generation_operation.hpp": {
+    "exit": 1,
+    "diagnostics": 0
+  },
+  "tests/generation_operation_test.cpp": {
+    "exit": 1,
+    "diagnostics": 0
+  },
+  "docs/m2.5-d8-b3-generation-operations.md": {
+    "exit": 1,
+    "diagnostics": 0
+  },
+  "docs/m2.5-d8-b3-qualification.md": {
+    "exit": 1,
+    "diagnostics": 0
+  }
+}

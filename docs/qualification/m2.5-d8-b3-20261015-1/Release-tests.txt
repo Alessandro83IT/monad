@@ -1,0 +1,258 @@
+Test project /tmp/athena-b3-qualified-20261015-1/release
+        Start   1: store_metadata_errors_test
+        Start   2: bounded_toml_test
+  1/118 Test   #1: store_metadata_errors_test ....................................   Passed    0.00 sec
+        Start   3: operational_request_codec_test
+  2/118 Test   #2: bounded_toml_test .............................................   Passed    0.00 sec
+        Start   4: operational_request_runtime_test
+  3/118 Test   #4: operational_request_runtime_test ..............................   Passed    0.18 sec
+        Start   5: operational_request_archive_test
+  4/118 Test   #5: operational_request_archive_test ..............................   Passed    0.19 sec
+        Start   6: generation_operation_test
+  5/118 Test   #6: generation_operation_test .....................................   Passed    2.14 sec
+        Start   7: initial_activation_test
+  6/118 Test   #7: initial_activation_test .......................................   Passed    0.26 sec
+        Start   8: operational_activation_test
+  7/118 Test   #8: operational_activation_test ...................................   Passed    0.11 sec
+        Start   9: operational_plan_test
+  8/118 Test   #9: operational_plan_test .........................................   Passed    0.06 sec
+        Start  10: activation_reconciliation_test
+  9/118 Test  #10: activation_reconciliation_test ................................   Passed    0.07 sec
+        Start  11: activation_selection_test
+ 10/118 Test   #3: operational_request_codec_test ................................   Passed    7.46 sec
+        Start  12: activation_plan_retention_test
+ 11/118 Test  #12: activation_plan_retention_test ................................   Passed    0.20 sec
+        Start  13: activation_plan_persistence_test
+ 12/118 Test  #13: activation_plan_persistence_test ..............................   Passed   11.17 sec
+        Start  14: legacy_d3_test
+ 13/118 Test  #14: legacy_d3_test ................................................   Passed    0.06 sec
+        Start  15: activation_projection_fs_test
+ 14/118 Test  #15: activation_projection_fs_test .................................   Passed    0.05 sec
+        Start  16: activation_current_test
+ 15/118 Test  #16: activation_current_test .......................................   Passed    0.00 sec
+        Start  17: activation_schema_test
+ 16/118 Test  #17: activation_schema_test ........................................   Passed    0.68 sec
+        Start  18: activation_digest_test
+ 17/118 Test  #18: activation_digest_test ........................................   Passed    0.17 sec
+        Start  19: transaction_gc_fault_test
+ 18/118 Test  #19: transaction_gc_fault_test .....................................   Passed    0.03 sec
+        Start  20: transaction_gc_protocol_test
+ 19/118 Test  #20: transaction_gc_protocol_test ..................................   Passed    0.02 sec
+        Start  21: transaction_gc_test
+ 20/118 Test  #21: transaction_gc_test ...........................................   Passed    0.05 sec
+        Start  22: immutable_publication_test
+ 21/118 Test  #22: immutable_publication_test ....................................   Passed    0.01 sec
+        Start  23: locking_test
+ 22/118 Test  #23: locking_test ..................................................   Passed    0.10 sec
+        Start  24: durable_filesystem_test
+ 23/118 Test  #24: durable_filesystem_test .......................................   Passed    0.00 sec
+        Start  25: installed_semantics_regression_test
+ 24/118 Test  #25: installed_semantics_regression_test ...........................   Passed    0.01 sec
+        Start  26: installed_semantics_test
+ 25/118 Test  #26: installed_semantics_test ......................................   Passed    0.01 sec
+        Start  27: installed_semantics_integration_test
+ 26/118 Test  #27: installed_semantics_integration_test ..........................***Skipped   0.00 sec
+        Start  28: cli_install_test
+ 27/118 Test  #28: cli_install_test ..............................................   Passed    0.01 sec
+        Start  29: cli_install_integration_test
+ 28/118 Test  #29: cli_install_integration_test ..................................***Skipped   0.00 sec
+        Start  30: install_transaction_test
+ 29/118 Test  #30: install_transaction_test ......................................   Passed    0.00 sec
+        Start  31: install_transaction_integration_test
+ 30/118 Test  #31: install_transaction_integration_test ..........................***Skipped   0.00 sec
+        Start  32: activation_projection_test
+ 31/118 Test  #32: activation_projection_test ....................................   Passed    0.01 sec
+        Start  33: generation_activation_test
+ 32/118 Test  #33: generation_activation_test ....................................***Skipped   0.00 sec
+        Start  34: generation_membership_test
+ 33/118 Test  #34: generation_membership_test ....................................   Passed    0.01 sec
+        Start  35: realization_executor_test
+ 34/118 Test  #35: realization_executor_test .....................................   Passed    0.48 sec
+        Start  36: realization_executor_integration_test
+ 35/118 Test  #36: realization_executor_integration_test .........................***Skipped   0.00 sec
+        Start  37: realization_record_test
+ 36/118 Test  #37: realization_record_test .......................................   Passed    0.00 sec
+        Start  38: object_store_test
+ 37/118 Test  #38: object_store_test .............................................   Passed    0.01 sec
+        Start  39: object_store_scanner_test
+ 38/118 Test  #39: object_store_scanner_test .....................................***Skipped   0.00 sec
+        Start  40: artifact_encoding_test
+ 39/118 Test  #40: artifact_encoding_test ........................................   Passed    0.00 sec
+        Start  41: artifact_identity_test
+ 40/118 Test  #41: artifact_identity_test ........................................   Passed    0.00 sec
+        Start  42: artifact_identity_scanner_test
+ 41/118 Test  #42: artifact_identity_scanner_test ................................***Skipped   0.00 sec
+        Start  43: artifact_model_test
+ 42/118 Test  #43: artifact_model_test ...........................................   Passed    0.00 sec
+        Start  44: artifact_contract_test
+ 43/118 Test  #44: artifact_contract_test ........................................   Passed    0.00 sec
+        Start  45: arch_repository_test
+ 44/118 Test  #45: arch_repository_test ..........................................   Passed    0.01 sec
+        Start  46: arch_repository_adapter_test
+ 45/118 Test  #46: arch_repository_adapter_test ..................................   Passed    0.07 sec
+        Start  47: arch_version_test
+ 46/118 Test  #47: arch_version_test .............................................   Passed    0.00 sec
+        Start  48: cmake_backend_test
+ 47/118 Test  #48: cmake_backend_test ............................................   Passed    0.41 sec
+        Start  49: version_test
+ 48/118 Test  #49: version_test ..................................................   Passed    0.00 sec
+        Start  50: package_loader_test
+ 49/118 Test  #50: package_loader_test ...........................................   Passed    0.00 sec
+        Start  51: dependency_resolver_test
+ 50/118 Test  #51: dependency_resolver_test ......................................   Passed    0.00 sec
+        Start  52: install_plan_test
+ 51/118 Test  #52: install_plan_test .............................................   Passed    0.00 sec
+        Start  53: generation_builder_test
+ 52/118 Test  #53: generation_builder_test .......................................   Passed    0.00 sec
+        Start  54: dependency_expression_test
+ 53/118 Test  #54: dependency_expression_test ....................................   Passed    0.00 sec
+        Start  55: dependency_roles_test
+ 54/118 Test  #55: dependency_roles_test .........................................   Passed    0.00 sec
+        Start  56: dependency_scope_precedence_test
+ 55/118 Test  #56: dependency_scope_precedence_test ..............................   Passed    0.00 sec
+        Start  57: dependency_expression_resolution_test
+ 56/118 Test  #57: dependency_expression_resolution_test .........................   Passed    0.00 sec
+        Start  58: dependency_constraint_test
+ 57/118 Test  #58: dependency_constraint_test ....................................   Passed    0.00 sec
+        Start  59: dependency_parser_test
+ 58/118 Test  #59: dependency_parser_test ........................................   Passed    0.00 sec
+        Start  60: dependency_serializer_test
+ 59/118 Test  #60: dependency_serializer_test ....................................   Passed    0.00 sec
+        Start  61: dependency_validator_test
+ 60/118 Test  #61: dependency_validator_test .....................................   Passed    0.00 sec
+        Start  62: remove_plan_test
+ 61/118 Test  #62: remove_plan_test ..............................................   Passed    0.00 sec
+        Start  63: removal_planner_test
+ 62/118 Test  #63: removal_planner_test ..........................................   Passed    0.00 sec
+        Start  64: activation_test
+ 63/118 Test  #64: activation_test ...............................................   Passed    0.00 sec
+        Start  65: generation_test
+ 64/118 Test  #65: generation_test ...............................................   Passed    0.00 sec
+        Start  66: installer_e2e_test
+ 65/118 Test  #66: installer_e2e_test ............................................   Passed    0.20 sec
+        Start  67: store_metadata_test
+ 66/118 Test  #67: store_metadata_test ...........................................   Passed    0.00 sec
+        Start  68: gc_test
+ 67/118 Test  #68: gc_test .......................................................   Passed    0.01 sec
+        Start  69: repository_index_test
+ 68/118 Test  #69: repository_index_test .........................................   Passed    0.00 sec
+        Start  70: repository_test
+ 69/118 Test  #70: repository_test ...............................................   Passed    0.00 sec
+        Start  71: repository_api_types_test
+ 70/118 Test  #71: repository_api_types_test .....................................   Passed    0.00 sec
+        Start  72: metadata_schema_test
+ 71/118 Test  #72: metadata_schema_test ..........................................   Passed    0.00 sec
+        Start  73: repository_snapshot_test
+ 72/118 Test  #73: repository_snapshot_test ......................................   Passed    0.00 sec
+        Start  74: repository_selection_test
+ 73/118 Test  #74: repository_selection_test .....................................   Passed    0.00 sec
+        Start  75: resolver_candidate_test
+ 74/118 Test  #75: resolver_candidate_test .......................................   Passed    0.00 sec
+        Start  76: resolver_snapshot_adapter_test
+ 75/118 Test  #76: resolver_snapshot_adapter_test ................................   Passed    0.00 sec
+        Start  77: install_request_resolution_test
+ 76/118 Test  #77: install_request_resolution_test ...............................   Passed    0.01 sec
+        Start  78: local_repository_test
+ 77/118 Test  #78: local_repository_test .........................................   Passed    0.00 sec
+        Start  79: removal_e2e_test
+ 78/118 Test  #79: removal_e2e_test ..............................................   Passed    0.00 sec
+        Start  80: removal_realization_test
+ 79/118 Test  #80: removal_realization_test ......................................   Passed    0.00 sec
+        Start  81: core_foundation_test
+ 80/118 Test  #81: core_foundation_test ..........................................   Passed    0.00 sec
+        Start  83: public_install_plan_test
+ 81/118 Test  #83: public_install_plan_test ......................................   Passed    0.00 sec
+        Start  85: removal_realization_integration_test
+ 82/118 Test  #85: removal_realization_integration_test ..........................***Skipped   0.01 sec
+        Start  86: packaging_install_test
+ 83/118 Test  #86: packaging_install_test ........................................   Passed    0.10 sec
+        Start  87: packaging_regression_test
+ 84/118 Test  #87: packaging_regression_test .....................................   Passed    5.81 sec
+        Start  88: immutable_object_publication_test
+ 85/118 Test  #88: immutable_object_publication_test .............................***Skipped   0.00 sec
+        Start  89: transaction_gc_crash_test
+ 86/118 Test  #89: transaction_gc_crash_test .....................................   Passed    0.02 sec
+        Start  90: transaction_gc_concurrency_test
+ 87/118 Test  #90: transaction_gc_concurrency_test ...............................   Passed    0.01 sec
+        Start  91: transaction_gc_scanner_test
+ 88/118 Test  #91: transaction_gc_scanner_test ...................................***Skipped   0.00 sec
+        Start  98: activation_selection_metadata_test
+ 89/118 Test  #98: activation_selection_metadata_test ............................   Passed    0.01 sec
+        Start  99: activation_plan_retention_limits_test
+ 90/118 Test  #99: activation_plan_retention_limits_test .........................   Passed    3.08 sec
+        Start 100: activation_plan_retention_budgets_test
+ 91/118 Test #100: activation_plan_retention_budgets_test ........................   Passed    6.31 sec
+        Start 101: activation_plan_retention_processes_test
+ 92/118 Test #101: activation_plan_retention_processes_test ......................   Passed    0.04 sec
+        Start 102: activation_plan_retention_kills_test
+ 93/118 Test #102: activation_plan_retention_kills_test ..........................   Passed    0.05 sec
+        Start 107: activation_plan_persistence_locator-cloexec_test
+ 94/118 Test #107: activation_plan_persistence_locator-cloexec_test ..............   Passed    0.02 sec
+        Start 108: activation_plan_persistence_filesystem-errors_test
+ 95/118 Test #108: activation_plan_persistence_filesystem-errors_test ............   Passed    0.30 sec
+        Start 109: activation_plan_persistence_faults_test
+ 96/118 Test #109: activation_plan_persistence_faults_test .......................   Passed    0.97 sec
+        Start 110: activation_plan_persistence_limits_test
+ 97/118 Test #110: activation_plan_persistence_limits_test .......................   Passed    0.29 sec
+        Start 111: activation_plan_persistence_bounds_test
+ 98/118 Test #111: activation_plan_persistence_bounds_test .......................   Passed    2.47 sec
+        Start 112: activation_plan_persistence_kills_test
+ 99/118 Test #112: activation_plan_persistence_kills_test ........................   Passed    0.95 sec
+        Start 113: activation_plan_persistence_processes_test
+100/118 Test #113: activation_plan_persistence_processes_test ....................   Passed    0.58 sec
+        Start 115: activation_plan_persistence_publication-capacity_test
+101/118 Test #115: activation_plan_persistence_publication-capacity_test .........   Passed    2.77 sec
+        Start 116: activation_plan_persistence_recovery-capacity_test
+102/118 Test #116: activation_plan_persistence_recovery-capacity_test ............   Passed    5.57 sec
+        Start 117: activation_plan_persistence_recovery-cloexec_test
+103/118 Test #117: activation_plan_persistence_recovery-cloexec_test .............   Passed    0.04 sec
+        Start 118: activation_plan_persistence_recovery-kills_test
+104/118 Test #118: activation_plan_persistence_recovery-kills_test ...............   Passed    0.37 sec
+        Start 119: activation_plan_persistence_concluding_callback_diagnostics
+105/118 Test #119: activation_plan_persistence_concluding_callback_diagnostics ...   Passed    0.04 sec
+        Start 120: activation_plan_persistence_boundaries_fresh_test
+106/118 Test  #11: activation_selection_test .....................................   Passed   76.10 sec
+        Start 121: activation_plan_persistence_boundaries_bootstrap_test
+107/118 Test #120: activation_plan_persistence_boundaries_fresh_test .............   Passed   30.74 sec
+        Start 122: activation_plan_persistence_boundaries_reused_test
+108/118 Test #122: activation_plan_persistence_boundaries_reused_test ............   Passed   26.79 sec
+        Start 123: activation_plan_persistence_boundaries_published_test
+109/118 Test #121: activation_plan_persistence_boundaries_bootstrap_test .........   Passed   30.92 sec
+        Start 130: activation_plan_persistence_qualification_cleanup_test
+110/118 Test #130: activation_plan_persistence_qualification_cleanup_test ........   Passed    0.00 sec
+        Start 132: toml_differential_test
+111/118 Test #132: toml_differential_test ........................................   Passed    0.17 sec
+        Start 133: toml_upstream_consumer_test
+112/118 Test #133: toml_upstream_consumer_test ...................................   Passed    0.00 sec
+        Start 134: toml_vendor_reproduction_test
+113/118 Test #134: toml_vendor_reproduction_test .................................   Passed    0.07 sec
+        Start 135: toml_isolation_test
+114/118 Test #135: toml_isolation_test ...........................................   Passed    0.16 sec
+        Start 136: qualification_driver_test
+115/118 Test #136: qualification_driver_test .....................................   Passed    0.36 sec
+116/118 Test #123: activation_plan_persistence_boundaries_published_test .........   Passed   17.49 sec
+        Start  82: public_planning_test
+117/118 Test  #82: public_planning_test ..........................................   Passed    0.02 sec
+        Start  84: resolution_result_test
+118/118 Test  #84: resolution_result_test ........................................   Passed    0.01 sec
+
+100% tests passed, 0 tests failed out of 118
+
+Label Time Summary:
+D4-A          =   0.04 sec*proc (1 test)
+diagnostic    =   0.04 sec*proc (1 test)
+packaging     =   5.91 sec*proc (2 tests)
+
+Total Test time (real) = 126.24 sec
+
+The following tests did not run:
+	 27 - installed_semantics_integration_test (Skipped)
+	 29 - cli_install_integration_test (Skipped)
+	 31 - install_transaction_integration_test (Skipped)
+	 33 - generation_activation_test (Skipped)
+	 36 - realization_executor_integration_test (Skipped)
+	 39 - object_store_scanner_test (Skipped)
+	 42 - artifact_identity_scanner_test (Skipped)
+	 85 - removal_realization_integration_test (Skipped)
+	 88 - immutable_object_publication_test (Skipped)
+	 91 - transaction_gc_scanner_test (Skipped)

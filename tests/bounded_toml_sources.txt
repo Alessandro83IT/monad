@@ -7,6 +7,7 @@ cmake/AthenaPackaging.cmake
 docs/m2.5-d8-b1-parser-boundary.md
 docs/m2.5-d8-b1-request-runtime.md
 docs/m2.5-d8-b2-request-archive.md
+docs/m2.5-d8-b3-generation-operations.md
 include/athena/core/api.hpp
 include/athena/core/config.hpp
 include/athena/core/dependency.hpp
@@ -32,6 +33,8 @@ src/activation/codec_detail.cpp
 src/activation/codec_detail.hpp
 src/activation/current_selection.cpp
 src/activation/current_selection.hpp
+src/activation/generation_operation.cpp
+src/activation/generation_operation.hpp
 src/activation/identity.cpp
 src/activation/identity.hpp
 src/activation/initial_activation.cpp
@@ -246,6 +249,7 @@ tests/gc_trash_unsafe_test_access.hpp
 tests/generation_activation_test.cpp
 tests/generation_builder_test.cpp
 tests/generation_membership_test.cpp
+tests/generation_operation_test.cpp
 tests/generation_test.cpp
 tests/immutable_publication_test.cpp
 tests/initial_activation_test.cpp

@@ -1,0 +1,13 @@
+Test project /tmp/athena-b3-sanitized
+    Start 4: operational_request_runtime_test
+1/4 Test #4: operational_request_runtime_test ...   Passed    1.28 sec
+    Start 5: operational_request_archive_test
+2/4 Test #5: operational_request_archive_test ...   Passed    2.43 sec
+    Start 6: generation_operation_test
+3/4 Test #6: generation_operation_test ..........   Passed   16.88 sec
+    Start 8: operational_activation_test
+4/4 Test #8: operational_activation_test ........   Passed    0.76 sec
+
+100% tests passed, 0 tests failed out of 4
+
+Total Test time (real) =  21.35 sec

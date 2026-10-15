@@ -1,0 +1,18 @@
+{
+  "source_copy": "Every file in qualified SOURCE.sha256 copied with byte hashes checked before CMake; workspace never modified",
+  "baseline_sha256": "46a2bafd084360501a6c17507d32103fc69d8c12359ea3ae9ef07a83ff79fce8",
+  "mutations": [
+    {
+      "name": "missing-recovery-shape",
+      "replace": "    shape(expected.kind, recovered.request);\n",
+      "with": "    // Mutation: skipped B3 shape check.\n"
+    },
+    {
+      "name": "equal-rollback-allowed",
+      "replace": "target >= selected_generation(base.current)",
+      "with": "target > selected_generation(base.current)"
+    }
+  ],
+  "per_mutation": "Replace exactly once in isolated copy of original source; rebuild generation_operation_test; expect CTest exit 8 and Expected rejection; results/logs retained",
+  "scratch_state_after": "Source restored to original bytes; scratch build still contains last mutant; neither is qualified production or included in candidate."
+}
