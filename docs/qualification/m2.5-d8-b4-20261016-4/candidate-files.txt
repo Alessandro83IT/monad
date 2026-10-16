@@ -1,0 +1,11 @@
+CMakeLists.txt
+docs/m2.5-d8-b4-package-operations.md
+docs/m2.5-d8-b4-qualification.md
+src/activation/package_operation.cpp
+src/activation/package_operation.hpp
+src/generation/publication.cpp
+tests/bounded_toml_sources.txt
+tests/generation_operation_test.cpp
+tests/package_operation_test.cpp
+tests/qualify_bounded_toml.py
+tests/transaction_gc_protocol_test.cpp

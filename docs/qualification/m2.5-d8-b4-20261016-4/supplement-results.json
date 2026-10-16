@@ -1,0 +1,14 @@
+{
+  "Debug": {
+    "mixed-build": "PASS",
+    "mixed-tests": "PASS",
+    "btrfs-suite": "PASS",
+    "btrfs-mixed": "PASS"
+  },
+  "Release": {
+    "mixed-build": "PASS",
+    "mixed-tests": "PASS",
+    "btrfs-suite": "PASS",
+    "btrfs-mixed": "PASS"
+  }
+}

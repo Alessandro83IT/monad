@@ -1,0 +1,46 @@
+{
+  "commands": [
+    [
+      "cmake",
+      "-S",
+      "/home/alessandro/Lab/Programming/athena-pm",
+      "-B",
+      "/tmp/athena-b4-audit-san-20261016-1",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+      "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer",
+      "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined",
+      "-DCMAKE_SHARED_LINKER_FLAGS=-fsanitize=address,undefined"
+    ],
+    [
+      "cmake",
+      "--build",
+      "/tmp/athena-b4-audit-san-20261016-1",
+      "--target",
+      "package_operation_test",
+      "package_operation_scanner_test",
+      "generation_operation_test",
+      "operational_request_archive_test",
+      "operational_request_runtime_test",
+      "operational_activation_test",
+      "transaction_gc_protocol_test",
+      "-j2"
+    ],
+    [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b4-audit-san-20261016-1",
+      "-R",
+      "^(package_operation_test|package_operation_scanner_test|generation_operation_test|operational_request_archive_test|operational_request_runtime_test|operational_activation_test|transaction_gc_protocol_test)$",
+      "--output-on-failure",
+      "--output-junit",
+      "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b4-audit-20261016-1/sanitizer-junit.xml"
+    ]
+  ],
+  "environment": {
+    "ASAN_OPTIONS": "detect_leaks=0",
+    "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+  },
+  "clean_build": true,
+  "LeakSanitizer": "NOT EXECUTED"
+}

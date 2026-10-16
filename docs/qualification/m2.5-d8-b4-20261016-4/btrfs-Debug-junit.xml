@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="7"
+	failures="0"
+	disabled="0"
+	skipped="1"
+	hostname=""
+	time="43"
+	timestamp="2026-10-16T12:40:18"
+	>
+	<testcase name="operational_request_runtime_test" classname="operational_request_runtime_test" time="1.06353" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="operational_request_archive_test" classname="operational_request_archive_test" time="2.06791" status="run">
+		<properties/>
+		<system-out>B2 fault boundaries: 7 x before/after
+</system-out>
+	</testcase>
+	<testcase name="generation_operation_test" classname="generation_operation_test" time="12.8738" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="package_operation_test" classname="package_operation_test" time="26.3687" status="run">
+		<properties/>
+		<system-out>PASS B4: simulated scanner, physical metadata/payload/symlink mechanics
+</system-out>
+	</testcase>
+	<testcase name="operational_activation_test" classname="operational_activation_test" time="0.664426" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="transaction_gc_protocol_test" classname="transaction_gc_protocol_test" time="0.268712" status="run">
+		<properties/>
+		<system-out>M2.5-C protocol/contention tests passed
+</system-out>
+	</testcase>
+	<testcase name="package_operation_scanner_test" classname="package_operation_scanner_test" time="0.116704" status="notrun">
+		<skipped message="SKIP_RETURN_CODE=77"/>
+		<properties/>
+		<system-out>SKIP physical B4 source authorization: artifact &lt;root&gt;: cannot establish absence of hidden trusted.* xattrs; initial-namespace CAP_SYS_ADMIN required
+</system-out>
+	</testcase>
+</testsuite>

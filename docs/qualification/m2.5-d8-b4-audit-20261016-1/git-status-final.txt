@@ -1,0 +1,20 @@
+ M CMakeLists.txt
+ M src/generation/publication.cpp
+ M tests/bounded_toml_sources.txt
+ M tests/generation_operation_test.cpp
+ M tests/qualify_bounded_toml.py
+ M tests/transaction_gc_protocol_test.cpp
+?? docs/m2.5-d8-b4-audit.md
+?? docs/m2.5-d8-b4-package-operations.md
+?? docs/m2.5-d8-b4-qualification.md
+?? docs/m2.5-d8b-cli-integration.md
+?? docs/qualification/m2.5-d8-b1-toml-20261015-1/
+?? docs/qualification/m2.5-d8-b4-20261016-1/
+?? docs/qualification/m2.5-d8-b4-20261016-2/
+?? docs/qualification/m2.5-d8-b4-20261016-3/
+?? docs/qualification/m2.5-d8-b4-20261016-4/
+?? docs/qualification/m2.5-d8-b4-audit-20261016-1/
+?? docs/qualification/m2.5-d8-b4-gate-20261016-1/
+?? src/activation/package_operation.cpp
+?? src/activation/package_operation.hpp
+?? tests/package_operation_test.cpp

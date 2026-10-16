@@ -1,0 +1,41 @@
+{
+  "head": "c0a8b12528c979fbaba1be86d36629c3122c20c2",
+  "branch": "main",
+  "verdict": "APPROVE",
+  "scope": "internal APIs and documented verified nonprivileged perimeter",
+  "Debug": {
+    "PASS": 109,
+    "FAIL": 0,
+    "SKIP": 11,
+    "NOT EXECUTED": 19
+  },
+  "Release": {
+    "PASS": 109,
+    "FAIL": 0,
+    "SKIP": 11,
+    "NOT EXECUTED": 19
+  },
+  "sanitizers": {
+    "PASS": 6,
+    "FAIL": 0,
+    "SKIP": 1
+  },
+  "Btrfs": {
+    "Debug": {
+      "PASS": 6,
+      "FAIL": 0,
+      "SKIP": 1
+    },
+    "Release": {
+      "PASS": 6,
+      "FAIL": 0,
+      "SKIP": 1
+    }
+  },
+  "source_inputs": 407,
+  "source_manifest_sha256": "6c52bbd9775c5409f2b78a657ab1566c192b837d40d96e37f2bffe3f8dd4bcb5",
+  "candidate_files": 11,
+  "git_diff_check_exit": 0,
+  "historical_preservation": true,
+  "finished_utc": "2026-10-16T10:47:07.075423+00:00"
+}

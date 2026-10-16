@@ -1,0 +1,169 @@
+[
+  {
+    "command": [
+      "c++",
+      "--version"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "compiler.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "--version"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "cmake-version.txt"
+  },
+  {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "git-status-before.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-S",
+      "/home/alessandro/Lab/Programming/athena-pm",
+      "-B",
+      "/tmp/athena-b4-audit-build-20261016-1/debug",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "Debug-configure.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/athena-b4-audit-build-20261016-1/debug",
+      "-j",
+      "4"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "Debug-build.txt"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b4-audit-build-20261016-1/debug",
+      "--show-only=json-v1"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "Debug-inventory.json"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b4-audit-build-20261016-1/debug",
+      "-LE",
+      "privileged",
+      "-E",
+      "^artifact_scanner_test$",
+      "--output-on-failure",
+      "--output-junit",
+      "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b4-audit-20261016-1/clean/Debug-junit.xml",
+      "-j",
+      "2"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "Debug-tests.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-LA",
+      "-N",
+      "/tmp/athena-b4-audit-build-20261016-1/debug"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "Debug-cache.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-S",
+      "/home/alessandro/Lab/Programming/athena-pm",
+      "-B",
+      "/tmp/athena-b4-audit-build-20261016-1/release",
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "Release-configure.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/athena-b4-audit-build-20261016-1/release",
+      "-j",
+      "4"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "Release-build.txt"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b4-audit-build-20261016-1/release",
+      "--show-only=json-v1"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "Release-inventory.json"
+  },
+  {
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/athena-b4-audit-build-20261016-1/release",
+      "-LE",
+      "privileged",
+      "-E",
+      "^artifact_scanner_test$",
+      "--output-on-failure",
+      "--output-junit",
+      "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b4-audit-20261016-1/clean/Release-junit.xml",
+      "-j",
+      "2"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "Release-tests.txt"
+  },
+  {
+    "command": [
+      "cmake",
+      "-LA",
+      "-N",
+      "/tmp/athena-b4-audit-build-20261016-1/release"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "Release-cache.txt"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "git-diff-check.txt"
+  },
+  {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "cwd": "/home/alessandro/Lab/Programming/athena-pm",
+    "log": "git-status-after.txt"
+  }
+]

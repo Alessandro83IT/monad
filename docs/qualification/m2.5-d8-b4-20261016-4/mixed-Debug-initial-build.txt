@@ -1,0 +1,9 @@
+/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b4-20261016-4/mixed-concurrency.cpp: In function ‘void {anonymous}::remove_preserves_dependency()’:
+/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b4-20261016-4/mixed-concurrency.cpp:54:18: error: ‘any_of’ is not a member of ‘std’
+   54 |     require(std::any_of(plan.plan.operations.begin(), plan.plan.operations.end(), [](const auto& value) {
+      |                  ^~~~~~
+In file included from /home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b4-20261016-4/mixed-concurrency.cpp:4:
+/home/alessandro/Lab/Programming/athena-pm/tests/package_operation_test.cpp: In function ‘int b4_embedded_unit_main(int, char**)’:
+/home/alessandro/Lab/Programming/athena-pm/tests/package_operation_test.cpp:527:18: warning: control reaches end of non-void function [-Wreturn-type]
+  527 |     std::cout << "PASS B4: simulated scanner, physical metadata/payload/symlink mechanics\n";
+      |                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

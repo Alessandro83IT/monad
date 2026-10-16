@@ -1,0 +1,38 @@
+{
+  "Debug": {
+    "counts": {
+      "PASS": 6,
+      "FAIL": 0,
+      "SKIP": 1
+    },
+    "results": {
+      "operational_request_runtime_test": "PASS",
+      "operational_request_archive_test": "PASS",
+      "generation_operation_test": "PASS",
+      "package_operation_test": "PASS",
+      "operational_activation_test": "PASS",
+      "transaction_gc_protocol_test": "PASS",
+      "package_operation_scanner_test": "SKIP"
+    },
+    "supplement": "PASS",
+    "cleanup": "removed empty witness parent"
+  },
+  "Release": {
+    "counts": {
+      "PASS": 6,
+      "FAIL": 0,
+      "SKIP": 1
+    },
+    "results": {
+      "operational_request_runtime_test": "PASS",
+      "operational_request_archive_test": "PASS",
+      "generation_operation_test": "PASS",
+      "package_operation_test": "PASS",
+      "operational_activation_test": "PASS",
+      "transaction_gc_protocol_test": "PASS",
+      "package_operation_scanner_test": "SKIP"
+    },
+    "supplement": "PASS",
+    "cleanup": "removed empty witness parent"
+  }
+}

@@ -316,6 +316,39 @@ void gc_lifetime() {
         f.state=std::make_unique<ProjectionState>(f.binding.generation_authority);
     }
 }
+// B4 gate: a live transaction lease is NOT a generation metadata pin.
+// Physical metadata witness, no fabricated payload or source authorization.
+void transaction_generation_lifetime_gate() {
+    OperationFixture f;
+    const auto before = f.current();
+    f.state.reset();
+    athena::store::TransactionPins pins({f.binding.store_authority, f.binding.generation_authority});
+    const auto registry = pins.authority().registry() / pins.id();
+    require(fs::exists(registry / "pin.toml"), "durable transaction exists before State");
+    f.state = std::make_unique<ProjectionState>(f.binding.generation_authority);
+    auto p = f.open(); auto archive = f.archive();
+    auto operation = f.prepare(p, GenerationOperationKind::Switch, 1);
+    const auto reference = operation.reference();
+    const auto frozen = serialize_operational_request(operation.request());
+    persist_generation_operation(p, *f.state, archive, operation);
+    require(!f.plan() && f.current() == before, "B2 persist has no D4 or premature selection");
+    f.state.reset();
+    // Deterministic cooperating competitor at the inter-operation State gap.
+    // It obeys the same lease -> State -> StoreGc hierarchy; discard does not
+    // consult the transaction registry because pins identify artifacts only.
+    athena::generation::GenerationManager manager(f.root / "generations",
+        athena::generation::GenerationManager::GenerationDirectoryTag{});
+    manager.discard(1);
+    require(!fs::exists(f.root / "generations/1") && fs::exists(registry / "pin.toml"),
+        "live transaction cannot retain archived target generation");
+    f.state = std::make_unique<ProjectionState>(f.binding.generation_authority);
+    archive_failure([&] { recover_generation_operation(p, *f.state, archive, reference); });
+    archive_failure([&] { activate_generation_operation(p, *f.state, archive, reference); });
+    require(f.current() == before && !f.plan() && bytes(f.record()) == frozen,
+        "lost lifetime fails closed without rebase, recreation, execution or archive damage");
+    f.state.reset();
+    pins.abandon(); // Explicit test cleanup only, never a recovery policy.
+}
 void concurrent_operations() {
     OperationFixture f;auto p=f.open();auto archive=f.archive();auto first=f.prepare(p,GenerationOperationKind::Switch,1,11);
     auto second=f.prepare(p,GenerationOperationKind::Switch,2,12);
@@ -337,7 +370,7 @@ void concurrent_operations() {
     const auto loser=current.activation_id==id(11)?12:11;
     require(!f.plan(loser)&&fs::exists(f.record(11))&&fs::exists(f.record(12)),"loser retained without D4 publication/rebase");
 }
-void run(){roundtrip();invalid_inputs();documents();conflicts();corrupt_records_and_unpublished();archive_faults();activation_faults();source_claims();physical_witness_boundary();gc_lifetime();concurrent_operations();}
+void run(){roundtrip();invalid_inputs();documents();conflicts();corrupt_records_and_unpublished();archive_faults();activation_faults();source_claims();physical_witness_boundary();gc_lifetime();transaction_generation_lifetime_gate();concurrent_operations();}
 }
 int main(int argc,char** argv) {
     if(argc==6&&std::string_view(argv[1])=="activate") {

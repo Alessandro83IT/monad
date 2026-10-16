@@ -1,0 +1,11 @@
+{
+  "libathena_core.so": [
+    "000000000057d0f8 T _ZN6athena8artifact4scanERKNSt10filesystem7__cxx114pathE"
+  ],
+  "package_operation_test": [
+    "00000000000a63da T _ZN6athena8artifact4scanERKNSt10filesystem7__cxx114pathE"
+  ],
+  "package_operation_scanner_test": [
+    "                 U _ZN6athena8artifact4scanERKNSt10filesystem7__cxx114pathE"
+  ]
+}

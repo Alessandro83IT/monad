@@ -1,0 +1,57 @@
+{
+  "prior_artifacts": {
+    "result": "PASS",
+    "verified_files": 71,
+    "baseline_snapshot_inputs": [],
+    "manifest_sha256": "f5a04bdef84cf02d681de25b2ad1423861c3813c8dc93357a86ffcaab3c81c01"
+  },
+  "prior_candidate": {
+    "result": "PASS",
+    "verified_files": 11,
+    "baseline_snapshot_inputs": [
+      "CMakeLists.txt",
+      "docs/m2.5-d8-b4-package-operations.md",
+      "docs/m2.5-d8-b4-qualification.md",
+      "src/activation/package_operation.cpp",
+      "src/activation/package_operation.hpp",
+      "src/generation/publication.cpp",
+      "tests/bounded_toml_sources.txt",
+      "tests/generation_operation_test.cpp",
+      "tests/package_operation_test.cpp",
+      "tests/qualify_bounded_toml.py",
+      "tests/transaction_gc_protocol_test.cpp"
+    ],
+    "manifest_sha256": "b1583d26b93c615907806bd4a7fd2b41e9304866977a0d22014ad333798ac669"
+  },
+  "prior_sources": {
+    "result": "PASS",
+    "verified_files": 407,
+    "baseline_snapshot_inputs": [
+      "CMakeLists.txt",
+      "docs/m2.5-d8-b4-package-operations.md",
+      "src/activation/package_operation.cpp",
+      "src/activation/package_operation.hpp",
+      "src/generation/publication.cpp",
+      "tests/bounded_toml_sources.txt",
+      "tests/generation_operation_test.cpp",
+      "tests/package_operation_test.cpp",
+      "tests/qualify_bounded_toml.py",
+      "tests/transaction_gc_protocol_test.cpp"
+    ],
+    "manifest_sha256": "6c52bbd9775c5409f2b78a657ab1566c192b837d40d96e37f2bffe3f8dd4bcb5"
+  },
+  "development_iterations": [
+    {
+      "result": "FAIL",
+      "scope": "Initial strengthening build: two GC fixture writes lacked a filesystem stream; fixed before clean builds."
+    },
+    {
+      "result": "FAIL",
+      "scope": "Initial negative exception-type expectation used artifact::Error; existing path validator intentionally translates it to SchemaError; corrected expected type before clean builds."
+    },
+    {
+      "result": "FAIL",
+      "scope": "Initial independent consumer compile referenced capabilities on SemanticState rather than its package member; corrected consumer; raw compiler output retained in boundaries-Debug-initial-compile-FAIL.txt."
+    }
+  ]
+}

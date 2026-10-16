@@ -67,6 +67,7 @@ set(ATHENA_TESTS
     operational_request_runtime_test
     operational_request_archive_test
     generation_operation_test
+    package_operation_test
     initial_activation_test
     operational_activation_test
     operational_plan_test
@@ -335,3 +336,14 @@ set_tests_properties(toml_vendor_reproduction_test toml_isolation_test PROPERTIE
 add_test(NAME qualification_driver_test COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/qualification_driver_test.py")
 set_tests_properties(qualification_driver_test PROPERTIES TIMEOUT 60)
+
+set_tests_properties(package_operation_test PROPERTIES TIMEOUT 120)
+
+# Same B4 fixture, with the production scanner and its unchanged metadata gate.
+add_executable(package_operation_scanner_test tests/package_operation_test.cpp)
+target_compile_definitions(package_operation_scanner_test PRIVATE ATHENA_B4_REAL_SCANNER)
+target_link_libraries(package_operation_scanner_test PRIVATE Athena::Core)
+target_include_directories(package_operation_scanner_test PRIVATE "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/third_party")
+target_compile_options(package_operation_scanner_test PRIVATE $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-UNDEBUG>)
+add_test(NAME package_operation_scanner_test COMMAND package_operation_scanner_test)
+set_tests_properties(package_operation_scanner_test PROPERTIES TIMEOUT 120 SKIP_RETURN_CODE 77)

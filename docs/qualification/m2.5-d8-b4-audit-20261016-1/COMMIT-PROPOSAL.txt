@@ -1,0 +1,6 @@
+feat(activation): integrate and qualify D8-B4 package operations
+
+Add internal install/remove preparation, D4 retention and B1/B2/B3 activation routing.
+Preserve dependency closure and generation/store lifetime; support safe Btrfs GC discovery.
+Include independent audit regressions, clean Debug/Release qualification and targeted sanitizer/filesystem evidence.
+No staging or commit was performed.

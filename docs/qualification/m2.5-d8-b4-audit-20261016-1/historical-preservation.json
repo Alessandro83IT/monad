@@ -1,0 +1,7 @@
+{
+  "result": "PASS",
+  "protected_files": 27,
+  "all_previous_evidence_and_protected_files": 167,
+  "complete_prior_file_sets_unchanged": true,
+  "fingerprint_inventory_sha256": "b12bc09a1f631803feeae22ab877f09a0ba0aa11ec93d201add1b469780968f7"
+}

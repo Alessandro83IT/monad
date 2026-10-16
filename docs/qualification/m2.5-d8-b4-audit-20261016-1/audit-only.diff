@@ -1,0 +1,314 @@
+--- audit-entry/tests/package_operation_test.cpp
++++ audit-result/tests/package_operation_test.cpp
+@@ -9,6 +9,10 @@
+ #include <sys/wait.h>
+ #include <iostream>
+ #include <set>
++#include <source_location>
++#include <type_traits>
++#include <athena/core/resolver.hpp>
++#include "parsing/bounded_toml.hpp"
+ using namespace athena;
+ using namespace athena::activation;
+ using namespace execution_test;
+@@ -38,6 +42,29 @@
+ }
+ #endif
+ namespace {
++std::string failure_text(std::exception_ptr ptr) {
++    if (!ptr) return "no underlying cause";
++    try { std::rethrow_exception(ptr); }
++    catch (const RequestArchiveError& e) { return std::string("B2:") + e.what() + " / " + failure_text(e.underlying); }
++    catch (const OperationalActivationError& e) { return "D8 stage=" + std::to_string(static_cast<int>(e.stage)) + " / " + failure_text(e.underlying); }
++    catch (const PlanPersistenceError& e) { return std::string("D4:") + e.what() + (e.underlying ? " / " + failure_text(e.underlying) : ""); }
++    catch (const std::exception& e) { return e.what(); }
++}
++template<class Expected, class F> void audited_rejected(F action, std::string_view expected,
++    std::source_location where = std::source_location::current()) {
++    try { action(); }
++    catch (...) {
++        const auto error = std::current_exception();
++        try { std::rethrow_exception(error); }
++        catch (const Expected&) {}
++        catch (...) { throw std::runtime_error("negative test threw an unexpected exception type: " + failure_text(error)); }
++        const auto actual = failure_text(error);
++        std::cout << "NEGATIVE " << where.line() << ": " << actual << '\n';
++        require(!expected.empty() && actual.find(expected) != actual.npos, "negative test failed at an unexpected boundary");
++        return;
++    }
++    throw std::runtime_error("Expected rejection");
++}
+ std::string read(const fs::path& path) {
+     std::ifstream stream(path, std::ios::binary); require(bool(stream), "read record");
+     return {std::istreambuf_iterator<char>(stream), {}};
+@@ -161,7 +188,7 @@
+     require(f.current().generation == 1 && fs::is_symlink(f.root / "projection/share/app"), "install through fresh D6/D7");
+     require(activate_package_operation(p, *f.state, archive, expected).publication == PlanPublication::AlreadyPublished, "exact selected retry");
+     if (dependencies) {
+-        rejected([&] { build_remove_operation_target(f.generation(1), 2, {"dep"}); });
++        audited_rejected<installed::ValidationError>([&] { build_remove_operation_target(f.generation(1), 2, {"dep"}); }, "Unsatisfied dependency for package");
+         require(fs::exists(f.root / "projection/share/dep"), "reverse dependency refusal leaves projection");
+     }
+     const std::vector<std::string> names = dependencies ? std::vector<std::string>{"app", "dep"} : std::vector<std::string>{"app"};
+@@ -172,51 +199,52 @@
+     activate_package_operation(p, *f.state, archive, removal.reference());
+     require(f.current().generation == 2 && !fs::exists(f.root / "projection/share/app"), "remove generation only");
+     for (const auto& r : records) require(fs::exists(f.objects.object_path(r.artifact_id)), "remove never deletes store");
+-    rejected([&] { activate_package_operation(p, *f.state, archive, expected); });
++    audited_rejected<RequestArchiveError>([&] { activate_package_operation(p, *f.state, archive, expected); }, "Prepared request base conflict");
+     require(f.current().activation_id == id(21), "old install replay cannot rebase");
+ }
+ void negatives() {
+     PackageFixture f; auto in = request({package("app", {"dep"}), package("dep")});
+     auto records = f.records(in); auto base = f.generation(0);
+-    rejected([&] { build_install_operation_target(base, 1, in, {records.front()}); });
++    audited_rejected<SchemaError>([&] { build_install_operation_target(base, 1, in, {records.front()}); }, "Incomplete realization closure");
+     auto wrong = records; wrong.front().semantics.reset();
+-    rejected([&] { build_install_operation_target(base, 1, in, wrong); });
++    audited_rejected<SchemaError>([&] { build_install_operation_target(base, 1, in, wrong); }, "Realization lacks complete semantic state");
+     wrong = records; wrong.back() = wrong.front();
+-    rejected([&] { build_install_operation_target(base, 1, in, wrong); });
+-    rejected([&] { build_install_operation_target(base, 0, in, records); });
+-    rejected([&] { build_install_operation_target(base, 1, request({package("app", {"missing"})}), records); });
+-    rejected([&] { build_remove_operation_target(base, 1, {"missing"}); });
++    audited_rejected<SchemaError>([&] { build_install_operation_target(base, 1, in, wrong); }, "Realization does not match resolved candidate identity");
++    audited_rejected<SchemaError>([&] { build_install_operation_target(base, 0, in, records); }, "requires a new generation above");
++    audited_rejected<core::ResolutionError>([&] { build_install_operation_target(base, 1, request({package("app", {"missing"})}), records); }, "missing");
++    audited_rejected<SchemaError>([&] { build_remove_operation_target(base, 1, {"missing"}); }, "Removal identity is not installed");
+     auto conflict = package("app"); conflict.conflicts = {"dep"};
+     auto conflict_request = request({conflict, package("dep")});
+     conflict_request.targets.push_back({{core::SelectorKind::Package, "dep", {}}});
+-    rejected([&] { core::plan_install(conflict_request); });
++    audited_rejected<core::ResolutionError>([&] { core::plan_install(conflict_request); }, "NOT: dep");
+     f.put(build_install_operation_target(base, 1, in, records)); auto raw = f.input(); auto p = f.open();
+     auto incomplete = raw; incomplete.generation.target_sources.pop_back();
+-    rejected([&] { prepare_install_operation(p, *f.state, incomplete, in); });
++    audited_rejected<SchemaError>([&] { prepare_install_operation(p, *f.state, incomplete, in); }, "Incomplete generation source inventory");
+     incomplete = raw; incomplete.generation.target_sources.front().links.clear();
+-    rejected([&] { prepare_install_operation(p, *f.state, incomplete, in); });
++    audited_rejected<SchemaError>([&] { prepare_install_operation(p, *f.state, incomplete, in); }, "source inventory is not complete and exact");
+     incomplete = raw; incomplete.generation.binding.projection_root = "/unrelated";
+-    rejected([&] { prepare_install_operation(p, *f.state, incomplete, in); });
++    audited_rejected<ExecutionError>([&] { prepare_install_operation(p, *f.state, incomplete, in); }, "Generation operation authority mismatch");
+     incomplete = raw; incomplete.generation.base.current = CurrentV1{0, id(99), PlanDigest(d1_test::digest('f'))};
+-    rejected([&] { prepare_install_operation(p, *f.state, incomplete, in); });
++    incomplete.generation.base.ownership = ActivationOwnership{id(99)}; // coherent but stale original selection
++    audited_rejected<ExecutionError>([&] { prepare_install_operation(p, *f.state, incomplete, in); }, "Prepared request base conflict");
+     incomplete = raw; incomplete.generation.target_sources.front().links = {"../escape"};
+-    rejected([&] { prepare_install_operation(p, *f.state, incomplete, in); });
+-    rejected([&] { prepare_install_operation(p, *f.state, raw, in, PlanDigest(d1_test::digest('f'))); });
++    audited_rejected<SchemaError>([&] { prepare_install_operation(p, *f.state, incomplete, in); }, "noncanonical path component");
++    audited_rejected<SchemaError>([&] { prepare_install_operation(p, *f.state, raw, in, PlanDigest(d1_test::digest('f'))); }, "Operational request digest mismatch");
+     const auto document = f.root / "generations/1/generation.toml";
+     fs::rename(document, f.root / "saved-target"); fs::create_symlink(f.root / "saved-target", document);
+-    rejected([&] { prepare_install_operation(p, *f.state, raw, in); });
++    audited_rejected<std::system_error>([&] { prepare_install_operation(p, *f.state, raw, in); }, "Too many levels of symbolic links");
+     fs::remove(document); fs::rename(f.root / "saved-target", document);
+     const auto object = f.objects.object_path(records.front().artifact_id);
+     const auto object_permissions = fs::status(object).permissions();
+     fs::permissions(object, fs::perms::owner_all); // fixture-only move of immutable directory
+     fs::rename(object, f.root / "saved-object");
+-    rejected([&] { prepare_install_operation(p, *f.state, raw, in); });
++    audited_rejected<store::ObjectError>([&] { prepare_install_operation(p, *f.state, raw, in); }, "test scan root");
+     fs::rename(f.root / "saved-object", object);
+     fs::permissions(object, object_permissions);
+     require(!f.plan() && f.current().generation == 0, "all invalid prepares precede D4 and selection");
+     const auto path = f.objects.object_path(records.front().artifact_id) / "share" / records.front().candidate.package.value();
+     fs::permissions(path, fs::perms::owner_write, fs::perm_options::add); write(path, "corrupt");
+-    rejected([&] { prepare_install_operation(p, *f.state, raw, in); });
++    audited_rejected<store::ObjectError>([&] { prepare_install_operation(p, *f.state, raw, in); }, "object content differs from expected ArtifactId");
+     require(!f.plan() && f.current().generation == 0, "corrupt payload refused before retention");
+ }
+ void tamper() {
+@@ -225,31 +253,31 @@
+     auto p = f.open(); auto archive = f.archive(); persist_package_operation(p, *f.state, archive, op);
+     const auto original = read(f.record());
+     write(f.record(), original + "# corrupt canonical envelope\n");
+-    rejected([&] { activate_package_operation(p, *f.state, archive, op.reference()); });
++    audited_rejected<RequestArchiveError>([&] { activate_package_operation(p, *f.state, archive, op.reference()); }, "Recovered envelope differs from independent exact-byte digest");
+     write(f.record(), original);
+     auto reference = op.reference(); reference.generation.request.envelope = RequestEnvelopeDigest(d1_test::digest('f'));
+-    rejected([&] { recover_package_operation(p, *f.state, archive, reference); });
++    audited_rejected<RequestArchiveError>([&] { recover_package_operation(p, *f.state, archive, reference); }, "Recovered envelope differs from independent exact-byte digest");
+     reference = op.reference(); reference.kind = static_cast<PackageOperationKind>(99);
+-    rejected([&] { recover_package_operation(p, *f.state, archive, reference); });
++    audited_rejected<SchemaError>([&] { recover_package_operation(p, *f.state, archive, reference); }, "Unknown package operation kind");
+     const auto retention = f.root / "projection/.athena-activation/plans" / id(20).value();
+     fs::rename(retention, f.root / "saved-retention");
+-    rejected([&] { recover_package_operation(p, *f.state, archive, op.reference()); });
+-    rejected([&] { activate_package_operation(p, *f.state, archive, op.reference()); });
++    audited_rejected<PlanPersistenceError>([&] { recover_package_operation(p, *f.state, archive, op.reference()); }, "No published recovery target");
++    audited_rejected<PlanPersistenceError>([&] { activate_package_operation(p, *f.state, archive, op.reference()); }, "No published recovery target");
+     require(!f.plan() && f.current().generation == 0 && read(f.record()) == original, "missing D4 root is never rebuilt from B2");
+     fs::rename(f.root / "saved-retention", retention);
+     const auto document = f.root / "generations/1/generation.toml";
+     const auto exact = read(document); write(document, exact + "# changed\n");
+-    rejected([&] { activate_package_operation(p, *f.state, archive, op.reference()); });
++    audited_rejected<RequestArchiveError>([&] { activate_package_operation(p, *f.state, archive, op.reference()); }, "Prepared generation differs from persisted document");
+     write(document, exact);
+     const auto payload = f.objects.object_path(records.front().artifact_id) / "share/app";
+     fs::permissions(payload, fs::perms::owner_write, fs::perm_options::add); write(payload, "changed after prepare");
+-    rejected([&] { activate_package_operation(p, *f.state, archive, op.reference()); });
++    audited_rejected<OperationalActivationError>([&] { activate_package_operation(p, *f.state, archive, op.reference()); }, "D8 stage=3 / object content differs");
+     require(f.current().generation == 0, "fresh D6 refuses changed payload after preparation");
+     write(payload, "payload for app"); fs::permissions(payload, fs::perms::owner_read | fs::perms::group_read | fs::perms::others_read);
+     auto prepared_again = f.prepare_install(in);
+     require(prepared_again.reference().generation.request.envelope == op.reference().generation.request.envelope, "exact reprepare frozen identity");
+     const auto record = f.record(); fs::remove(record); fs::create_symlink(document, record);
+-    rejected([&] { activate_package_operation(p, *f.state, archive, op.reference()); });
++    audited_rejected<RequestArchiveError>([&] { activate_package_operation(p, *f.state, archive, op.reference()); }, "Unsafe request file metadata");
+     fs::remove(record); write(record, original); fs::permissions(record, fs::perms::owner_read | fs::perms::owner_write);
+     activate_package_operation(p, *f.state, archive, op.reference());
+ }
+@@ -274,8 +302,8 @@
+     in.feature_states["gui"] = true; in.profile = "desktop";
+     auto records = f.records(in); auto target = build_install_operation_target(f.generation(0), 1, in, records);
+     require(target.realizations.size() == 1, "capability and feature are selectors, not extra package identities");
+-    rejected([&] { build_remove_operation_target(target, 2, {"api"}); });
+-    rejected([&] { build_remove_operation_target(target, 2, {"gui"}); });
++    audited_rejected<SchemaError>([&] { build_remove_operation_target(target, 2, {"api"}); }, "Removal identity is not installed");
++    audited_rejected<SchemaError>([&] { build_remove_operation_target(target, 2, {"gui"}); }, "Removal identity is not installed");
+     // Profile state survives an upgrade whose request does not restate it.
+     auto next = in; next.feature_states.clear(); next.targets.resize(1);
+     auto next_records = f.records(next);
+@@ -288,14 +316,14 @@
+     auto with_deps = build_install_operation_target(f.generation(0), 1, dep_in, f.records(dep_in));
+     auto remaining = build_remove_operation_target(with_deps, 2, {"app"});
+     require(remaining.realizations.size() == 1 && remaining.realizations.front().candidate.package.value() == "dep", "remove has no implicit autoremove");
+-    rejected([&] { build_remove_operation_target(with_deps, 2, {"app", "app"}); });
++    audited_rejected<SchemaError>([&] { build_remove_operation_target(with_deps, 2, {"app", "app"}); }, "Empty or duplicate removal identity");
+ }
+ void collisions_and_concurrency() {
+     PackageFixture f; auto in = request({package("app")}); auto records = f.records(in);
+     f.put(build_install_operation_target(f.generation(0), 1, in, records));
+     f.put(build_install_operation_target(f.generation(0), 2, in, records));
+     auto first = f.prepare_install(in, 1, 20);
+-    rejected([&] { f.prepare_install(in, 2, 20); });
++    audited_rejected<PlanPersistenceError>([&] { f.prepare_install(in, 2, 20); }, "Existing D4 bytes differ from request");
+     auto second = f.prepare_install(in, 2, 22);
+     auto p = f.open(); auto archive = f.archive();
+     persist_package_operation(p, *f.state, archive, first); persist_package_operation(p, *f.state, archive, second);
+@@ -341,10 +369,10 @@
+             boundary == 1 ? f.root / "generations" / std::to_string(target) / "generation.toml" :
+             boundary == 2 ? f.root / "generations" / std::to_string(target) : f.root / "generations";
+         sync_fault_after = after; sync_fault_hit = false; raw.durability.fsync = synchronization_fault;
+-        rejected([&] {
++        audited_rejected<core::detail::PersistenceError>([&] {
+             if (removal) prepare_remove_operation(p, *f.state, raw, {"app"});
+             else prepare_install_operation(p, *f.state, raw, in);
+-        });
++        }, "Input/output error");
+         require(sync_fault_hit && !f.plan(activation) && f.current() == original, "source/generation barrier faults precede D4 and selection");
+         raw.durability = core::detail::linux_syscalls();
+         auto op = removal ? prepare_remove_operation(p, *f.state, raw, {"app"}) : prepare_install_operation(p, *f.state, raw, in);
+@@ -372,7 +400,7 @@
+     auto p = f.open(); const auto original = f.current(); const auto digest = f.digest(1);
+     substitution_file = f.root / "generations/1/generation.toml"; substitution_hit = false;
+     raw.durability.fsync = substitute_generation_directory;
+-    rejected([&] { prepare_install_operation(p, *f.state, raw, in); });
++    audited_rejected<SchemaError>([&] { prepare_install_operation(p, *f.state, raw, in); }, "Generation directory instance changed across B4 barriers");
+     require(substitution_hit && f.digest(1) == digest && !f.plan() && f.current() == original,
+         "same bytes in a substituted generation instance cannot satisfy the old barriers");
+     raw.durability = core::detail::linux_syscalls();
+@@ -385,8 +413,8 @@
+     const auto metadata = legacy / ".athena/metadata.toml"; write(metadata, "# sparse oversized legacy metadata");
+     fs::resize_file(metadata, max_document_size + 1);
+     auto base = generation::make_generation(1, {{"old", legacy.native(), {}}}, records);
+-    rejected([&] { build_install_operation_target(base, 2, in, records); });
+-    rejected([&] { build_remove_operation_target(base, 2, {"app"}); });
++    audited_rejected<parsing::Error>([&] { build_install_operation_target(base, 2, in, records); }, "TOML file bound before input allocation");
++    audited_rejected<parsing::Error>([&] { build_remove_operation_target(base, 2, {"app"}); }, "TOML file bound before input allocation");
+     require(fs::file_size(metadata) == max_document_size + 1, "bounded legacy capture never rewrites metadata");
+ }
+ void retention_faults() {
+@@ -408,10 +436,10 @@
+             auto rc = rename(a, b, c, d, flags); if (match && after && rc == 0) { errno = EIO; return -1; } return rc;
+         };
+         auto broken = f.open(io);
+-        rejected([&] {
++        audited_rejected<PlanPersistenceError>([&] {
+             if (removal) prepare_remove_operation(broken, *f.state, raw, {"app"});
+             else prepare_install_operation(broken, *f.state, raw, in);
+-        });
++        }, "D4 NOREPLACE rename: Input/output error");
+         require(hit && f.current() == original && fs::is_empty(f.archive_path) == !removal, "D4 prepare faults cannot select or archive new request");
+         auto fresh = f.open();
+         auto op = removal ? prepare_remove_operation(fresh, *f.state, raw, {"app"}) : prepare_install_operation(fresh, *f.state, raw, in);
+@@ -469,7 +497,7 @@
+             auto rc = rename(a, b, c, d, flags); if (hit) { errno = EIO; return -1; } return rc;
+         };
+         auto broken = f.archive(io);
+-        rejected([&] { persist_package_operation(p, *f.state, broken, op); });
++        audited_rejected<RequestArchiveError>([&] { persist_package_operation(p, *f.state, broken, op); }, "Input/output error");
+         require(event >= boundary && f.current() == original && f.plan(removal ? 21 : 20), "B2 faults preserve retention and current");
+         auto archive = f.archive(); persist_package_operation(p, *f.state, archive, op);
+         activate_package_operation(p, *f.state, archive, op.reference());
+@@ -484,7 +512,7 @@
+             auto rc = sync(fd); if (hit) { errno = EIO; return -1; } return rc;
+         };
+         auto broken = f.archive(io);
+-        rejected([&] { activate_package_operation(p, *f.state, broken, op.reference()); });
++        audited_rejected<RequestArchiveError>([&] { activate_package_operation(p, *f.state, broken, op.reference()); }, "Request archive barrier: Input/output error");
+         require(event >= boundary && f.current() == original, "B2 recovery faults never execute");
+         activate_package_operation(p, *f.state, archive, op.reference());
+     }
+@@ -525,4 +553,5 @@
+     try { roundtrip(false); roundtrip(true); negatives(); tamper(); semantic_variants(); collisions_and_concurrency(); bounded_legacy_capture(); same_bytes_substitution(); preparation_barrier_faults(); retention_faults(); execution_faults(); archive_faults(); }
+     catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
+     std::cout << "PASS B4: simulated scanner, physical metadata/payload/symlink mechanics\n";
+-}
++    return 0;
++}
+--- audit-entry/tests/transaction_gc_protocol_test.cpp
++++ audit-result/tests/transaction_gc_protocol_test.cpp
+@@ -60,14 +60,42 @@
+ void generation_directory_link_contract() {
+     Fixture fixture;
+     core::FileLock state(core::state_lock_path(fixture.generations), core::LockKind::State);
+-    require(generation::publication::existing_ids_for_gc(fixture.generations) == std::vector<std::uint64_t>{0},
+-        "valid leaf generation is a GC root on the current supported filesystem");
+-    const auto child = fixture.generations / "0/unexpected-child";
+-    fs::create_directory(child);
+-    rejects([&] { generation::publication::existing_ids_for_gc(fixture.generations); });
+-    require(fs::remove(child), "remove fixture-only child");
+-    require(generation::publication::existing_ids_for_gc(fixture.generations) == std::vector<std::uint64_t>{0},
+-        "directory-shape guard remains strict after repair");
++    auto valid = [&] {
++        require(generation::publication::existing_ids_for_gc(fixture.generations) == std::vector<std::uint64_t>{0},
++            "valid leaf generation is a GC root on the current supported filesystem");
++    };
++    auto invalid = [&](std::string_view expected) {
++        try { generation::publication::existing_ids_for_gc(fixture.generations); }
++        catch (const std::runtime_error& error) {
++            require(std::string_view(error.what()) == expected, "GC root refused for an unexpected preliminary reason");
++            std::cout << "GC NEGATIVE: " << error.what() << '\n'; return;
++        }
++        throw std::runtime_error("unsafe GC root was accepted");
++    };
++    valid();
++    const auto zero = fixture.generations / "0", metadata = zero / "generation.toml";
++    const auto child = zero / "unexpected-child";
++    fs::create_directory(child); invalid("unsafe canonical generation directory: 0");
++    require(generation::publication::existing_ids(fixture.generations) == std::vector<std::uint64_t>{0},
++        "generic historical enumeration keeps its compatibility contract");
++    require(fs::remove(child), "remove fixture-only child"); valid();
++    fs::permissions(zero, fs::perms::owner_all | fs::perms::group_read);
++    invalid("unsafe canonical generation directory: 0"); fs::permissions(zero, fs::perms::owner_all); valid();
++    fs::permissions(metadata, fs::perms::owner_read | fs::perms::owner_write | fs::perms::group_read);
++    invalid("unsafe canonical generation metadata: 0"); fs::permissions(metadata, fs::perms::owner_read | fs::perms::owner_write); valid();
++    fs::create_hard_link(metadata, fixture.temporary.root / "metadata-alias");
++    invalid("unsafe canonical generation metadata: 0"); fs::remove(fixture.temporary.root / "metadata-alias"); valid();
++    fs::rename(metadata, fixture.temporary.root / "saved-metadata"); fs::create_symlink(fixture.temporary.root / "saved-metadata", metadata);
++    invalid("unsafe canonical generation metadata: 0"); fs::remove(metadata); fs::rename(fixture.temporary.root / "saved-metadata", metadata); valid();
++    fs::create_directory_symlink(zero, fixture.generations / "1"); invalid("unsafe canonical generation entry: 1"); fs::remove(fixture.generations / "1"); valid();
++    std::ofstream(fixture.generations / "1") << "not a generation directory"; invalid("unsafe canonical generation entry: 1"); fs::remove(fixture.generations / "1"); valid();
++    // nlink=2 historically permits unrelated files and non-followed symlinks.
++    // Btrfs's nlink=1 branch must preserve that SAME acceptance boundary.
++    std::ofstream(zero / "unrelated") << "opaque"; fs::create_directory_symlink(fixture.temporary.root, zero / "unrelated-link"); valid();
++    fs::remove(zero / "unrelated"); fs::remove(zero / "unrelated-link"); valid();
++    struct statfs filesystem {}; require(::fstatfs(d::open_directory(zero).get(), &filesystem) == 0, "generation filesystem witness");
++    const auto status = d::stat_fd(d::open_directory(zero).get());
++    std::cout << "GC filesystem=" << filesystem.f_type << " directory_nlink=" << status.st_nlink << " strict shape/metadata matrix PASS\n";
+ }
+ void collisions() {
+     Fixture fixture; fixture.gc().collect();

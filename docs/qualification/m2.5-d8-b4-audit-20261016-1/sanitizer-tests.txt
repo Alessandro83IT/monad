@@ -1,0 +1,22 @@
+Test project /tmp/athena-b4-audit-san-20261016-1
+    Start   4: operational_request_runtime_test
+1/7 Test   #4: operational_request_runtime_test ...   Passed    1.29 sec
+    Start   5: operational_request_archive_test
+2/7 Test   #5: operational_request_archive_test ...   Passed    2.54 sec
+    Start   6: generation_operation_test
+3/7 Test   #6: generation_operation_test ..........   Passed   17.13 sec
+    Start   7: package_operation_test
+4/7 Test   #7: package_operation_test .............   Passed   43.12 sec
+    Start   9: operational_activation_test
+5/7 Test   #9: operational_activation_test ........   Passed    0.81 sec
+    Start  21: transaction_gc_protocol_test
+6/7 Test  #21: transaction_gc_protocol_test .......   Passed    0.27 sec
+    Start 139: package_operation_scanner_test
+7/7 Test #139: package_operation_scanner_test .....***Skipped   0.14 sec
+
+100% tests passed, 0 tests failed out of 7
+
+Total Test time (real) =  65.28 sec
+
+The following tests did not run:
+	139 - package_operation_scanner_test (Skipped)

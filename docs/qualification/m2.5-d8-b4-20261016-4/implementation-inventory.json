@@ -1,0 +1,79 @@
+[
+  {
+    "path": "CMakeLists.txt",
+    "status": "modified",
+    "sha256": "56804bd4fc5ac9932b9740698df638eaf9b2a6b89f64f71e51bcd5e4c4bd2296",
+    "baseline_sha256": "a861090016e68e8f1c664558cd645a11a545e552c2db9cded4d469ca8ac5ee0f",
+    "bytes": 17675
+  },
+  {
+    "path": "docs/m2.5-d8-b4-package-operations.md",
+    "status": "added",
+    "sha256": "58463f98ada4d07049a087496fea2c112517ed7aae94469bd97679a1d5c71f92",
+    "baseline_sha256": null,
+    "bytes": 13843
+  },
+  {
+    "path": "docs/m2.5-d8-b4-qualification.md",
+    "status": "added",
+    "sha256": "d93adc18486fb569b9baad0230325dd7bbf379a4d9a328e3dd700dd8e270b8fe",
+    "baseline_sha256": null,
+    "bytes": 14424
+  },
+  {
+    "path": "src/activation/package_operation.cpp",
+    "status": "added",
+    "sha256": "ca78ba12b54c8350de9b2e7b6ab11d9abce6a7e345e57ba3aed34bcdc1b81c17",
+    "baseline_sha256": null,
+    "bytes": 18040
+  },
+  {
+    "path": "src/activation/package_operation.hpp",
+    "status": "added",
+    "sha256": "c0f340a2f92833244bfe1a7924e4deec8bde1189f7b0df48bb1524ccc22c4722",
+    "baseline_sha256": null,
+    "bytes": 4539
+  },
+  {
+    "path": "src/generation/publication.cpp",
+    "status": "modified",
+    "sha256": "157bee9f689aa1486bbf1c5cad5ca61a32abf2c0734e23e336b4f87eaaa02c58",
+    "baseline_sha256": "bccf6f891065bf9041847b32eba9d466e210f640d26814254d9d124c4f59c2aa",
+    "bytes": 8524
+  },
+  {
+    "path": "tests/bounded_toml_sources.txt",
+    "status": "modified",
+    "sha256": "a660c1f48bb079f4216ff62b65f827a0a5eb056d6df2d5d542f52977ac0e6dc1",
+    "baseline_sha256": "2b9955af5aab97dfbe8e2a468b4d189e4f492768f97b0a6e8609ce217cb62e2c",
+    "bytes": 13980
+  },
+  {
+    "path": "tests/generation_operation_test.cpp",
+    "status": "modified",
+    "sha256": "150c120406979016f16ca952a33493cf00cc979e81f25b605c9f3b979c65152d",
+    "baseline_sha256": "6a58a37dd2b90c541189b9b4b201a145f90ca395611e53ff694a17df94c3d8dd",
+    "bytes": 29569
+  },
+  {
+    "path": "tests/package_operation_test.cpp",
+    "status": "added",
+    "sha256": "1ef62c6a367bb3f15370fdc5251ada4aff3078496a40faf27a17c2b4ad21e5cf",
+    "baseline_sha256": null,
+    "bytes": 36630
+  },
+  {
+    "path": "tests/qualify_bounded_toml.py",
+    "status": "modified",
+    "sha256": "315a128daf6556ee1ca6ade3d804f40ff9a4bd99a1cf0c28d10a07491cf50798",
+    "baseline_sha256": "6ac571d75e37f4df16557ea30ba0655cedd40a8f14e4f00d8098a2e68334bd44",
+    "bytes": 8925
+  },
+  {
+    "path": "tests/transaction_gc_protocol_test.cpp",
+    "status": "modified",
+    "sha256": "ae735949f3fcf4895db272dc989c3ee59815e87cc54042b5bdb1bb890e24525c",
+    "baseline_sha256": "a2237401dc12f8d817d3b3350b68455e516138eadc36b085369f799c741ec799",
+    "bytes": 15257
+  }
+]

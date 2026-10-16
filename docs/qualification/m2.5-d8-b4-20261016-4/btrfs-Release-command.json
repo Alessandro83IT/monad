@@ -1,0 +1,24 @@
+{
+  "command": [
+    "ctest",
+    "--test-dir",
+    "/tmp/athena-b4-build-20261016-4/release",
+    "-R",
+    "^(package_operation_test|package_operation_scanner_test|generation_operation_test|operational_request_archive_test|operational_request_runtime_test|operational_activation_test|transaction_gc_protocol_test)$",
+    "--output-on-failure",
+    "--output-junit",
+    "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b4-20261016-4/btrfs-Release-junit.xml"
+  ],
+  "fixture_parent": "/home/alessandro/Lab/Programming/athena-pm/.b4-btrfs-qualified-aoor62hk",
+  "environment": {
+    "ATHENA_EXECUTION_TEST_TMPDIR": "/home/alessandro/Lab/Programming/athena-pm/.b4-btrfs-qualified-aoor62hk",
+    "TMPDIR": "/home/alessandro/Lab/Programming/athena-pm/.b4-btrfs-qualified-aoor62hk"
+  },
+  "filesystem": "btrfs",
+  "ctest_returncode": 0,
+  "supplement_command": [
+    "/tmp/athena-b4-mixed-Release-20261016-4"
+  ],
+  "supplement_returncode": 0,
+  "cleanup": "removed empty witness parent"
+}

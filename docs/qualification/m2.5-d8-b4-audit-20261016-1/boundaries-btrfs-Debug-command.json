@@ -1,0 +1,13 @@
+{
+  "fixture_parent": "/home/alessandro/Lab/Programming/athena-pm/.b4-btrfs-audit-boundaries-5h65u_l4",
+  "environment": {
+    "ATHENA_EXECUTION_TEST_TMPDIR": "/home/alessandro/Lab/Programming/athena-pm/.b4-btrfs-audit-boundaries-5h65u_l4",
+    "TMPDIR": "/home/alessandro/Lab/Programming/athena-pm/.b4-btrfs-audit-boundaries-5h65u_l4"
+  },
+  "filesystem": "btrfs",
+  "supplement_command": [
+    "/tmp/athena-b4-audit-boundaries-Debug-20261016-1"
+  ],
+  "supplement_returncode": 0,
+  "cleanup": "removed empty witness parent"
+}

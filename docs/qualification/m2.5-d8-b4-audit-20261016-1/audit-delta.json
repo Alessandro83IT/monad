@@ -1,0 +1,10 @@
+{
+  "modified_original_candidate_files": [
+    "tests/package_operation_test.cpp",
+    "tests/transaction_gc_protocol_test.cpp"
+  ],
+  "unchanged_original_candidate_files": 9,
+  "new_audit_report": "docs/m2.5-d8-b4-audit.md",
+  "production_delta_since_audit_entry": "NONE",
+  "patch_sha256": "095a1df6f7de4a387d29a0496eff17e56b5c3efcd7efc77b9b41706b82ddb8a0"
+}

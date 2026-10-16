@@ -1,0 +1,3 @@
+PASS complete zero-link install/remove roundtrip; scanner=SIMULATED
+PASS remove preserves dependency and KEEP witness; scanner=SIMULATED
+PASS mixed install/remove/rollback/GC; winner=00000000000000000000000000000017; scanner=SIMULATED

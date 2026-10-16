@@ -1,0 +1,100 @@
+{
+  "commands": [
+    [
+      "nm",
+      "-D",
+      "-C",
+      "/tmp/athena-b4-audit-build-20261016-1/debug/libathena_core.so"
+    ],
+    [
+      "nm",
+      "-D",
+      "-C",
+      "/tmp/athena-b4-audit-build-20261016-1/debug/package_operation_test"
+    ],
+    [
+      "nm",
+      "-D",
+      "-C",
+      "/tmp/athena-b4-audit-build-20261016-1/debug/package_operation_scanner_test"
+    ],
+    [
+      "readelf",
+      "-d",
+      "/tmp/athena-b4-audit-build-20261016-1/debug/package_operation_scanner_test"
+    ],
+    [
+      "nm",
+      "-D",
+      "-C",
+      "/tmp/athena-b4-audit-build-20261016-1/release/libathena_core.so"
+    ],
+    [
+      "nm",
+      "-D",
+      "-C",
+      "/tmp/athena-b4-audit-build-20261016-1/release/package_operation_test"
+    ],
+    [
+      "nm",
+      "-D",
+      "-C",
+      "/tmp/athena-b4-audit-build-20261016-1/release/package_operation_scanner_test"
+    ],
+    [
+      "readelf",
+      "-d",
+      "/tmp/athena-b4-audit-build-20261016-1/release/package_operation_scanner_test"
+    ]
+  ],
+  "proof": {
+    "debug/libathena_core.so": {
+      "scan_symbols": [
+        "000000000057d0f8 T athena::artifact::scan(std::filesystem::__cxx11::path const&)"
+      ],
+      "needed": []
+    },
+    "debug/package_operation_test": {
+      "scan_symbols": [
+        "00000000000ad43a T athena::artifact::scan(std::filesystem::__cxx11::path const&)"
+      ],
+      "needed": []
+    },
+    "debug/package_operation_scanner_test": {
+      "scan_symbols": [
+        "                 U athena::artifact::scan(std::filesystem::__cxx11::path const&)"
+      ],
+      "needed": [
+        " 0x0000000000000001 (NEEDED)             Shared library: [libathena_core.so]",
+        " 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]",
+        " 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]",
+        " 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]",
+        " 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]"
+      ]
+    },
+    "release/libathena_core.so": {
+      "scan_symbols": [
+        "00000000002100f0 T athena::artifact::scan(std::filesystem::__cxx11::path const&)"
+      ],
+      "needed": []
+    },
+    "release/package_operation_test": {
+      "scan_symbols": [
+        "0000000000029670 T athena::artifact::scan(std::filesystem::__cxx11::path const&)"
+      ],
+      "needed": []
+    },
+    "release/package_operation_scanner_test": {
+      "scan_symbols": [],
+      "needed": [
+        " 0x0000000000000001 (NEEDED)             Shared library: [libathena_core.so]",
+        " 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]",
+        " 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]",
+        " 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]",
+        " 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]"
+      ]
+    }
+  },
+  "result": "PASS",
+  "interpretation": "Only simulated consumer defines scanner; library defines production scanner. Real consumer depends on library and defines no scanner. Debug includes a direct undefined scan reference; Release eliminates unused fixture helpers and has no direct scan symbol."
+}

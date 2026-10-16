@@ -57,6 +57,46 @@ realization::RealizationRecord membership(const Fixture& fixture) {
     auto selection=plan({recipe(fixture.temporary.root/"source")}).selections()[0].identity();
     return {selection,id('a'),{},core::ArtifactOrigin::AmbientSourceBuild};
 }
+void generation_directory_link_contract() {
+    Fixture fixture;
+    core::FileLock state(core::state_lock_path(fixture.generations), core::LockKind::State);
+    auto valid = [&] {
+        require(generation::publication::existing_ids_for_gc(fixture.generations) == std::vector<std::uint64_t>{0},
+            "valid leaf generation is a GC root on the current supported filesystem");
+    };
+    auto invalid = [&](std::string_view expected) {
+        try { generation::publication::existing_ids_for_gc(fixture.generations); }
+        catch (const std::runtime_error& error) {
+            require(std::string_view(error.what()) == expected, "GC root refused for an unexpected preliminary reason");
+            std::cout << "GC NEGATIVE: " << error.what() << '\n'; return;
+        }
+        throw std::runtime_error("unsafe GC root was accepted");
+    };
+    valid();
+    const auto zero = fixture.generations / "0", metadata = zero / "generation.toml";
+    const auto child = zero / "unexpected-child";
+    fs::create_directory(child); invalid("unsafe canonical generation directory: 0");
+    require(generation::publication::existing_ids(fixture.generations) == std::vector<std::uint64_t>{0},
+        "generic historical enumeration keeps its compatibility contract");
+    require(fs::remove(child), "remove fixture-only child"); valid();
+    fs::permissions(zero, fs::perms::owner_all | fs::perms::group_read);
+    invalid("unsafe canonical generation directory: 0"); fs::permissions(zero, fs::perms::owner_all); valid();
+    fs::permissions(metadata, fs::perms::owner_read | fs::perms::owner_write | fs::perms::group_read);
+    invalid("unsafe canonical generation metadata: 0"); fs::permissions(metadata, fs::perms::owner_read | fs::perms::owner_write); valid();
+    fs::create_hard_link(metadata, fixture.temporary.root / "metadata-alias");
+    invalid("unsafe canonical generation metadata: 0"); fs::remove(fixture.temporary.root / "metadata-alias"); valid();
+    fs::rename(metadata, fixture.temporary.root / "saved-metadata"); fs::create_symlink(fixture.temporary.root / "saved-metadata", metadata);
+    invalid("unsafe canonical generation metadata: 0"); fs::remove(metadata); fs::rename(fixture.temporary.root / "saved-metadata", metadata); valid();
+    fs::create_directory_symlink(zero, fixture.generations / "1"); invalid("unsafe canonical generation entry: 1"); fs::remove(fixture.generations / "1"); valid();
+    std::ofstream(fixture.generations / "1") << "not a generation directory"; invalid("unsafe canonical generation entry: 1"); fs::remove(fixture.generations / "1"); valid();
+    // nlink=2 historically permits unrelated files and non-followed symlinks.
+    // Btrfs's nlink=1 branch must preserve that SAME acceptance boundary.
+    std::ofstream(zero / "unrelated") << "opaque"; fs::create_directory_symlink(fixture.temporary.root, zero / "unrelated-link"); valid();
+    fs::remove(zero / "unrelated"); fs::remove(zero / "unrelated-link"); valid();
+    struct statfs filesystem {}; require(::fstatfs(d::open_directory(zero).get(), &filesystem) == 0, "generation filesystem witness");
+    const auto status = d::stat_fd(d::open_directory(zero).get());
+    std::cout << "GC filesystem=" << filesystem.f_type << " directory_nlink=" << status.st_nlink << " strict shape/metadata matrix PASS\n";
+}
 void collisions() {
     Fixture fixture; fixture.gc().collect();
     auto first=d::linux_syscalls(); first.random=zero_random;
@@ -228,7 +268,7 @@ int main(int argc,char** argv) {
             }
             gc.reclaim_trash(ops);return 0;
         }
-        collisions(); update_and_retirement(1); update_and_retirement(2); generation_vs_gc(); inherited_lease(); detach_contract(); retirement_failure(); reclaim_claims();
+        generation_directory_link_contract(); collisions(); update_and_retirement(1); update_and_retirement(2); generation_vs_gc(); inherited_lease(); detach_contract(); retirement_failure(); reclaim_claims();
           std::cout<<"M2.5-C protocol/contention tests passed\n"; return 0; }
     catch (const std::exception& e) { std::cerr<<e.what()<<'\n'; return 1; }
 }

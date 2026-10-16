@@ -1,0 +1,95 @@
+NEGATIVE 194: B2:Operational request archive failed; inspect underlying error / Prepared request base conflict
+NEGATIVE 183: Unsatisfied dependency for package 'app': dep >= 1 (no coherent semantic provider assignment)
+NEGATIVE 194: B2:Operational request archive failed; inspect underlying error / Prepared request base conflict
+NEGATIVE 200: Incomplete realization closure
+NEGATIVE 202: Realization lacks complete semantic state
+NEGATIVE 204: Realization does not match resolved candidate identity
+NEGATIVE 205: Package operation requires a new generation above the original base
+NEGATIVE 206: Dipendenza non trovata o nessuna versione compatibile disponibile: missing (richiesta da app)
+NEGATIVE 207: Removal identity is not installed
+NEGATIVE 211: Dipendenza vietata dal vincolo NOT: dep (1)
+NEGATIVE 214: Incomplete generation source inventory
+NEGATIVE 216: Package operation source inventory is not complete and exact
+NEGATIVE 218: Generation operation authority mismatch
+NEGATIVE 220: Base v1 ownership mismatch
+NEGATIVE 222: artifact "../escape": noncanonical path component
+NEGATIVE 223: Operational request digest mismatch
+NEGATIVE 226: openat generation.toml: Too many levels of symbolic links
+NEGATIVE 232: artifact <root>: test scan root
+NEGATIVE 238: object content differs from expected ArtifactId: /tmp/athena-d6-Z6fUoF/store/objects/v1/sha256/45ae2b838d6e504f5178651111d1fe80da87ae064a582802ec2caec8ce1e2491
+NEGATIVE 247: B2:Operational request archive failed; inspect underlying error / Recovered envelope differs from independent exact-byte digest
+NEGATIVE 250: B2:Operational request archive failed; inspect underlying error / Recovered envelope differs from independent exact-byte digest
+NEGATIVE 252: Unknown package operation kind
+NEGATIVE 255: D4:No published recovery target
+NEGATIVE 256: D4:No published recovery target
+NEGATIVE 261: B2:Operational request archive failed; inspect underlying error / Prepared generation differs from persisted document
+NEGATIVE 265: D8 stage=3 / object content differs from expected ArtifactId: /tmp/athena-d6-WK4pIg/store/objects/v1/sha256/45ae2b838d6e504f5178651111d1fe80da87ae064a582802ec2caec8ce1e2491
+NEGATIVE 271: B2:Operational request archive failed; inspect underlying error / Unsafe request file metadata, mount or size
+NEGATIVE 296: Removal identity is not installed
+NEGATIVE 297: Removal identity is not installed
+NEGATIVE 310: Empty or duplicate removal identity
+NEGATIVE 317: D4:Existing D4 bytes differ from request
+NEGATIVE 407: TOML file bound before input allocation
+NEGATIVE 408: TOML file bound before input allocation
+NEGATIVE 394: Generation directory instance changed across B4 barriers
+NEGATIVE 363: file barrier failure: Input/output error
+NEGATIVE 363: file barrier failure: Input/output error
+NEGATIVE 363: directory barrier failure (OUTCOME UNCERTAIN): Input/output error
+NEGATIVE 363: directory barrier failure (OUTCOME UNCERTAIN): Input/output error
+NEGATIVE 363: file barrier failure: Input/output error
+NEGATIVE 363: file barrier failure: Input/output error
+NEGATIVE 363: directory barrier failure (OUTCOME UNCERTAIN): Input/output error
+NEGATIVE 363: directory barrier failure (OUTCOME UNCERTAIN): Input/output error
+NEGATIVE 363: file barrier failure: Input/output error
+NEGATIVE 363: file barrier failure: Input/output error
+NEGATIVE 363: directory barrier failure (OUTCOME UNCERTAIN): Input/output error
+NEGATIVE 363: directory barrier failure (OUTCOME UNCERTAIN): Input/output error
+NEGATIVE 363: file barrier failure: Input/output error
+NEGATIVE 363: file barrier failure: Input/output error
+NEGATIVE 363: directory barrier failure (OUTCOME UNCERTAIN): Input/output error
+NEGATIVE 363: directory barrier failure (OUTCOME UNCERTAIN): Input/output error
+NEGATIVE 430: D4:D4 NOREPLACE rename: Input/output error
+NEGATIVE 430: D4:D4 NOREPLACE rename: Input/output error
+NEGATIVE 430: D4:D4 NOREPLACE rename: Input/output error
+NEGATIVE 430: D4:D4 NOREPLACE rename: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Write request preparation: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Publish immutable request without replacement: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Write request preparation: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Publish immutable request without replacement: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Write request preparation: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Publish immutable request without replacement: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Write request preparation: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Publish immutable request without replacement: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 491: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+NEGATIVE 506: B2:Operational request archive failed; inspect underlying error / Request archive barrier: Input/output error
+PASS B4: simulated scanner, physical metadata/payload/symlink mechanics

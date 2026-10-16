@@ -1,0 +1,7 @@
+{
+  "docs/m2.5-d8-b4-package-operations.md": [],
+  "docs/m2.5-d8-b4-qualification.md": [],
+  "src/activation/package_operation.cpp": [],
+  "src/activation/package_operation.hpp": [],
+  "tests/package_operation_test.cpp": []
+}

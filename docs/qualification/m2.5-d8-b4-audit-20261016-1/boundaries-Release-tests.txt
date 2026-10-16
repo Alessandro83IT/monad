@@ -1,0 +1,7 @@
+NEGATIVE 19: Target lacks a resolved realization
+NEGATIVE 23: Persisted install target differs from complete dependency plan
+NEGATIVE 26: Realization semantics differ from frozen resolution/profile
+PASS independent install persisted closure/delta/semantic refusal
+NEGATIVE 37: Persisted remove target differs from exact requested removal
+NEGATIVE 41: Unsatisfied dependency for package 'app': dep (no coherent semantic provider assignment)
+PASS independent remove exact delta/reverse-dependency refusal

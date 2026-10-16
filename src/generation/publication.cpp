@@ -6,6 +6,8 @@
 #include <dirent.h>
 #include <memory>
 #include <system_error>
+#include <sys/vfs.h>
+#include <linux/magic.h>
 namespace athena::generation::publication {
 std::optional<std::uint64_t> canonical_id(std::string_view name) {
     if (name.empty() || (name.size() > 1 && name.front() == '0')) return {};
@@ -18,6 +20,40 @@ std::optional<std::uint64_t> canonical_id(std::string_view name) {
     return id;
 }
 namespace {
+// Btrfs reports one directory link even when children exist. Preserve the
+// historical leaf-directory invariant by inspecting children, not by accepting
+// arbitrary link counts or weakening the metadata ownership/mode checks.
+bool btrfs_leaf_directory(int fd, const struct stat& original) {
+    if (original.st_nlink != 1) return false;
+    struct statfs filesystem {};
+    if (::fstatfs(fd, &filesystem) < 0)
+        throw std::system_error(errno, std::generic_category(), "inspect generation filesystem");
+    if (static_cast<unsigned long>(filesystem.f_type) != BTRFS_SUPER_MAGIC) return false;
+    const int raw = ::openat(fd, ".", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    if (raw < 0) throw std::system_error(errno, std::generic_category(), "open generation interior");
+    DIR* stream = ::fdopendir(raw);
+    if (!stream) { const int error = errno; ::close(raw); throw std::system_error(error, std::generic_category(), "read generation interior"); }
+    const auto close = [](DIR* value) { ::closedir(value); };
+    std::unique_ptr<DIR, decltype(close)> owner(stream, close);
+    for (;;) {
+        errno = 0; const auto* entry = ::readdir(stream);
+        if (!entry) {
+            if (errno) throw std::system_error(errno, std::generic_category(), "enumerate generation interior");
+            break;
+        }
+        const std::string_view name(entry->d_name);
+        if (name == "." || name == "..") continue;
+        struct stat child {};
+        if (::fstatat(fd, entry->d_name, &child, AT_SYMLINK_NOFOLLOW) < 0)
+            throw std::system_error(errno, std::generic_category(), "inspect generation child");
+        if (S_ISDIR(child.st_mode)) return false;
+    }
+    const auto after = core::detail::stat_fd(fd);
+    return original.st_dev == after.st_dev && original.st_ino == after.st_ino &&
+        original.st_mode == after.st_mode && original.st_uid == after.st_uid && original.st_gid == after.st_gid &&
+        after.st_nlink == 1 && original.st_mtim.tv_sec == after.st_mtim.tv_sec && original.st_mtim.tv_nsec == after.st_mtim.tv_nsec &&
+        original.st_ctim.tv_sec == after.st_ctim.tv_sec && original.st_ctim.tv_nsec == after.st_ctim.tv_nsec;
+}
 std::vector<std::uint64_t> enumerate_ids(const std::filesystem::path& path, bool fail_closed) {
     namespace d = core::detail;
     if (!path.is_absolute()) throw std::invalid_argument("generation authority must be absolute");
@@ -66,7 +102,7 @@ std::vector<std::uint64_t> enumerate_ids(const std::filesystem::path& path, bool
             if (::fstatat(directory.get(), name.c_str(), &named, AT_SYMLINK_NOFOLLOW) < 0 ||
                 named.st_dev != after.st_dev || named.st_ino != after.st_ino || !S_ISDIR(named.st_mode))
                 throw std::runtime_error("canonical generation entry substituted: " + name);
-            if (fail_closed && (after.st_uid != ::geteuid() || (after.st_mode & 07777) != 0700 || after.st_nlink != 2))
+            if (fail_closed && (after.st_uid != ::geteuid() || (after.st_mode & 07777) != 0700 || (after.st_nlink != 2 && !btrfs_leaf_directory(opened.get(), after))))
                 throw std::runtime_error("unsafe canonical generation directory: " + name);
             if (fail_closed) {
                 struct stat metadata{};

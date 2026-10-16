@@ -1,0 +1,74 @@
+[
+  {
+    "path": "CMakeLists.txt",
+    "sha256": "56804bd4fc5ac9932b9740698df638eaf9b2a6b89f64f71e51bcd5e4c4bd2296",
+    "bytes": 17675,
+    "git_state": "tracked modified"
+  },
+  {
+    "path": "docs/m2.5-d8-b4-audit.md",
+    "sha256": "668af014186359487422bed97100e0839def7cabf624e2cc46d974619d6416fd",
+    "bytes": 14499,
+    "git_state": "untracked"
+  },
+  {
+    "path": "docs/m2.5-d8-b4-package-operations.md",
+    "sha256": "58463f98ada4d07049a087496fea2c112517ed7aae94469bd97679a1d5c71f92",
+    "bytes": 13843,
+    "git_state": "untracked"
+  },
+  {
+    "path": "docs/m2.5-d8-b4-qualification.md",
+    "sha256": "d93adc18486fb569b9baad0230325dd7bbf379a4d9a328e3dd700dd8e270b8fe",
+    "bytes": 14424,
+    "git_state": "untracked"
+  },
+  {
+    "path": "src/activation/package_operation.cpp",
+    "sha256": "ca78ba12b54c8350de9b2e7b6ab11d9abce6a7e345e57ba3aed34bcdc1b81c17",
+    "bytes": 18040,
+    "git_state": "untracked"
+  },
+  {
+    "path": "src/activation/package_operation.hpp",
+    "sha256": "c0f340a2f92833244bfe1a7924e4deec8bde1189f7b0df48bb1524ccc22c4722",
+    "bytes": 4539,
+    "git_state": "untracked"
+  },
+  {
+    "path": "src/generation/publication.cpp",
+    "sha256": "157bee9f689aa1486bbf1c5cad5ca61a32abf2c0734e23e336b4f87eaaa02c58",
+    "bytes": 8524,
+    "git_state": "tracked modified"
+  },
+  {
+    "path": "tests/bounded_toml_sources.txt",
+    "sha256": "a660c1f48bb079f4216ff62b65f827a0a5eb056d6df2d5d542f52977ac0e6dc1",
+    "bytes": 13980,
+    "git_state": "tracked modified"
+  },
+  {
+    "path": "tests/generation_operation_test.cpp",
+    "sha256": "150c120406979016f16ca952a33493cf00cc979e81f25b605c9f3b979c65152d",
+    "bytes": 29569,
+    "git_state": "tracked modified"
+  },
+  {
+    "path": "tests/package_operation_test.cpp",
+    "sha256": "30eeb5927d2d486e206cb6d22584bda8a2f6452f70f1956edb4e08ab48d22c5a",
+    "bytes": 40682,
+    "git_state": "untracked"
+  },
+  {
+    "path": "tests/qualify_bounded_toml.py",
+    "sha256": "315a128daf6556ee1ca6ade3d804f40ff9a4bd99a1cf0c28d10a07491cf50798",
+    "bytes": 8925,
+    "git_state": "tracked modified"
+  },
+  {
+    "path": "tests/transaction_gc_protocol_test.cpp",
+    "sha256": "1f8dc5b84ef227f9f8c104fd26256b8fd1893dddb7965071b050fdf567845aa6",
+    "bytes": 17795,
+    "git_state": "tracked modified"
+  }
+]

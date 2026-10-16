@@ -1,0 +1,37 @@
+{
+  "clean": {
+    "Debug": {
+      "PASS": 109,
+      "FAIL": 0,
+      "SKIP": 11,
+      "NOT EXECUTED": 19
+    },
+    "Release": {
+      "PASS": 109,
+      "FAIL": 0,
+      "SKIP": 11,
+      "NOT EXECUTED": 19
+    }
+  },
+  "targeted": {
+    "sanitizer-junit.xml": {
+      "PASS": 6,
+      "FAIL": 0,
+      "SKIP": 1,
+      "NOT EXECUTED": 0
+    },
+    "btrfs-Debug-junit.xml": {
+      "PASS": 6,
+      "FAIL": 0,
+      "SKIP": 1,
+      "NOT EXECUTED": 0
+    },
+    "btrfs-Release-junit.xml": {
+      "PASS": 6,
+      "FAIL": 0,
+      "SKIP": 1,
+      "NOT EXECUTED": 0
+    }
+  },
+  "supplemental": "Both consumers PASS in both configurations on tmpfs and Btrfs; no CTest registration/count inferred from consumer checks"
+}

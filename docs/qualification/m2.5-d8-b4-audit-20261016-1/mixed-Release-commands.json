@@ -1,0 +1,22 @@
+[
+  [
+    "c++",
+    "-std=c++20",
+    "-O3",
+    "-DNDEBUG",
+    "-UNDEBUG",
+    "-I/home/alessandro/Lab/Programming/athena-pm/tests",
+    "-I/home/alessandro/Lab/Programming/athena-pm/src",
+    "-I/home/alessandro/Lab/Programming/athena-pm/include",
+    "-I/home/alessandro/Lab/Programming/athena-pm/third_party",
+    "/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b4-audit-20261016-1/mixed-concurrency.cpp",
+    "-L/tmp/athena-b4-audit-build-20261016-1/release",
+    "-Wl,-rpath,/tmp/athena-b4-audit-build-20261016-1/release",
+    "-lathena_core",
+    "-o",
+    "/tmp/athena-b4-audit-mixed-Release-20261016-1"
+  ],
+  [
+    "/tmp/athena-b4-audit-mixed-Release-20261016-1"
+  ]
+]

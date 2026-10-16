@@ -8,6 +8,7 @@ docs/m2.5-d8-b1-parser-boundary.md
 docs/m2.5-d8-b1-request-runtime.md
 docs/m2.5-d8-b2-request-archive.md
 docs/m2.5-d8-b3-generation-operations.md
+docs/m2.5-d8-b4-package-operations.md
 include/athena/core/api.hpp
 include/athena/core/config.hpp
 include/athena/core/dependency.hpp
@@ -56,6 +57,8 @@ src/activation/operational_request_codec.cpp
 src/activation/operational_request_codec.hpp
 src/activation/operational_request_runtime.cpp
 src/activation/operational_request_runtime.hpp
+src/activation/package_operation.cpp
+src/activation/package_operation.hpp
 src/activation/plan.cpp
 src/activation/plan.hpp
 src/activation/plan_persistence.cpp
@@ -275,6 +278,7 @@ tests/operational_request_archive_test.cpp
 tests/operational_request_codec_test.cpp
 tests/operational_request_runtime_test.cpp
 tests/package_loader_test.cpp
+tests/package_operation_test.cpp
 tests/packaging_appimage_tool_stub.sh
 tests/packaging_fixture/CMakeLists.txt
 tests/packaging_fixture/core.cpp

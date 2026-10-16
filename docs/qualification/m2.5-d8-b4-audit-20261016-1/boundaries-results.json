@@ -1,0 +1,12 @@
+{
+  "Debug": {
+    "boundaries-build": "PASS",
+    "boundaries-tests": "PASS",
+    "btrfs-boundaries": "PASS"
+  },
+  "Release": {
+    "boundaries-build": "PASS",
+    "boundaries-tests": "PASS",
+    "btrfs-boundaries": "PASS"
+  }
+}

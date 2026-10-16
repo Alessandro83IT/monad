@@ -1,0 +1,4 @@
+/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b4-audit-20261016-1/audit-boundaries.cpp: In function ‘void {anonymous}::install_delta()’:
+/home/alessandro/Lab/Programming/athena-pm/docs/qualification/m2.5-d8-b4-audit-20261016-1/audit-boundaries.cpp:25:52: error: ‘struct athena::installed::SemanticState’ has no member named ‘capabilities’
+   25 |     auto wrong = records; wrong.front().semantics->capabilities.push_back("unrequested-capability");
+      |                                                    ^~~~~~~~~~~~

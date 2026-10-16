@@ -1,0 +1,48 @@
+{
+  "scope": "B4 internal adapter and minimal existing Btrfs GC discovery correction",
+  "reviewed": [
+    "snapshot resolver and dependency AST",
+    "installed semantic environment and remove builder",
+    "realization executor and ObjectStore",
+    "GenerationManager publication/discard legacy boundary",
+    "B1 frozen request/runtime",
+    "B2 archive/reference/recovery",
+    "B3 switch/rollback",
+    "D4 publication",
+    "D5 retention",
+    "D6 selection",
+    "D7 reconciliation",
+    "D8.2 operational activation",
+    "lock ordering, transaction leases, pins, GC and recovery"
+  ],
+  "corrected_findings": [
+    {
+      "severity": "HIGH",
+      "issue": "B2 plus transaction lease does not retain target generation metadata",
+      "resolution": "B4 prepares under State and publishes existing D4/D5 retention before returning"
+    },
+    {
+      "severity": "MEDIUM",
+      "issue": "legacy semantic capture could use unbounded compatibility overload",
+      "resolution": "existing D8 byte bound and verified seal/source before interpretation"
+    },
+    {
+      "severity": "MEDIUM",
+      "issue": "past producer completion alone cannot certify current generation/payload barriers",
+      "resolution": "actual synchronization and named-instance checks before D4, plus fault/substitution tests"
+    },
+    {
+      "severity": "HIGH",
+      "issue": "existing GC canonical generation nlink=2 assumption rejects supported Btrfs and blocks lifetime registration",
+      "resolution": "positive Btrfs identification plus stable no-follow leaf-directory scan for nlink=1; strict owner/mode/file rules retained"
+    }
+  ],
+  "open_CRITICAL_HIGH_MEDIUM": [],
+  "qualification": "COMPLETE: APPROVE within documented verified nonprivileged perimeter",
+  "environmental_limits": [
+    "production scanner trusted.* metadata capability unavailable: positive physical authorization SKIP, refusal checked",
+    "no power-loss/reboot or arbitrary hostile writer proof",
+    "no build attestation beyond existing producer trust contract",
+    "no privileged legacy/mount/owner tests or OOM stress"
+  ]
+}
