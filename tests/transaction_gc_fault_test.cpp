@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "object_store_test_support.hpp"
+#include "filesystem_fixture_support.hpp"
 #include "store/transaction_pins.hpp"
 #include "store/gc.hpp"
 #include "generation/generation.hpp"
@@ -13,7 +14,7 @@ struct Fixture {
     StoreFixture temporary;
     fs::path store = temporary.root / "store", generations = temporary.root / "generations";
     Fixture() {
-        fs::create_directory(store);
+        fixture_fs::create_directories(store);
         generation::GenerationManager(generations,generation::GenerationManager::GenerationDirectoryTag{}).initialize();
         gc().collect();
     }
@@ -126,7 +127,7 @@ void lost_binding() {
         fs::rename(source,fixture.temporary.root/"lost-binding");
         failure([&]{fixture.gc().collect();}); require(fs::exists(fixture.object()/"nested/data"),"lost binding treated as no roots");
     }
-    Fixture fixture; const auto second=fixture.temporary.root/"second-store"; fs::create_directory(second);
+    Fixture fixture; const auto second=fixture.temporary.root/"second-store"; fixture_fs::create_directories(second);
     failure([&]{store::TransactionPins owner({second,fixture.generations});});
     require(!fs::exists(second/"objects"),"mismatched authority published namespace");
 }

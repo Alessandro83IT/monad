@@ -9,12 +9,17 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <vector>
+#include "filesystem_fixture_support.hpp"
 namespace execution_test {
 using namespace athena::activation;
 namespace fs = std::filesystem;
 using d1_test::require;
 ActivationId id(unsigned n) { char bytes[33]; std::snprintf(bytes,sizeof(bytes),"%032x",n); return ActivationId(bytes); }
-void write(const fs::path& path, std::string_view bytes) { std::ofstream out(path); out << bytes; require(bool(out),"fixture write"); }
+void write(const fs::path& path, std::string_view bytes) {
+    const bool created = !fs::exists(path);
+    std::ofstream out(path); out << bytes; out.close(); require(bool(out),"fixture write");
+    if (created) fs::permissions(path, fs::perms::owner_read | fs::perms::owner_write);
+}
 struct Fixture {
     fs::path root;
     ProjectionBinding binding;
@@ -22,7 +27,7 @@ struct Fixture {
     std::unique_ptr<ProjectionState> state;
     Fixture() : root([] { const auto parent=::getenv("ATHENA_EXECUTION_TEST_TMPDIR"); std::string pattern=std::string(parent?parent:"/tmp")+"/athena-d6-XXXXXX"; std::vector<char> name(pattern.begin(),pattern.end());name.push_back(0); auto p=::mkdtemp(name.data()); require(p,"mkdtemp"); return fs::path(p); }()),
         binding{d1_test::projection_id,(root/"generations").native(),(root/"store").native(),(root/"projection").native()}, objects(root/"store") {
-        for (auto name : {"generations","store","projection"}) fs::create_directory(root/name);
+        for (auto name : {"generations","store","projection"}) fixture_fs::create_directories(root/name);
         state = std::make_unique<ProjectionState>(binding.generation_authority);
         auto context = ProjectionContext::create_binding(binding,objects,*state);
         for (unsigned n=0;n<3;++n) { fs::create_directory(root/"generations"/std::to_string(n));

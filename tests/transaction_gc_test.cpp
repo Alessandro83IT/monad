@@ -7,6 +7,7 @@
 #include "artifact/identity.hpp"
 #include "artifact/scanner.hpp"
 #include "realization_executor_support.hpp"
+#include "filesystem_fixture_support.hpp"
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/file.h>
@@ -30,7 +31,7 @@ struct Fixture {
         std::string pattern = "/tmp/athena-m25c-XXXXXX";
         check(::mkdtemp(pattern.data()), "mkdtemp"); root = pattern;
         store = root / "store"; generations = root / "generations";
-        fs::create_directory(store);
+        fixture_fs::create_directories(store);
         generation::GenerationManager manager(generations, generation::GenerationManager::GenerationDirectoryTag{}); manager.initialize();
     }
     ~Fixture() { std::error_code e; fs::remove_all(root, e); }
@@ -174,7 +175,7 @@ void pins() {
 void wrong_store_activation() {
     Fixture fixture;
     const auto other_store = fixture.root / "other-store";
-    fs::create_directory(other_store);
+    fixture_fs::create_directories(other_store);
     const auto record = execution_test::plan({execution_test::recipe(fixture.root / "source")}).selections()[0].identity();
     realization::RealizationRecord membership{record, id('a'), {}, core::ArtifactOrigin::AmbientSourceBuild};
     generation::Generation target_generation;

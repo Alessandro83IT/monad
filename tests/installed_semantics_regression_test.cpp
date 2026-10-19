@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "filesystem_fixture_support.hpp"
 #include "installed_semantics_support.hpp"
 #include "store/manifest.hpp"
 #include <toml++/toml.hpp>
@@ -100,7 +101,7 @@ void h3() {
     // or publication, independently of the CLI and scanner capabilities.
     StoreFixture fixture;
     const auto paths = PathLayout::from_root(fixture.root / "athena");
-    fs::create_directories(paths.store); fs::create_directories(paths.build); fs::create_directories(paths.target_root);
+    fixture_fs::create_directories(paths.store); fs::create_directories(paths.build); fs::create_directories(paths.target_root);
     std::ofstream(paths.store / "sentinel") << "unchanged";
     std::ofstream(paths.target_root / "sentinel") << "unchanged";
     generation::GenerationManager manager(paths.generation_state, generation::GenerationManager::GenerationDirectoryTag{});

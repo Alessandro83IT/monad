@@ -16,7 +16,6 @@
 #include <athena/core/locking.hpp>
 #include "../core/detail/filesystem.hpp"
 #include "publication.hpp"
-#include <fstream>
 #include <set>
 #include <map>
 #include "../store/object_store.hpp"
@@ -157,19 +156,20 @@ void GenerationManager::write_current(
     std::uint64_t id
 ) const
 {
-    const auto file =
-        generations_directory_ / "current";
-
-    std::ofstream output(file);
-
-    if (!output) {
-        throw std::runtime_error(
-            "Impossibile aggiornare la generation corrente: " +
-            file.string()
-        );
+    namespace d = core::detail;
+    auto parent = d::open_directory(generations_directory_);
+    struct stat existing{};
+    if (::fstatat(parent.get(), "current", &existing, AT_SYMLINK_NOFOLLOW) == 0) {
+        // Never repair unsafe historical authority by replacing or chmodding it.
+        if (!S_ISREG(existing.st_mode) || existing.st_uid != ::geteuid() ||
+            existing.st_nlink != 1 || (existing.st_mode & 07022))
+            throw std::runtime_error("Unsafe historical current metadata");
+    } else if (errno != ENOENT) {
+        throw std::system_error(errno, std::generic_category(), "Inspect current before publication");
     }
-
-    output << id << '\n';
+    // Exclusive 0600 temporary, complete write, file fsync, rename, directory fsync.
+    // No process-global umask changes and no chmod of existing metadata.
+    d::atomic_replace(parent.get(), "current", std::to_string(id) + "\n");
 }
 
 /*
@@ -539,6 +539,13 @@ void GenerationManager::switch_impl(std::uint64_t id, const std::filesystem::pat
         }
         write_current(target.id);
     } catch (...) {
+        // After rename, a failed directory barrier leaves selection uncertain.
+        // Rolling back payloads here could contradict the published current.
+        try { throw; }
+        catch (const core::detail::PersistenceError& error) {
+            if (error.outcome_uncertain) throw;
+        }
+        catch (...) {}
         for (auto it = added.rbegin(); it != added.rend(); ++it) {
             try { deactivate(**it); } catch (...) {}
         }

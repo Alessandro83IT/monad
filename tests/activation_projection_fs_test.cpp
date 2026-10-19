@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "activation/projection_fs.hpp"
 #include "activation_schema_support.hpp"
+#include "filesystem_fixture_support.hpp"
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -28,7 +29,7 @@ struct Fixture {
     }
     Fixture() : base(temporary()), binding{d1_test::projection_id,
         (base / "generations").native(), (base / "store").native(), (base / "projection").native()}, store(base / "store") {
-        for (auto name : {"generations", "store", "projection"}) fs::create_directory(base / name);
+        for (auto name : {"generations", "store", "projection"}) fixture_fs::create_directories(base / name);
         state = std::make_unique<ProjectionState>(binding.generation_authority);
     }
     ~Fixture() { state.reset(); fs::remove_all(base); } // Fixture cleanup, never the primitive under test.
@@ -199,16 +200,16 @@ void bindings() {
       write(f.admin() / "authority.toml", serialize(bad)); error([&] { f.open(); }, ProjectionCause::BindingConflict); }
     { Fixture f; auto c = f.create(); auto bad = f.binding; bad.store_authority = f.base.native();
       rejected([&] { ProjectionContext::open(bad, f.store); }); }
-    { Fixture f; auto c = f.create(); fs::rename(f.projection(), f.base / "saved"); fs::create_directory(f.projection());
+    { Fixture f; auto c = f.create(); fs::rename(f.projection(), f.base / "saved"); fixture_fs::create_directories(f.projection());
       error([&] { c.revalidate(); }, ProjectionCause::BindingConflict); }
-    { Fixture f; fs::rename(f.base / "generations", f.base / "saved"); fs::create_directory(f.base / "generations");
+    { Fixture f; fs::rename(f.base / "generations", f.base / "saved"); fixture_fs::create_directories(f.base / "generations");
       error([&] { f.create(); }, ProjectionCause::BindingConflict);
       require(!fs::exists(f.admin()), "Stale State token cannot initialize a substituted authority"); }
     for (auto authority : {"generations", "store"}) {
-        Fixture f; auto c = f.create(); fs::rename(f.base / authority, f.base / "saved"); fs::create_directory(f.base / authority);
+        Fixture f; auto c = f.create(); fs::rename(f.base / authority, f.base / "saved"); fixture_fs::create_directories(f.base / authority);
         error([&] { c.revalidate(); }, ProjectionCause::BindingConflict);
     }
-    { Fixture f; auto c = f.create(); fs::rename(f.admin(), f.base / "saved"); fs::create_directory(f.admin());
+    { Fixture f; auto c = f.create(); fs::rename(f.admin(), f.base / "saved"); fixture_fs::create_directories(f.admin());
       error([&] { c.revalidate(); }, ProjectionCause::ProjectionConflict); }
     { Fixture f; auto c = f.create(); auto path = f.admin() / "authority.toml";
       auto bytes = serialize(f.binding); write(path, d1_test::replace(bytes, "schema_version = 1", "schema_version = 2"));

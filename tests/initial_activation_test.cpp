@@ -64,6 +64,7 @@ struct Fresh {
         fs::permissions(root / "generations" / std::to_string(n) / "generation.toml",
                         fs::perms::owner_read | fs::perms::owner_write);
         write(root / "generations/current", std::to_string(n) + "\n");
+        fs::permissions(root / "generations/current", fs::perms::owner_read | fs::perms::owner_write);
     }
 };
 template <class F> InitialActivationError error(F f, InitialCause cause) {
@@ -207,10 +208,14 @@ void run() {
         f.legacy(7, true);
         auto parent = f.root / "store/demo";
         auto source = parent / "nested";
-        fs::create_directories(source / "bin");
+        fixture_fs::create_directories(source / "bin");
         write(source / "bin/a", "retained");
         athena::store::write_manifest(parent, {});
         athena::store::write_metadata(parent, {"parent", "1", "fixture", "checksum", "cmake"});
+        // This is a pre-existing legacy fixture, not publication under test.
+        fs::permissions(parent / ".athena", fs::perms::owner_all);
+        for (auto name : {"manifest.toml", "metadata.toml"})
+            fs::permissions(parent / ".athena" / name, fs::perms::owner_read | fs::perms::owner_write);
         auto document =
             "id = 7\n[[entries]]\npackage = \"demo\"\nstore = \"" + source.native() + "\"\n";
         write(f.root / "generations/7/generation.toml", document);

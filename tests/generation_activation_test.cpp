@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "filesystem_fixture_support.hpp"
 #include <algorithm>
 #include "generation/generation.hpp"
 #include "activation/activation.hpp"
@@ -31,7 +32,7 @@ template<class F> std::string failure(F action) {
 int main() {
     StoreFixture fixture;
     const auto root = fixture.root / "store", target = fixture.root / "target";
-    fs::create_directory(root);
+    fixture_fs::create_directories(root);
     ObjectStore objects(root);
     GenerationManager manager(fixture.root / "state"); manager.initialize();
     { athena::store::TransactionPins binding({root, manager.authority()}); binding.abandon(); }
@@ -52,7 +53,7 @@ int main() {
     }
     // Focused type transitions use their own root and generation history.
     GenerationManager transitions(fixture.root / "transition-state"); transitions.initialize();
-    const auto transition_store_root = fixture.root / "transition-store"; fs::create_directory(transition_store_root);
+    const auto transition_store_root = fixture.root / "transition-store"; fixture_fs::create_directories(transition_store_root);
     ObjectStore transition_objects(transition_store_root);
     { athena::store::TransactionPins binding({transition_store_root, transitions.authority()}); binding.abandon(); }
     const auto transition_root = fixture.root / "transition-target";
@@ -196,7 +197,7 @@ int main() {
     // A legitimate payload may contain a file that happens to parse as a legacy
     // manifest. A legacy alias to it remains a distinct activation source.
     GenerationManager namespaces(fixture.root / "namespace-state"); namespaces.initialize();
-    const auto namespace_store_root = fixture.root / "namespace-store"; fs::create_directory(namespace_store_root);
+    const auto namespace_store_root = fixture.root / "namespace-store"; fixture_fs::create_directories(namespace_store_root);
     ObjectStore namespace_objects(namespace_store_root);
     { athena::store::TransactionPins binding({namespace_store_root, namespaces.authority()}); binding.abandon(); }
     const auto namespace_target = fixture.root / "namespace-target";

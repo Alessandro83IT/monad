@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "activation/legacy.hpp"
 #include "activation_schema_support.hpp"
+#include "filesystem_fixture_support.hpp"
 #include "generation/generation.hpp"
 #include "store/manifest.hpp"
 #include "store/metadata.hpp"
@@ -28,17 +29,17 @@ struct Fixture {
     static fs::path temporary() { char b[] = "/tmp/athena-d3-XXXXXX"; auto p = ::mkdtemp(b); require(p, "mkdtemp"); return p; }
     Fixture(bool payload = true) : base(temporary()), binding{d1_test::projection_id,
         (base / "generations").native(), (base / "store").native(), (base / "projection").native()}, store(base / "store") {
-        fs::create_directory(base / "store"); fs::create_directory(base / "projection");
+        fixture_fs::create_directories(base / "store"); fixture_fs::create_directories(base / "projection");
         athena::generation::GenerationManager manager(base); manager.initialize();
         if (payload) {
-            fs::create_directories(source() / "bin"); write(source() / "bin/a", "first", 0755); write(source() / "bin/b", "second", 0644);
+            fixture_fs::create_directories(source() / "bin"); write(source() / "bin/a", "first", 0755); write(source() / "bin/b", "second", 0644);
             athena::store::write_manifest(source(), {{"bin/a"}, {"bin/b"}});
             athena::store::write_metadata(source(), {"demo", "1", "fixture", "checksum", "cmake"});
             manager.create_unprotected_for_test({{"demo", source().native(), {}}});
             // Actual pre-M2.4 format, with exact package/store identity.
             write(base / "generations/1/generation.toml", "id = 1\n\n[[entries]]\npackage = \"demo\"\nstore = \"" + source().native() + "\"\n");
             write(base / "generations/current", "1\n");
-            fs::create_directory(base / "projection/bin");
+            fixture_fs::create_directories(base / "projection/bin");
             for (auto leaf : {"a", "b"}) fs::create_symlink(source() / "bin" / leaf, base / "projection/bin" / leaf);
         }
         state = std::make_unique<ProjectionState>(binding.generation_authority);

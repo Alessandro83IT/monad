@@ -12,9 +12,55 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <sys/stat.h>
+#include <unistd.h>
+
+namespace {
+void current_permissions_regression() {
+    athena::test::TemporaryDirectory fixture("athena-current-permissions");
+    athena::generation::GenerationManager manager(fixture.path());
+    assert(manager.initialize().id == 0);
+    const auto path = fixture.path() / "generations/current";
+    auto inspect = [&] {
+        struct stat value{};
+        assert(::lstat(path.c_str(), &value) == 0);
+        return value;
+    };
+    auto before = inspect();
+    assert(S_ISREG(before.st_mode));
+    assert((before.st_mode & 07777) == 0600);
+    assert(before.st_uid == ::geteuid() && before.st_nlink == 1);
+    const auto next = manager.create_unprotected_for_test({});
+    // Keep the old inode open: replacement must not truncate it in place.
+    std::ifstream old(path);
+    manager.switch_to(next.id, fixture.path() / "target");
+    auto after = inspect();
+    assert(after.st_ino != before.st_ino);
+    assert((after.st_mode & 07777) == 0600);
+    std::string bytes;
+    std::getline(old, bytes);
+    assert(bytes == "0");
+    assert(manager.current().id == next.id);
+    assert(manager.initialize().id == next.id);
+    // Existing group-writable metadata must remain untouched on rejection.
+    assert(::chmod(path.c_str(), 0664) == 0);
+    before = inspect();
+    bool rejected = false;
+    try { manager.switch_to(0, fixture.path() / "target"); }
+    catch (const std::runtime_error&) { rejected = true; }
+    assert(rejected);
+    after = inspect();
+    assert(after.st_ino == before.st_ino);
+    assert((after.st_mode & 07777) == 0664);
+    assert(manager.current().id == next.id);
+    for (const auto& entry : std::filesystem::directory_iterator(path.parent_path()))
+        assert(!entry.path().filename().string().starts_with(".athena-tmp-"));
+}
+}
 
 int main()
 {
+    current_permissions_regression();
     /*
      * Use an isolated temporary state directory so the generation
      * tests never modify Athena's real system state.

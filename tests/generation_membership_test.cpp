@@ -4,6 +4,7 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+#include "filesystem_fixture_support.hpp"
 #include "generation/generation.hpp"
 #include <algorithm>
 #include <cassert>
@@ -111,7 +112,7 @@ int main() {
     auto* directory = mkdtemp(pattern);
     assert(directory);
     const std::filesystem::path root(directory);
-    std::filesystem::create_directories(root / "generations/7");
+    fixture_fs::create_directories(root / "generations/7");
     const auto file = root / "generations/7/generation.toml";
     { std::ofstream out(file); out << old; }
     GenerationManager manager(root);

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "realization_executor_support.hpp"
+#include "filesystem_fixture_support.hpp"
 #include "store/gc.hpp"
 #include "store/gc_trash.hpp"
 #include "gc_trash_unsafe_test_access.hpp"
@@ -16,7 +17,7 @@ namespace {
 struct Fixture {
     StoreFixture temporary;
     fs::path store = temporary.root / "store", generations = temporary.root / "generations";
-    Fixture() { fs::create_directory(store); generation::GenerationManager(generations, generation::GenerationManager::GenerationDirectoryTag{}).initialize(); }
+    Fixture() { fixture_fs::create_directories(store); generation::GenerationManager(generations, generation::GenerationManager::GenerationDirectoryTag{}).initialize(); }
     store::AuthorityContext authority() const { return {store, generations}; }
     fs::path object(char c) const { return store::ObjectStore(store).object_path(core::ArtifactId("sha256:" + std::string(64,c))); }
     void payload(char c) { fs::create_directory(object(c)); std::ofstream(object(c) / "data") << "complete"; }

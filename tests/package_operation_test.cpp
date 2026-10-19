@@ -119,7 +119,7 @@ struct PackageFixture : Fixture {
             artifact::normalize(tree); auto id = artifact::derive_artifact_id(tree);
             const auto path = objects.object_path(id);
             if (!fs::exists(path)) {
-                fs::create_directories(path);
+                fixture_fs::create_directories(path);
                 store::object_detail::materialize(path, tree); store::object_detail::finalize(path, tree);
             }
             result.push_back({selected.identity(), id, {}, core::ArtifactOrigin::AmbientSourceBuild,
@@ -409,7 +409,7 @@ void same_bytes_substitution() {
 }
 void bounded_legacy_capture() {
     PackageFixture f; auto in = request({package("app")}); const auto records = f.records(in);
-    const auto legacy = f.root / "legacy"; fs::create_directories(legacy / ".athena");
+    const auto legacy = f.root / "legacy"; fixture_fs::create_directories(legacy / ".athena");
     const auto metadata = legacy / ".athena/metadata.toml"; write(metadata, "# sparse oversized legacy metadata");
     fs::resize_file(metadata, max_document_size + 1);
     auto base = generation::make_generation(1, {{"old", legacy.native(), {}}}, records);

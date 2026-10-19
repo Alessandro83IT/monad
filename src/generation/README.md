@@ -273,3 +273,21 @@ uses exclusive State; switch retains shared State while it uses persisted roots.
 All persisted generations remain roots, so pin handoff does not require current
 selection. Internal authority-binding files do not change generation/current
 formats or historical decoding.
+
+### Historical current metadata publication
+
+`GenerationManager::write_current` publishes the decimal record using an exclusive
+0600 temporary in the generation directory, a complete write and file barrier,
+atomic rename, then a directory barrier. The mode is safe with umask 0002, 0022
+and 0077 without changing the process umask. Existing nonregular, foreign-owned,
+multiply linked, special-mode or group/world-writable current entries are rejected;
+they are never chmodded or replaced as a repair. The authority directory must be
+trusted against concurrent untrusted entry mutation, as required by the filesystem
+primitive. This does not extend the historical switch into a crash-recoverable
+payload transaction. If publication succeeds but its directory barrier fails,
+selection is uncertain and the historical switch propagates that error without
+rolling payloads back against a possibly published selection.
+
+The general generation reader still accepts the bounded historical decimal and
+CurrentV1 formats; the D6 selection and D3 adoption readers retain their stricter
+ownership, link, mode, mount and identity checks. No reader checks are relaxed.

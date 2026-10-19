@@ -4,6 +4,7 @@
 #include "installed_semantics_support.hpp"
 #include "dependency/parser.hpp"
 #include "cli_install_support.hpp"
+#include "filesystem_fixture_support.hpp"
 #include <toml++/toml.hpp>
 using namespace semantic_test;
 int main() {
@@ -195,7 +196,7 @@ int main() {
 
     // Historical generations remain immutable/readable and serve offline validation.
     const auto paths = PathLayout::from_root(fixture.root / "athena");
-    fs::create_directories(paths.store);
+    fixture_fs::create_directories(paths.store);
     generation::GenerationManager manager(paths.generation_state, generation::GenerationManager::GenerationDirectoryTag{});
     manager.initialize();
     auto historical = manager.create_unprotected_for_test(base.entries, base.realizations);
@@ -212,9 +213,9 @@ int main() {
     rejects([&] { install::remove_packages({"B"}, paths.target_root, paths); }, "B >= 2");
     require(read_bytes(paths.generation_state / "current") == current_before, "failed validation changed current");
     unchanged(paths.generation_state, states_before); unchanged(paths.store, objects_before); unchanged(paths.target_root, target_before);
-    fs::create_directories(objects.object_path(base.realizations.front().artifact_id));
+    fixture_fs::create_directories(objects.object_path(base.realizations.front().artifact_id));
     const ArtifactId orphan("sha256:" + std::string(64, 'b'));
-    fs::create_directories(objects.object_path(orphan));
+    fixture_fs::create_directories(objects.object_path(orphan));
     const auto collected = store::GarbageCollector(paths.store, paths.generation_state.parent_path()).collect();
     require(collected == std::vector<fs::path>{objects.object_path(orphan)} &&
             fs::exists(objects.object_path(base.realizations.front().artifact_id)), "GC retains semantic records by ArtifactId");
