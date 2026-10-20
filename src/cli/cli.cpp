@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "cli.hpp"
+#include "../core/detail/filesystem.hpp"
 #include "../installed/environment.hpp"
 #include "command_line.hpp"
 #include "../package/package.hpp"
@@ -381,8 +382,8 @@ int run(int argc, char* argv[])
                 const auto current = std::filesystem::exists(config.paths.generation_state / "current")
                     ? preflight.current() : athena::generation::Generation{0, {}};
                 (void)athena::installed::prepare_install(current, plan);
-                std::filesystem::create_directories(config.paths.store);
-                std::filesystem::create_directories(config.paths.build);
+                athena::core::detail::create_directory_tree(config.paths.store, 0755);
+                athena::core::detail::create_directory_tree(config.paths.build, 0755);
                 athena::store::ObjectStore objects(config.paths.store);
                 athena::realization::ExecutionOptions execution{config.paths.build};
                 athena::generation::GenerationManager generations(

@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "filesystem_fixture_support.hpp"
 #include "realization_executor_support.hpp"
 #include "install/transaction.hpp"
 using namespace execution_test;
 int main() {
     StoreFixture fixture;
-    fs::create_directory(fixture.root / "objects");
+    fixture_fs::create_directories(fixture.root / "objects");
     store::ObjectStore objects(fixture.root / "objects");
     generation::GenerationManager generations(fixture.root / "state");
     const auto target = fixture.root / "target";
@@ -14,7 +15,7 @@ int main() {
     const auto empty = plan({});
     install::install_plan(empty, generations, objects, execution, target);
     require(!fs::exists(fixture.root / "state") && !fs::exists(target), "empty transaction mutated state");
-    fs::create_directory(fixture.root / "workspace");
+    fixture_fs::create_directories(fixture.root / "workspace");
     const realization::ExecutionOptions valid_execution{fixture.root / "workspace"};
     auto unsupported = plan({recipe(fixture.root / "missing")}, false);
     bool uninitialized = false;

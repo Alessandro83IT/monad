@@ -237,6 +237,7 @@ tests/cli_install_support.hpp
 tests/cli_install_test.cpp
 tests/cmake_backend_test.cpp
 tests/core_foundation_test.cpp
+tests/create_directory_tree_test.cpp
 tests/dependency_constraint_test.cpp
 tests/dependency_expression_resolution_test.cpp
 tests/dependency_expression_test.cpp
@@ -247,6 +248,7 @@ tests/dependency_scope_precedence_test.cpp
 tests/dependency_serializer_test.cpp
 tests/dependency_validator_test.cpp
 tests/durable_filesystem_test.cpp
+tests/filesystem_fixture_support.hpp
 tests/gc_test.cpp
 tests/gc_trash_unsafe_test_access.hpp
 tests/generation_activation_test.cpp

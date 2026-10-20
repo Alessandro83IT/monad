@@ -77,6 +77,22 @@ the process's descriptor references through the kernel.
 
 ## Supported durability contract
 
+`create_directory_tree` is a non-durable layout initializer. It walks from `/`
+using directory descriptors and refuses untrusted ancestry: components must be
+owned by root or the effective user and must not be group/other writable, except
+sticky directories such as `/tmp`. Symlinks are rejected. Existing shared
+directories are not chmodded; private state leaves requested by callers must be
+root/effective-user owned and have no group/other permissions. A new directory
+is prepared under a private staging container and receives its final mode before
+an atomic no-replace rename publishes the public name. If preparation fails, the
+requested name remains absent; a retry starts a new staging attempt. Failed
+attempts may leave private staging residue. This provides namespace atomicity,
+not crash durability: it does not fsync the new directory or its parent, and
+must not be used to establish durable records or authority.
+For existing layouts created by older umask-dependent initialization, see
+[`docs/alpha-m1-legacy-layout.md`](../../../docs/alpha-m1-legacy-layout.md)
+for diagnosis and a human-reviewed migration procedure.
+
 Durable mutation preflights fstatfs against a conservative allowlist: the ext
 family (shared EXT4 magic), XFS, Btrfs and tmpfs. All other/unknown
 types fail before temporary creation or publication; this is an allowlist, not a

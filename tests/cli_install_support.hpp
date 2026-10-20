@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
+#include "filesystem_fixture_support.hpp"
 #include "realization_executor_support.hpp"
 #include "cli/cli.hpp"
 #include "generation/generation.hpp"
@@ -13,7 +14,7 @@ inline void manifest(const core::PathLayout& paths, const std::string& name,
                      const fs::path& archive, const std::string& dependencies = "[]",
                      const std::string& backend = "cmake") {
     const auto directory = paths.repository_state / "packages" / name;
-    fs::create_directories(directory);
+    fixture_fs::create_directories(directory);
     std::ofstream(directory / "package.toml")
         << "name = \"" << name << "\"\nversion = \"1\"\nsource = \"file://"
         << archive.native() << "\"\nbuild_system = \"" << backend

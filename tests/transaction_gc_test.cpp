@@ -39,10 +39,10 @@ struct Fixture {
     generation::GenerationManager manager() const { return {generations, generation::GenerationManager::GenerationDirectoryTag{}}; }
     store::GarbageCollector gc() const { return store::GarbageCollector(authority()); }
     fs::path object(char c) const { return store::ObjectStore(store).object_path(core::ArtifactId("sha256:" + std::string(64, c))); }
-    void payload(char c) { fs::create_directories(object(c) / "nested"); std::ofstream(object(c) / "nested/data") << "complete"; }
+    void payload(char c) { fixture_fs::create_directories(object(c) / "nested"); std::ofstream(object(c) / "nested/data") << "complete"; }
 };
 core::ArtifactId id(char c) { return core::ArtifactId("sha256:" + std::string(64, c)); }
-void write(const fs::path& path, const std::string& text) { std::ofstream out(path); out << text; out.close(); check(bool(out), "write fixture"); }
+void write(const fs::path& path, const std::string& text) { std::ofstream out(path); out << text; out.close(); check(bool(out), "write fixture"); fs::permissions(path, fs::perms::owner_read | fs::perms::owner_write); }
 std::string read(const fs::path& path) { std::ifstream in(path); return {std::istreambuf_iterator<char>(in), {}}; }
 void wait_ok(pid_t pid) { int status; check(::waitpid(pid, &status, 0) == pid, "waitpid"); check(WIFEXITED(status) && WEXITSTATUS(status) == 0, "child failed"); }
 template<class F> void child(F operation) {
@@ -186,9 +186,9 @@ void wrong_store_activation() {
         owner.handoff(target_generation.id);
     }
     const auto wrong_object = store::ObjectStore(other_store).object_path(id('a'));
-    fs::create_directories(wrong_object);
+    fixture_fs::create_directories(wrong_object);
     const auto activation_root = fixture.root / "activation";
-    fs::create_directories(activation_root);
+    fixture_fs::create_directories(activation_root);
     write(activation_root / "sentinel", "unchanged");
     rejects([&] { fixture.manager().switch_to(target_generation.id, activation_root, store::ObjectStore(other_store)); });
     check(read(activation_root / "sentinel") == "unchanged" && fixture.manager().current().id == 0,
@@ -217,7 +217,7 @@ void wrong_generation_authority() {
         rooted_id = manager.create_unprotected_for_test({}, {membership}).id;
         owner.handoff(rooted_id);
     }
-    fs::create_directories(fixture.object('a'));
+    fixture_fs::create_directories(fixture.object('a'));
     rejects([&] { store::GarbageCollector(fixture.store, state,
         store::GarbageCollector::GenerationDirectoryTag{}).collect(); });
     check(fs::exists(fixture.object('a')), "state-parent authority deleted a rooted object");
@@ -230,7 +230,7 @@ void wrong_generation_authority() {
         "compatibility adapter did not collect after persisted root removal");
     const auto empty_state = fixture.root / "empty-state";
     fs::create_directory(empty_state);
-    fs::create_directories(fixture.object('b'));
+    fixture_fs::create_directories(fixture.object('b'));
     rejects([&] { store::GarbageCollector(fixture.store, empty_state,
         store::GarbageCollector::GenerationDirectoryTag{}).collect(); });
     check(fs::exists(fixture.object('b')), "empty ambiguous authority was bound");
@@ -260,7 +260,7 @@ void legacy_alias_roots_object() {
     Fixture fixture;
     const auto alias_id = id('c');
     const auto object = store::ObjectStore(fixture.store).object_path(alias_id);
-    fs::create_directories(object);
+    fixture_fs::create_directories(object);
     const auto alias = fixture.store / "legacy-object-alias";
     fs::create_symlink(object, alias);
     fixture.manager().create_unprotected_for_test({{"legacy", alias.string()}});
@@ -398,13 +398,13 @@ void crash_tests() {
 void legacy_guard() {
     Fixture fixture;
     auto legacy = fixture.store / "legacy-1";
-    fs::create_directories(legacy / ".athena"); write(legacy / ".athena/metadata.toml", "owned");
+    fixture_fs::create_directories(legacy / ".athena"); write(legacy / ".athena/metadata.toml", "owned");
     std::string tid;
     { store::TransactionPins owner(fixture.authority()); tid = owner.id(); gc_process(fixture); check(fs::exists(legacy), "active legacy guard"); }
     check(fixture.gc().collect().empty() && fs::exists(legacy), "stale legacy guard");
     // No stale reconciliation policy in C: use an independent clean authority to verify legacy detach.
     Fixture clean; auto orphan = clean.store / "legacy-1";
-    fs::create_directories(orphan / ".athena"); write(orphan / ".athena/metadata.toml", "owned");
+    fixture_fs::create_directories(orphan / ".athena"); write(orphan / ".athena/metadata.toml", "owned");
     check(clean.gc().collect() == std::vector<fs::path>{orphan}, "legacy recoverable collection");
     check(store::GcTrash::containers(clean.store).empty(), "legacy trash residue");
 }

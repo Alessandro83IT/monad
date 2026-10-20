@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "filesystem_fixture_support.hpp"
 #include "object_store_test_support.hpp"
 #include <sys/syscall.h>
 #include "store/gc.hpp"
@@ -34,10 +35,10 @@ int main() {
     rejects(ObjectErrorCode::StoreDirectory, [&] { store.list(); });
     fs::remove(fixture.root / "objects");
     const auto ns = store.object_path(id).parent_path();
-    fs::create_directories(ns);
+    fixture_fs::create_directories(ns);
     const athena::core::ArtifactId second("sha256:" + std::string(64, 'b'));
-    fs::create_directories(store.object_path(second));
-    fs::create_directories(store.object_path(id) / "nested");
+    fixture_fs::create_directories(store.object_path(second));
+    fixture_fs::create_directories(store.object_path(id) / "nested");
     std::ofstream(store.object_path(id) / "nested/file") << "payload";
     fs::create_directory_symlink(fixture.root, store.object_path(id) / "external");
     fs::permissions(store.object_path(id) / "nested", fs::perms::owner_read | fs::perms::owner_exec);
@@ -115,7 +116,7 @@ int main() {
     // follows literal links to external content or touches other private work.
     const auto abandoned = fixture.root / ".publish-owned";
     const auto other_work = fixture.root / ".publish-other";
-    fs::create_directories(abandoned / "payload"); fs::create_directory(other_work);
+    fixture_fs::create_directories(abandoned / "payload"); fs::create_directory(other_work);
     mechanics::materialize(abandoned / "payload", model);
     std::ofstream(fixture.root / "sentinel") << "keep";
     fs::create_symlink(fixture.root / "sentinel", abandoned / "payload/external");
@@ -123,7 +124,7 @@ int main() {
     require(mechanics::cleanup_private(abandoned).empty(), "hardened cleanup failed");
     require(!fs::exists(abandoned) && fs::exists(other_work), "cleanup ownership boundary");
     require(read_bytes(fixture.root / "sentinel") == "keep", "cleanup followed link");
-    const auto failed = fixture.root / ".publish-failed"; fs::create_directories(failed / "payload");
+    const auto failed = fixture.root / ".publish-failed"; fixture_fs::create_directories(failed / "payload");
     const NormalizedArtifact cannot_materialize{1, {
         {"a", RegularFile{false, "partial private work"}},
         {std::string(300, 'z'), RegularFile{false, "exceeds Linux component limit"}}

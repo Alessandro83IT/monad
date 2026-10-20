@@ -109,6 +109,106 @@ Fd open_directory(const std::filesystem::path& path, bool create, bool trusted_a
     }
     directory(fd.get()); return fd;
 }
+void create_directory_tree(const std::filesystem::path& path, mode_t mode, bool private_tree,
+                           const Syscalls& ops) {
+    if (!path.is_absolute() || (mode & ~0777) || (mode & 0022) || (private_tree && (mode & 0077)))
+        throw std::invalid_argument("invalid managed directory path or mode");
+    int root_fd = ::open("/", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    if (root_fd < 0) fail("open root directory", errno);
+    auto fd = Fd::adopt(root_fd);
+    const uid_t root_owner = stat_fd(fd.get()).st_uid;
+    auto trusted = [&](int descriptor, bool managed, const std::filesystem::path& where) {
+        const auto s = stat_fd(descriptor);
+        if (s.st_uid != root_owner && s.st_uid != ::geteuid())
+            throw std::runtime_error("untrusted directory owner at " + where.string());
+        if (managed && private_tree && ((s.st_uid != root_owner && s.st_uid != ::geteuid()) || (s.st_mode & 07777) != 0700))
+            throw std::runtime_error("unsafe pre-existing private directory at " + where.string() + " (expected root/effective-user owner and mode 0700)");
+        if ((s.st_mode & 0022) && (managed || !(s.st_mode & S_ISVTX)))
+            throw std::runtime_error("untrusted writable directory at " + where.string() + " (group/other write without an allowed sticky ancestor)");
+    };
+    trusted(fd.get(), false, "/");
+    const auto relative = path.relative_path();
+    std::filesystem::path walked("/");
+    size_t index = 0;
+    for (const auto& part : relative) {
+        const bool final_component = ++index == static_cast<size_t>(std::distance(relative.begin(), relative.end()));
+        const auto name = part.string(); leaf(name);
+        const auto component_path = walked / part;
+        Fd next;
+        for (;;) {
+            struct stat existing{};
+            if (::fstatat(fd.get(), name.c_str(), &existing, AT_SYMLINK_NOFOLLOW) == 0) {
+                if (!S_ISDIR(existing.st_mode))
+                    throw std::runtime_error("managed path component is not a real directory: " + component_path.string());
+                try { next = open_at(fd.get(), name, O_RDONLY | O_DIRECTORY); }
+                catch (const std::system_error& error) {
+                    throw std::system_error(error.code(), "open managed path component " + component_path.string());
+                }
+                trusted(next.get(), final_component, component_path);
+                break;
+            }
+            if (errno != ENOENT) fail("inspect managed path component " + component_path.string(), errno);
+
+            // Prepare under an unpredictable private sibling name. Finalize its
+            // mode while it is still unpublished, then atomically claim the
+            // requested name without replacing a concurrent winner.
+            std::array<unsigned char, 16> random{};
+            size_t offset = 0;
+            while (offset < random.size()) {
+                const auto count = (ops.random ? ops.random : ::getrandom)(
+                    random.data() + offset, random.size() - offset, 0);
+                if (count < 0 && errno == EINTR) continue;
+                if (count <= 0) { if (count == 0) errno = EIO; fail("managed directory randomness for " + component_path.string(), errno); }
+                if (static_cast<size_t>(count) > random.size() - offset)
+                    throw std::logic_error("random returned invalid count");
+                offset += static_cast<size_t>(count);
+            }
+            std::string staging = ".athena-layout-";
+            constexpr char hex[] = "0123456789abcdef";
+            for (const auto byte : random) { staging += hex[byte >> 4]; staging += hex[byte & 15]; }
+            const int mkdir_result = ops.mkdir ? ops.mkdir(fd.get(), staging.c_str(), 0700)
+                                               : ::mkdirat(fd.get(), staging.c_str(), 0700);
+            if (mkdir_result < 0) {
+                if (errno == EEXIST) continue;
+                fail("create private staging container for " + component_path.string(), errno);
+            }
+            Fd staging_parent;
+            try { staging_parent = open_at(fd.get(), staging, O_RDONLY | O_DIRECTORY); }
+            catch (const std::system_error& error) {
+                throw std::system_error(error.code(), "open private staging directory for " + component_path.string());
+            }
+            const auto stage_status = stat_fd(staging_parent.get());
+            if (stage_status.st_uid != ::geteuid() || (stage_status.st_mode & 0077) != 0)
+                throw std::runtime_error("managed staging directory is not private for " + component_path.string());
+            if ((ops.mkdir ? ops.mkdir(staging_parent.get(), "entry", 0700)
+                           : ::mkdirat(staging_parent.get(), "entry", 0700)) < 0)
+                fail("create staged managed directory for " + component_path.string(), errno);
+            Fd prepared;
+            try { prepared = open_at(staging_parent.get(), "entry", O_RDONLY | O_DIRECTORY); }
+            catch (const std::system_error& error) {
+                throw std::system_error(error.code(), "open staged managed directory for " + component_path.string());
+            }
+            const int chmod_result = ops.chmod ? ops.chmod(prepared.get(), mode) : ::fchmod(prepared.get(), mode);
+            if (chmod_result < 0) fail("fchmod prepared managed directory for " + component_path.string(), errno);
+            if ((ops.rename ? ops.rename : rename_linux)(staging_parent.get(), "entry", fd.get(), name.c_str(), RENAME_NOREPLACE) == 0) {
+                // The target is fully initialized. A failed cleanup leaves only
+                // an inaccessible, private staging container.
+                (void)::unlinkat(fd.get(), staging.c_str(), AT_REMOVEDIR);
+                next = std::move(prepared);
+                break;
+            }
+            if (errno == EEXIST) {
+                // Keep the private staging residue rather than risk deleting a
+                // name changed by a concurrent actor; retry against the winner.
+                continue;
+            }
+            fail("publish managed directory " + component_path.string(), errno);
+        }
+        fd = std::move(next);
+        walked = component_path;
+        trusted(fd.get(), final_component, component_path);
+    }
+}
 void unlink_at(int parent, std::string_view name, bool is_directory) {
     directory(parent); leaf(name); const std::string n(name);
     if (::unlinkat(parent, n.c_str(), is_directory ? AT_REMOVEDIR : 0) < 0) { const int error = errno; fail("unlinkat " + n, error); }

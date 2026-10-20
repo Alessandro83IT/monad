@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "filesystem_fixture_support.hpp"
 #include "object_store_test_support.hpp"
 #include "generation/publication.hpp"
 #include "generation/generation.hpp"
@@ -166,11 +167,11 @@ void read_and_visibility_cases(const fs::path& root) {
          RepositoryProvenance{snapshot.repository_id, snapshot.revision, MetadataReference("recipe"), snapshot}},
         artifact, {}, ArtifactOrigin::AmbientSourceBuild};
     const auto legacy = store / "legacy-1";
-    fs::create_directories(legacy);
+    fixture_fs::create_directories(legacy);
     athena::store::write_metadata(legacy, {"legacy", "1", "", "", "", {}});
     // A byte-known namespace fixture tests reachability, not scanner eligibility.
     const auto retained_object = store / "objects/v1/sha256" / artifact.value().substr(7);
-    fs::create_directories(retained_object);
+    fixture_fs::create_directories(retained_object);
     const auto published = manager.create_unprotected_for_test({{"legacy", legacy.string()}}, {record});
     require(manager.current().id == 0 && published.id == 1, "publication selected current");
     const auto missing = root / "missing-read-state";
@@ -204,7 +205,7 @@ void read_and_visibility_cases(const fs::path& root) {
 }
 void locator_cases(const fs::path& root) {
     const auto a = root / "relative-a", b = root / "relative-b";
-    fs::create_directory(a); fs::create_directory(b);
+    fixture_fs::create_directories(a); fixture_fs::create_directories(b);
     const auto child = ::fork(); require(child >= 0, "relative authority fork");
     if (child == 0) {
         try {

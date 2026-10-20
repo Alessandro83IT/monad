@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "installer.hpp"
+#include "../core/detail/filesystem.hpp"
 
 #include "../package/package.hpp"
 #include "../package/package_loader.hpp"
@@ -259,11 +260,11 @@ void install_plan(
      * tests to redirect Athena's paths into a temporary filesystem root.
      */
     paths.validate();
-    std::filesystem::create_directories(paths.cache / "downloads");
-    std::filesystem::create_directories(paths.cache / "sources");
-    std::filesystem::create_directories(paths.build);
-    std::filesystem::create_directories(paths.store);
-    std::filesystem::create_directories(paths.state);
+    athena::core::detail::create_directory_tree(paths.cache / "downloads", 0755);
+    athena::core::detail::create_directory_tree(paths.cache / "sources", 0755);
+    athena::core::detail::create_directory_tree(paths.build, 0755);
+    athena::core::detail::create_directory_tree(paths.store, 0755);
+    athena::core::detail::create_directory_tree(paths.state, 0700, true);
 
     /*
      * An empty plan represents no requested state transition.

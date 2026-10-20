@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "filesystem_fixture_support.hpp"
 #include "install/generation_builder.hpp"
 #include "install/remover.hpp"
 #include "installed/environment.hpp"
@@ -23,7 +24,7 @@ template<class F> std::string failure(F action) {
 int main(int argc, char**) {
     StoreFixture fixture;
     const auto paths = PathLayout::from_root(fixture.root / "athena");
-    fs::create_directories(paths.store);
+    fixture_fs::create_directories(paths.store);
     GenerationManager manager(paths.generation_state, GenerationManager::GenerationDirectoryTag{});
     manager.initialize();
     ObjectStore objects(paths.store);
@@ -31,7 +32,7 @@ int main(int argc, char**) {
     const auto a = record("a", ArtifactId("sha256:" + std::string(64, 'c')));
     const auto b = record("b", ArtifactId("sha256:" + std::string(64, 'd')));
     const auto legacy = paths.store / "legacy-1";
-    fs::create_directories(legacy / "bin");
+    fixture_fs::create_directories(legacy / "bin");
     std::ofstream(legacy / "bin/legacy") << "legacy";
     store::write_manifest(legacy, {{"bin/legacy"}});
     store::write_metadata(legacy, {"legacy", "1", "", "", "", {}});

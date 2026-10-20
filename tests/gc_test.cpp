@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Alessandro Bifaretti
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "filesystem_fixture_support.hpp"
 #include "temporary_directory.hpp"
 
 #include "../src/generation/generation.hpp"
@@ -64,7 +65,7 @@ int main()
     const auto store_directory =
         test_root / "store";
 
-    std::filesystem::create_directories(
+    fixture_fs::create_directories(
         store_directory
     );
 
@@ -89,7 +90,7 @@ int main()
         historical,
         orphan
     }) {
-        std::filesystem::create_directories(
+        fixture_fs::create_directories(
             store / ".athena"
         );
 
@@ -103,6 +104,8 @@ int main()
                 "test"
             }
         );
+        std::filesystem::permissions(store / ".athena/metadata.toml",
+            std::filesystem::perms::owner_read | std::filesystem::perms::owner_write);
     }
 
     /*
@@ -112,7 +115,7 @@ int main()
     const auto unrelated =
         store_directory / "unrelated";
 
-    std::filesystem::create_directories(
+    fixture_fs::create_directories(
         unrelated
     );
 
@@ -208,7 +211,7 @@ int main()
     const auto external_directory =
         test_root / "external";
 
-    std::filesystem::create_directories(
+    fixture_fs::create_directories(
         external_directory
     );
 
@@ -252,15 +255,17 @@ int main()
     const auto compat_real = test_root / "compat-real";
     const auto compat_link = test_root / "compat-link";
     const auto compat_state = test_root / "compat-state";
-    std::filesystem::create_directory(compat_real);
+    fixture_fs::create_directories(compat_real);
     std::filesystem::create_directory_symlink(compat_real, compat_link);
     athena::generation::GenerationManager compat_manager(compat_state);
     compat_manager.initialize();
     compat_manager.create_unprotected_for_test({{"keep", (compat_link / "keep").string()}});
     auto compat_entry = [&](const char* name) {
         const auto path = compat_real / name;
-        std::filesystem::create_directories(path / ".athena");
+        fixture_fs::create_directories(path / ".athena");
         athena::store::write_metadata(path, {"test", "1", "source", "digest", "test"});
+        std::filesystem::permissions(path / ".athena/metadata.toml",
+            std::filesystem::perms::owner_read | std::filesystem::perms::owner_write);
     };
     compat_entry("keep"); compat_entry("orphan");
     athena::store::GarbageCollector compat_gc(compat_link, compat_state);
@@ -270,7 +275,7 @@ int main()
     assert(compat_gc_restart.collect().empty());
     // An incomplete, real namespace is absent; a namespace symlink is
     // suspicious even when dangling and must stop both deletion domains.
-    std::filesystem::create_directories(compat_real / "objects/v1");
+    fixture_fs::create_directories(compat_real / "objects/v1");
     assert(compat_gc.collect().empty());
     compat_entry("orphan");
     std::filesystem::remove_all(compat_real / "objects/v1/sha256"); // replace C administrative namespace in this corruption fixture
@@ -299,7 +304,7 @@ int main()
 
     // Retained legacy generations can still activate their payload after GC.
     for (const auto& path : {historical, kept}) {
-        std::filesystem::create_directories(path / "bin");
+        fixture_fs::create_directories(path / "bin");
         std::ofstream(path / "bin/tool") << path.filename().string();
         athena::store::write_manifest(path, {{"bin/tool"}});
     }
@@ -336,15 +341,15 @@ int main()
      * This test exercises GC reachability and ownership, not scanner or
      * publication semantics.
      */
-    std::filesystem::create_directories(
+    fixture_fs::create_directories(
         objects.object_path(historical_artifact)
     );
 
-    std::filesystem::create_directories(
+    fixture_fs::create_directories(
         objects.object_path(current_artifact)
     );
 
-    std::filesystem::create_directories(
+    fixture_fs::create_directories(
         objects.object_path(orphan_artifact)
     );
 
@@ -381,7 +386,7 @@ int main()
     std::filesystem::create_directory(ns / "unrelated");
     std::filesystem::create_directory(ns / std::string(64, 'A'));
     std::ofstream(ns / std::string(64, 'a')) << "unrelated file";
-    std::filesystem::create_directories(objects.object_path(orphan_artifact) / "nested");
+    fixture_fs::create_directories(objects.object_path(orphan_artifact) / "nested");
     std::filesystem::create_directory_symlink(external_directory, objects.object_path(orphan_artifact) / "nested/link");
     (void)shared;
 
@@ -435,8 +440,10 @@ int main()
     const auto metadata = state_directory / "generations" / std::to_string(historical_realization.id) / "generation.toml";
     const auto valid_document = athena::generation::serialize(retained);
     std::filesystem::create_directory(objects.object_path(orphan_artifact));
-    std::filesystem::create_directories(orphan / ".athena");
+    fixture_fs::create_directories(orphan / ".athena");
     athena::store::write_metadata(orphan, {"test", "1", "source", "digest", "test"});
+    std::filesystem::permissions(orphan / ".athena/metadata.toml",
+        std::filesystem::perms::owner_read | std::filesystem::perms::owner_write);
     auto semantic_corruption = valid_document;
     semantic_corruption.replace(semantic_corruption.find(historical_artifact.value()), historical_artifact.value().size(), "invalid");
     for (const auto& corrupt : {semantic_corruption, std::string("invalid = [")}) {

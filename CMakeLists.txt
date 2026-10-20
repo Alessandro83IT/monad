@@ -86,6 +86,7 @@ set(ATHENA_TESTS
     immutable_publication_test
     locking_test
     durable_filesystem_test
+    create_directory_tree_test
     installed_semantics_regression_test
     installed_semantics_test
     installed_semantics_integration_test

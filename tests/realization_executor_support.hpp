@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
+#include "filesystem_fixture_support.hpp"
 #include "realization/executor.hpp"
 #include "artifact/scanner.hpp"
 #include "artifact/identity.hpp"
@@ -39,7 +40,7 @@ inline core::InstallPlan plan(std::vector<core::SourceRecipe> recipes, bool payl
 }
 inline fs::path archive_fixture(StoreFixture& fixture, const std::string& content) {
     const auto directory = fixture.root / "input" / "project";
-    fs::create_directories(directory);
+    fixture_fs::create_directories(directory);
     std::ofstream(directory / "CMakeLists.txt") <<
         "cmake_minimum_required(VERSION 3.20)\nproject(fixture LANGUAGES NONE)\n"
         "install(FILES payload DESTINATION share/fixture)\n";
@@ -50,9 +51,9 @@ inline fs::path archive_fixture(StoreFixture& fixture, const std::string& conten
     return archive;
 }
 inline void setup(StoreFixture& fixture) {
-    fs::create_directory(fixture.root / "workspace");
-    fs::create_directory(fixture.root / "objects");
-    fs::create_directory(fixture.root / "generations");
+    fixture_fs::create_directories(fixture.root / "workspace");
+    fixture_fs::create_directories(fixture.root / "objects");
+    fixture_fs::create_directories(fixture.root / "generations");
     std::ofstream(fixture.root / "generations" / "sentinel") << "unchanged";
     fs::create_symlink("generations/sentinel", fixture.root / "current");
 }

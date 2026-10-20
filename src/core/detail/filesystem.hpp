@@ -59,6 +59,14 @@ struct stat stat_fd(int);
 void regular(int);
 void directory(int);
 Fd open_directory(const std::filesystem::path&, bool create = false, bool trusted_ancestry = false);
+// Creates only below trusted ancestry (root/effective-user owned, not group/other
+// writable except sticky ancestors). `private_tree` additionally requires the
+// existing leaf to be effective-user/root owned and have no group/other access.
+// Directories are fully prepared under private staging containers before their
+// public names are claimed. It is not a durability operation; callers needing
+// crash durability must use the durable directory protocol.
+void create_directory_tree(const std::filesystem::path&, mode_t mode, bool private_tree = false,
+                           const Syscalls& = linux_syscalls());
 Fd open_at(int parent, std::string_view name, int flags, mode_t mode = 0600);
 void mkdir_at(int parent, std::string_view name, mode_t mode = 0700);
 void unlink_at(int parent, std::string_view name, bool is_directory = false);

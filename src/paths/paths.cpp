@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "paths.hpp"
+#include "../core/detail/filesystem.hpp"
 #include <utility>
 
 namespace athena::paths {
@@ -98,14 +99,15 @@ std::filesystem::path store()
 void initialize()
 {
     current_layout.validate();
-    std::filesystem::create_directories(downloads());
-    std::filesystem::create_directories(sources());
-    std::filesystem::create_directories(build());
-    std::filesystem::create_directories(store());
-    std::filesystem::create_directories(current_layout.state);
-    std::filesystem::create_directories(current_layout.repository_snapshots);
-    std::filesystem::create_directories(current_layout.repository_state);
-    std::filesystem::create_directories(current_layout.generation_state);
+    using athena::core::detail::create_directory_tree;
+    create_directory_tree(downloads(), 0755);
+    create_directory_tree(sources(), 0755);
+    create_directory_tree(build(), 0755);
+    create_directory_tree(store(), 0755);
+    create_directory_tree(current_layout.state, 0700, true);
+    create_directory_tree(current_layout.repository_snapshots, 0700, true);
+    create_directory_tree(current_layout.repository_state, 0700, true);
+    create_directory_tree(current_layout.generation_state, 0700, true);
 }
 
 }
