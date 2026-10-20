@@ -4,7 +4,7 @@ set -eu
 
 PROJECT_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 BUILD_DIR="${ATHENA_APPIMAGE_BUILD_DIR:-$PROJECT_ROOT/build}"
-APPDIR="$BUILD_DIR/AthenaPM.AppDir"
+APPDIR="$BUILD_DIR/MonadPM.AppDir"
 
 # Check the effective normalized bindir before deleting any existing AppDir.
 cmake -P "$BUILD_DIR/check-appimage-bindir.cmake"
@@ -22,18 +22,18 @@ cp "$PROJECT_ROOT/packaging/AppDir/AppRun" \
 
 chmod +x "$APPDIR/AppRun"
 
-cp "$PROJECT_ROOT/packaging/AppDir/athena-pm.desktop" \
-   "$APPDIR/athena-pm.desktop"
+cp "$PROJECT_ROOT/packaging/AppDir/monad-pm.desktop" \
+   "$APPDIR/monad-pm.desktop"
 
-cp "$PROJECT_ROOT/packaging/AppDir/athena.png" \
-   "$APPDIR/athena.png"
+cp "$PROJECT_ROOT/packaging/AppDir/monad.png" \
+   "$APPDIR/monad.png"
 
 echo "AppDir creata: $APPDIR"
 
 APPIMAGETOOL="${APPIMAGETOOL:-$HOME/Applications/appimagetool/appimagetool-x86_64.AppImage}"
 ATHENA_VERSION="$(sed -n 's/^[[:space:]]*VERSION[[:space:]]\+\([0-9][0-9.]*\).*/\1/p' "$PROJECT_ROOT/CMakeLists.txt" | head -n 1)"
 DIST_DIR="${ATHENA_APPIMAGE_DIST_DIR:-$PROJECT_ROOT/dist}"
-OUTPUT="$DIST_DIR/AthenaPM-${ATHENA_VERSION}-x86_64.AppImage"
+OUTPUT="$DIST_DIR/MonadPM-${ATHENA_VERSION}-x86_64.AppImage"
 
 mkdir -p "$DIST_DIR"
 

@@ -40,7 +40,7 @@ foreach(prefix /usr /opt/athena)
     run("@CMAKE_COMMAND@" -E env "DESTDIR=${destdir}"
         "@CMAKE_COMMAND@" --install "${build}" --prefix "${prefix}" ${config_args})
     set(root "${destdir}${prefix}")
-    set(binary "${root}/@CMAKE_INSTALL_BINDIR@/athena")
+    set(binary "${root}/@CMAKE_INSTALL_BINDIR@/mpkg")
     set(core "${root}/@CMAKE_INSTALL_LIBDIR@/${CORE_NAME}")
     # Compare the whole file/directory/symlink inventory with configured destinations.
     # This catches extra usr/ components without banning intentionally chosen usr/.

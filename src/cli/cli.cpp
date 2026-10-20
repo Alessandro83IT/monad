@@ -53,9 +53,9 @@ std::filesystem::path package_manifest(
 void print_help()
 {
     std::cout
-        << "Athena Package Manager 0.1.0\n\n"
+        << "Monad Package Manager 0.1.0\n\n"
         << "Usage:\n"
-        << "  athena <command> [options]\n\n"
+        << "  mpkg <command> [options]\n\n"
         << "Commands:\n"
         << "  install     Install a package\n"
         << "  remove      Remove a package\n"
@@ -67,7 +67,7 @@ void print_help()
         << "  -h, --help      Show this help message\n"
         << "  -V, --version   Show version information\n"
         << "      --config PATH  Load an explicit configuration file\n"
-        << "      --root PATH    Override the Athena root\n";
+        << "      --root PATH    Override the package manager root\n";
 }
 
 /*
@@ -90,7 +90,7 @@ int run(int argc, char* argv[])
     if (command_line.command == "--version" ||
         command_line.command == "-V") {
 
-        std::cout << "Athena Package Manager 0.1.0\n";
+        std::cout << "Monad Package Manager 0.1.0\n";
         return 0;
     }
 

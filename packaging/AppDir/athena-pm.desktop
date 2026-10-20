@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=Athena Package Manager
-Comment=Athena Package Manager
-Exec=athena
-Icon=athena
-Type=Application
-Categories=System;
-Terminal=true

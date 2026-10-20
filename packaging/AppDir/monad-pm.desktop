@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Monad Package Manager
+Comment=Monad Package Manager
+Exec=mpkg
+Icon=monad
+Type=Application
+Categories=System;
+Terminal=true

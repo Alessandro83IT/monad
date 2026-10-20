@@ -1,6 +1,6 @@
-# Athena Package Manager
+# Monad Package Manager
 
-Athena Package Manager is an experimental package manager for Linux.
+Monad Package Manager is an experimental package manager for Linux.
 
 The project aims to combine:
 
@@ -52,7 +52,7 @@ cmake --build build
 Run:
 
 ```bash
-./build/athena
+./build/mpkg
 ```
 
 ## Project goals
@@ -63,7 +63,7 @@ The project is initially developed and tested on Arch Linux.
 
 ## License
 
-Athena Package Manager is free software licensed under the
+Monad Package Manager is free software licensed under the
 GNU General Public License, version 3 or (at your option) any later version
 (GPL-3.0-or-later).
 

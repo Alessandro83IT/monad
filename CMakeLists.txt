@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(athena
     VERSION 0.1.0
-    DESCRIPTION "Athena Package Manager"
+    DESCRIPTION "Monad Package Manager"
     LANGUAGES CXX
 )
 
@@ -35,6 +35,7 @@ target_compile_features(athena_core PUBLIC cxx_std_20)
 target_link_libraries(athena_core PRIVATE OpenSSL::Crypto LibArchive::LibArchive Threads::Threads)
 
 add_executable(athena src/main.cpp)
+set_target_properties(athena PROPERTIES OUTPUT_NAME mpkg)
 target_link_libraries(athena PRIVATE Athena::Core)
 
 athena_install_targets("${PROJECT_SOURCE_DIR}/include")
@@ -46,7 +47,7 @@ add_custom_target(appimage
         "${PROJECT_SOURCE_DIR}/packaging/build-appimage.sh"
     DEPENDS athena
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMENT "Building Athena Package Manager AppImage"
+    COMMENT "Building Monad Package Manager AppImage"
 )
 
 function(add_athena_test name)

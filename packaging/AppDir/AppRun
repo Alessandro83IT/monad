@@ -2,4 +2,4 @@
 
 HERE="$(dirname "$(readlink -f "$0")")"
 
-exec "$HERE/usr/bin/athena" "$@"
+exec "$HERE/usr/bin/mpkg" "$@"
