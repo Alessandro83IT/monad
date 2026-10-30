@@ -177,6 +177,8 @@ RepositorySnapshot LocalRepository::load_snapshot() const
         }
     } catch (const RepositoryError&) {
         throw;
+    } catch (const athena::package::PackageIdentityError& error) {
+        throw RepositoryError(RepositoryErrorCode::InvalidCandidate, error.what());
     } catch (const athena::package::PackageSchemaError& error) {
         throw RepositoryError(RepositoryErrorCode::UnsupportedSchema, error.what());
     } catch (const std::filesystem::filesystem_error& error) {

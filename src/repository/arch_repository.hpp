@@ -84,10 +84,14 @@ public:
     ) const;
 
     /*
-     * Extract an Arch package into a temporary/staging directory.
+     * Extract an Arch package into a new destination directory. The
+     * destination must not already exist; it is created privately and
+     * removed on every extraction failure. On success it becomes the
+     * complete extracted tree.
      *
-     * Archive members are validated before extraction so absolute paths
-     * and parent-directory traversal cannot escape the destination.
+     * Archive members are validated before and during extraction. Links,
+     * special files, duplicate paths, traversal, and oversized entries are
+     * rejected.
      */
     void extract_package(
         const std::filesystem::path& package_path,

@@ -3,9 +3,9 @@
 
 #include "autotools_backend.hpp"
 
-#include <cstdlib>
+#include "../process/run.hpp"
+
 #include <stdexcept>
-#include <string>
 
 namespace athena::build {
 
@@ -41,14 +41,12 @@ void AutotoolsBackend::build(
      * Enter the package source directory, configure the package,
      * then compile it.
      */
-    const std::string command =
-        "cd \"" + source_directory.string() +
-        "\" && ./configure --prefix=/usr && make";
-
-    /*
-     * Execute the build command through the system shell.
-     */
-    const int result = std::system(command.c_str());
+    const int configure_result = athena::process::run(
+        {"./configure", "--prefix=/usr"}, source_directory
+    );
+    const int result = configure_result == 0
+        ? athena::process::run({"make"}, source_directory)
+        : configure_result;
 
     /*
      * A non-zero exit status means that configuration or compilation
@@ -97,15 +95,10 @@ void AutotoolsBackend::install(
     /*
      * Install the already-built package using DESTDIR.
      */
-    const std::string command =
-        "cd \"" + source_directory.string() +
-        "\" && make install DESTDIR=\"" +
-        staging_directory.string() + "\"";
-
-    /*
-     * Execute the installation command.
-     */
-    const int result = std::system(command.c_str());
+    const int result = athena::process::run(
+        {"env", "DESTDIR=" + std::filesystem::absolute(staging_directory).string(),
+         "make", "install"}, source_directory
+    );
 
     /*
      * Report installation failures to the caller.

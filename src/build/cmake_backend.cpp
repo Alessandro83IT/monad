@@ -3,7 +3,8 @@
 
 #include "cmake_backend.hpp"
 
-#include <cstdlib>
+#include "../process/run.hpp"
+
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -42,20 +43,11 @@ void CMakeBackend::build(
      * package layout is intended to follow the normal Linux
      * filesystem hierarchy.
      */
-    const std::string configure_command =
-        "cmake "
-        "-S \"" + source_directory.string() +
-        "\" "
-        "-B \"" + build_directory.string() +
-        "\" "
-        "-DCMAKE_BUILD_TYPE=Release "
-        "-DCMAKE_INSTALL_PREFIX=/usr";
-
-    /*
-     * Execute the CMake configuration step.
-     */
-    const int configure_result =
-        std::system(configure_command.c_str());
+    const int configure_result = athena::process::run({
+        "cmake", "-S", std::filesystem::absolute(source_directory).string(),
+        "-B", std::filesystem::absolute(build_directory).string(),
+        "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_INSTALL_PREFIX=/usr"
+    });
 
     /*
      * A non-zero exit status means that CMake configuration failed.
@@ -70,16 +62,9 @@ void CMakeBackend::build(
     /*
      * Compile the package using the generated CMake build tree.
      */
-    const std::string build_command =
-        "cmake --build \"" +
-        build_directory.string() +
-        "\"";
-
-    /*
-     * Execute the compilation step.
-     */
-    const int build_result =
-        std::system(build_command.c_str());
+    const int build_result = athena::process::run({
+        "cmake", "--build", std::filesystem::absolute(build_directory).string()
+    });
 
     /*
      * A non-zero exit status means that compilation failed.
@@ -130,18 +115,11 @@ void CMakeBackend::install(
      * CMake uses /usr as the package prefix while DESTDIR
      * redirects the resulting filesystem tree into staging.
      */
-    const std::string command =
-        "DESTDIR=\"" +
-        staging_directory.string() +
-        "\" cmake --install \"" +
-        build_directory.string() +
-        "\" --prefix /usr";
-
-    /*
-     * Execute the installation step.
-     */
-    const int result =
-        std::system(command.c_str());
+    const int result = athena::process::run({
+        "env", "DESTDIR=" + std::filesystem::absolute(staging_directory).string(),
+        "cmake", "--install", std::filesystem::absolute(build_directory).string(),
+        "--prefix", "/usr"
+    });
 
     /*
      * Report installation failures to the caller.

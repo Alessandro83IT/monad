@@ -2,6 +2,7 @@
 #include "activation/plan_retention.hpp"
 #include "activation/plan_persistence.hpp"
 #include "activation_schema_support.hpp"
+#include "test_tmp_root.hpp"
 #include "generation/generation.hpp"
 #include "store/gc.hpp"
 #include <algorithm>
@@ -34,6 +35,10 @@ void write(const fs::path& path, std::string_view bytes) {
     require(!out.fail() && ::chmod(path.c_str(), 0600) == 0, "write fixture");
 }
 void directory(const fs::path& path) { require(::mkdir(path.c_str(), 0700) == 0, "mkdir fixture"); }
+void fail_fixture_setup_for_test() {
+    if (std::getenv("ATHENA_TEST_FAIL_D5_FIXTURE_SETUP"))
+        throw std::runtime_error("injected D5 fixture-construction failure");
+}
 std::string read(const fs::path& path) { std::ifstream in(path, std::ios::binary); require(bool(in), "read fixture"); return {std::istreambuf_iterator<char>(in), {}}; }
 std::string hex(std::size_t n, int width = 32) { std::ostringstream out; out << std::hex << std::setw(width) << std::setfill('0') << n; return out.str(); }
 core::ArtifactId artifact(char c) { return core::ArtifactId(d1_test::digest(c)); }
@@ -51,18 +56,24 @@ template<class F> void rejects_eio(F operation) {
 }
 struct Fixture {
     fs::path base, generations, root, projection;
-    explicit Fixture(fs::path existing = {}, fs::path parent = "/tmp") {
+    explicit Fixture(fs::path existing = {}, fs::path parent = athena::test::temporary_root()) {
         if (!existing.empty()) { base = existing; }
         else { std::string pattern = (parent / "athena-d5-XXXXXX").native(); require(::mkdtemp(pattern.data()), "mkdtemp"); base = pattern; }
         generations = base / "generations"; root = base / "store"; projection = base / "projection";
         owned = existing.empty();
         if (owned) {
+          try {
             directory(root); directory(projection);
+            fail_fixture_setup_for_test();
             manager().initialize(); for (int n = 0; n < 3; ++n) manager().create({});
             require(gc().collect().empty(), "establish C binding");
             ProjectionState state(generations.native());
             auto p = ProjectionContext::create_binding(binding(), objects(), state);
             ensure_plan_namespace(p, state);
+          } catch (...) {
+            std::error_code ignored; fs::remove_all(base, ignored);
+            throw;
+          }
         }
     }
     bool owned;
@@ -367,7 +378,7 @@ struct QualificationMount {
 };
 int privileged(std::string_view which) {
     if (::geteuid() != 0) { std::cout << "SKIP D5 VM: effective root required\n"; return 77; }
-    fs::path parent = "/tmp";
+    fs::path parent = athena::test::temporary_root();
     if (which == "ext4") {
         const auto* supplied = std::getenv("ATHENA_D5_EXT4_TMPDIR");
         if (!supplied) { std::cout << "SKIP D5 VM ext4: dedicated existing directory required\n"; return 77; }
@@ -418,6 +429,19 @@ int main(int argc, char** argv) {
         else if (mode == "budgets") budgets();
         else if (mode == "processes") concurrency();
         else if (mode == "kills") kills();
+        else if (mode == "fixture-construction-failure") {
+            const auto parent = fs::temp_directory_path() / ("athena-d5-exception-" + std::to_string(::getpid()));
+            fs::create_directory(parent);
+            require(fs::directory_iterator(parent) == fs::directory_iterator{}, "D5 exception fixture parent initially empty");
+            ::setenv("ATHENA_TEST_FAIL_D5_FIXTURE_SETUP", "1", 1);
+            try { Fixture f({}, parent); throw std::runtime_error("D5 injected failure was not raised"); }
+            catch (const std::runtime_error& e) {
+                require(std::string(e.what()) == "injected D5 fixture-construction failure", "D5 expected injected exception");
+            }
+            ::unsetenv("ATHENA_TEST_FAIL_D5_FIXTURE_SETUP");
+            require(fs::directory_iterator(parent) == fs::directory_iterator{}, "D5 constructor failure removed owned temporary directory");
+            fs::remove(parent);
+        }
         else if (mode.starts_with("privileged-")) qualification_status = privileged(mode.substr(11));
         else throw std::runtime_error("unknown D5 mode");
     });

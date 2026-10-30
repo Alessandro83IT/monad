@@ -8,6 +8,7 @@
 #include "artifact/scanner.hpp"
 #include "realization_executor_support.hpp"
 #include "filesystem_fixture_support.hpp"
+#include "test_tmp_root.hpp"
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/file.h>
@@ -28,7 +29,7 @@ template<class F> void rejects(F f) { bool caught = false; try { f(); } catch (c
 struct Fixture {
     fs::path root, store, generations;
     Fixture() {
-        std::string pattern = "/tmp/athena-m25c-XXXXXX";
+        std::string pattern = (athena::test::temporary_root() / "athena-m25c-XXXXXX").native();
         check(::mkdtemp(pattern.data()), "mkdtemp"); root = pattern;
         store = root / "store"; generations = root / "generations";
         fixture_fs::create_directories(store);

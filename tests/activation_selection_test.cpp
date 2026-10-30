@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <iostream>
+#include <chrono>
 using namespace athena::activation;
 namespace fs = std::filesystem;
 using d1_test::require;
@@ -100,8 +101,10 @@ void faults() {
     }
     std::cout << "D6 fsync boundaries: " << boundaries << '\n';
 }
-void io_faults() {
-    for(unsigned kind=0;kind<3;++kind) {
+void io_faults(unsigned first_kind = 0, unsigned last_kind = 2,
+               unsigned shard_index = 1, unsigned shard_count = 1) {
+    require(shard_count > 0 && shard_index > 0 && shard_index <= shard_count, "valid I/O fault shard");
+    for(unsigned kind=first_kind;kind<=last_kind;++kind) {
         auto run=[&](unsigned boundary) {
             Fixture f;auto plan=f.plan(1,0,AbsentBase{});ProjectionIo io;unsigned count=0;bool armed=false;
             auto fault=[&]{if(!armed)return false;return ++count==boundary;};
@@ -116,7 +119,17 @@ void io_faults() {
                 recover_selection(fresh,*f.state,plan);}
             return count;
         };
-        unsigned count=run(0);for(unsigned n=1;n<=count;++n)run(n);
+        unsigned count=run(0);
+        const unsigned first = static_cast<unsigned>((static_cast<unsigned long long>(count) * (shard_index - 1)) / shard_count) + 1;
+        const unsigned last = static_cast<unsigned>((static_cast<unsigned long long>(count) * shard_index) / shard_count);
+        std::cerr << "D6 I/O kind " << kind << " fault points: " << count
+                  << ", shard " << shard_index << "/" << shard_count
+                  << " interval " << first << ".." << last << std::endl;
+        for(unsigned n=first;n<=last;++n) {
+            run(n);
+            if((n-first+1)%100==0 || n==last)
+                std::cerr << "D6 I/O kind " << kind << " checked " << n << "/" << count << std::endl;
+        }
         std::cout<<"D6 I/O kind "<<kind<<" boundaries: "<<count<<'\n';
     }
 }
@@ -207,4 +220,33 @@ int main(int argc,char** argv) { try {
         try {commit_selection(p,state,{ActivationId(argv[5]),PlanDigest(argv[6])});return 0;}
         catch(const ExecutionError& e){if(e.cause==ExecutionCause::SelectionConflict)return 4;throw;}
     }
-    source_authority_bootstrap();transitions();invalid();faults();io_faults();instance_substitution();kills();processes();}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
+    if((argc==2 || argc==4) && std::string(argv[1]).starts_with("io-faults-")) {
+        const std::string kind = argv[1];
+        if(kind=="io-faults-open") io_faults(0,0);
+        else if(kind=="io-faults-stat") {
+            if(argc==4) io_faults(1,1,static_cast<unsigned>(std::stoul(argv[2])),static_cast<unsigned>(std::stoul(argv[3])));
+            else io_faults(1,1);
+        }
+        else if(kind=="io-faults-pread") io_faults(2,2);
+        else throw std::runtime_error("unknown I/O fault mode");
+        return 0;
+    }
+    if(argc==2 && std::string(argv[1])=="selection-base") {
+        source_authority_bootstrap();transitions();invalid();faults();instance_substitution();kills();processes();
+        return 0;
+    }
+    const auto stage = [](const char* name, auto&& run) {
+        const auto started = std::chrono::steady_clock::now();
+        std::cerr << "D6 stage begin: " << name << std::endl;
+        run();
+        const auto elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
+        std::cerr << "D6 stage complete: " << name << " (" << elapsed << " s)" << std::endl;
+    };
+    stage("source-authority-bootstrap", source_authority_bootstrap);
+    stage("transitions", transitions);
+    stage("invalid-inputs", invalid);
+    stage("fsync-faults", faults);
+    stage("instance-substitution", instance_substitution);
+    stage("kill-boundaries", kills);
+    stage("multiprocess-contention", processes);
+}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }

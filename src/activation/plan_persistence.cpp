@@ -620,7 +620,20 @@ struct PlanAccess::Operation {
             if (!anchor.parent) throw std::logic_error("Foreign evidence lacks parent");
             const int parent = evidence_fd(e, *anchor.parent);
             auto current = open(parent, anchor.name, false, Cause::Substituted, true);
-            if (!e.matches(foreign.container, current.initial)) fail(Cause::Substituted, "Foreign container anchor changed");
+            if (foreign.published) {
+                if (!e.matches(foreign.container, current.initial))
+                    fail(Cause::Substituted, "Foreign container anchor changed");
+            } else {
+                // Preparation containers are intentionally opaque. Keep the
+                // same pinned directory instance and its access boundary, but
+                // do not treat changes to its uninspected contents as a new
+                // anchor (directory size/timestamps/link count can change).
+                const auto& original = anchor.metadata;
+                if (!Evidence::same_identity(original, current.initial) ||
+                    original.stx_mode != current.initial.stx_mode ||
+                    original.stx_uid != current.initial.stx_uid)
+                    fail(Cause::Substituted, "Foreign container anchor changed");
+            }
             if (foreign.published) {
                 if (!foreign.interior) throw std::logic_error("Foreign published evidence lacks inventory");
                 auto batch = evidence_inventory(e, current.fd.get(), foreign.container, 2, [&](const auto& name) {

@@ -13,21 +13,22 @@
 int main()
 {
     athena::test::TemporaryDirectory fixture("athena-cmake-test");
-    const auto source_directory = fixture.path() / "source";
     const auto build_directory = fixture.path() / "build";
     const auto staging_directory = fixture.path() / "staging";
+    const auto marker = fixture.path() / "shell-injection-marker";
 
     std::cout << "Testing CMake backend...\n";
 
     /*
      * Create a minimal CMake project used exclusively by this test.
      */
-    std::filesystem::remove_all(source_directory);
-    std::filesystem::create_directories(source_directory);
+    const auto hostile_source_directory =
+        fixture.path() / ("source $(touch " + marker.string() + ")");
+    std::filesystem::create_directories(hostile_source_directory);
 
     {
         std::ofstream cmake_lists(
-            source_directory / "CMakeLists.txt"
+            hostile_source_directory / "CMakeLists.txt"
         );
 
         cmake_lists
@@ -41,7 +42,7 @@ int main()
 
     {
         std::ofstream source_file(
-            source_directory / "main.cpp"
+            hostile_source_directory / "main.cpp"
         );
 
         source_file
@@ -55,14 +56,14 @@ int main()
     athena::build::CMakeBackend backend;
 
     backend.build(
-        source_directory,
+        hostile_source_directory,
         build_directory
     );
 
     std::cout << "Build completed.\n";
 
     backend.install(
-        source_directory,
+        hostile_source_directory,
         build_directory,
         staging_directory
     );
@@ -79,6 +80,7 @@ int main()
         "athena-cmake-test";
 
     assert(std::filesystem::exists(installed_binary));
+    assert(!std::filesystem::exists(marker));
 
     std::cout
         << "CMake backend tests passed.\n";
@@ -86,7 +88,7 @@ int main()
     /*
      * Clean up all temporary files created by the test.
      */
-    std::filesystem::remove_all(source_directory);
+    std::filesystem::remove_all(hostile_source_directory);
     std::filesystem::remove_all(build_directory);
     std::filesystem::remove_all(staging_directory);
 

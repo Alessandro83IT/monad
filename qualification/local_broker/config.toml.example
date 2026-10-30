@@ -1,0 +1,12 @@
+[broker]
+# Bind only under the systemd-managed RuntimeDirectory; the server refuses other paths.
+socket_path = "/run/monad-local-broker/broker.sock"
+# Numeric host IDs are checked against SO_PEERCRED. The user and PID namespace
+# must also match the broker's namespaces; a JSON-supplied UID is never used.
+allowed_uid = 1000
+allowed_gid = 1000
+expected_virt = "oracle"
+expected_pid1 = "systemd"
+# Replace with the SHA-256 of /etc/machine-id captured and independently approved
+# from the target VM. The broker refuses to start until this exact pin is set.
+expected_machine_id_sha256 = "REPLACE_WITH_64_HEX_DIGEST"

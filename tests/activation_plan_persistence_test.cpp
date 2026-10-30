@@ -96,6 +96,7 @@ extern "C" int fcntl(int fd,int command,...) {
 #include "activation/plan_persistence.hpp"
 #include "activation/legacy.hpp"
 #include "activation_schema_support.hpp"
+#include "test_tmp_root.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -114,6 +115,7 @@ extern "C" int fcntl(int fd,int command,...) {
 #include <linux/capability.h>
 #include <cstdlib>
 #include <sstream>
+#include <source_location>
 #include <sys/syscall.h>
 #include <sys/wait.h>
 #include <signal.h>
@@ -154,6 +156,10 @@ namespace {
 using C = PlanPersistenceCause;
 using O = ProjectionOutcome;
 bool qualification_cleanup_failed = false;
+void fail_fixture_setup_for_test() {
+    if (std::getenv("ATHENA_TEST_FAIL_D4_FIXTURE_SETUP"))
+        throw std::runtime_error("injected D4 fixture-construction failure");
+}
 std::string fdpath(int fd) { return fs::read_symlink("/proc/self/fd/" + std::to_string(fd)).native(); }
 ino_t inode(const fs::path& p) { struct stat s{}; require(::lstat(p.c_str(), &s) == 0, "lstat fixture"); return s.st_ino; }
 void write(const fs::path& p, std::string_view b) {
@@ -172,9 +178,11 @@ struct Fixture {
         auto pattern = (parent / "athena-d4-XXXXXX").native();
         auto p = ::mkdtemp(pattern.data()); require(p, "mkdtemp D4 fixture"); return p;
     }
-    explicit Fixture(const fs::path& parent = "/tmp") : base(temporary(parent)), binding{d1_test::projection_id, (base / "generations").native(),
+    explicit Fixture(const fs::path& parent = athena::test::temporary_root()) : base(temporary(parent)), binding{d1_test::projection_id, (base / "generations").native(),
         (base / "store").native(), (base / "projection").native()}, store(base / "store") {
+      try {
         for (auto name : {"generations", "store", "projection"}) directory(base / name);
+        fail_fixture_setup_for_test();
         state = std::make_unique<ProjectionState>(binding.generation_authority);
         auto p = ProjectionContext::create_binding(binding, store, *state);
         // These unrelated namespaces must survive every tested operation.
@@ -185,6 +193,11 @@ struct Fixture {
                 base / "generations/.athena-projection-authority.toml", admin() / "authority.toml"}) {
             struct stat s{}; require(::lstat(path.c_str(), &s) == 0, "protected fixture observation"); protected_files.emplace(path, s);
         }
+      } catch (...) {
+        state.reset();
+        std::error_code ignored; fs::remove_all(base, ignored);
+        throw;
+      }
     }
     ~Fixture() noexcept {
         state.reset();
@@ -225,13 +238,16 @@ struct Fixture {
         if (!injected_status) require(!fs::exists(published() / "status.toml"), "no status");
     }
 };
-template<class F> PlanPersistenceError error(F action, C cause, O outcome) {
+template<class F> PlanPersistenceError error(F action, C cause, O outcome,
+        std::source_location call_site = std::source_location::current()) {
     try { action(); }
     catch (const PlanPersistenceError& e) {
         require(e.cause == cause, std::string("Wrong D4 cause: ") + e.what());
         require(e.outcome == outcome, std::string("Wrong D4 outcome (expected " + std::to_string(static_cast<int>(outcome)) + ", actual " + std::to_string(static_cast<int>(e.outcome)) + "): ") + e.what()); return e;
     }
-    throw std::runtime_error("Expected D4 rejection");
+    throw std::runtime_error(std::string("Expected D4 rejection at ") + call_site.file_name() + ":" +
+        std::to_string(call_site.line()) + " (cause=" + std::to_string(static_cast<int>(cause)) +
+        ", outcome=" + std::to_string(static_cast<int>(outcome)) + ")");
 }
 template<class F> void rejects(F action) { try { action(); } catch (const std::exception&) { return; } throw std::runtime_error("Unsafe state accepted"); }
 template<class F> ProjectionError projection_error(F action, ProjectionCause cause, int number = 0) {
@@ -721,6 +737,7 @@ void evidence_structural() {
     }
     for (int perturbation : {0, 1, 2, 3}) {
         const bool private_container = perturbation == 3;
+        std::cout << "D4 foreign substitution perturbation " << perturbation << '\n' << std::flush;
         Fixture f; f.publish(); const std::string name(32, '0');
         const auto path = (private_container ? f.plans()/".preparations" : f.plans())/name;
         directory(path);
@@ -733,6 +750,12 @@ void evidence_structural() {
         if (private_container) {
             // Contents of private foreign residue remain deliberately opaque.
             write(path/"opaque", "private residue");
+            PlanEvidenceTestAccess::compare(p, *f.state, e);
+            require(e.matches(id, anchor) && descriptor_count() == baseline,
+                "opaque private residue changes do not replace the retained container anchor");
+            require(::rename(path.c_str(), (f.base/"retired-private-foreign").c_str()) == 0,
+                "retain original private foreign container inode");
+            directory(path);
         } else if (perturbation == 1) {
             const auto file = path / "plan.toml";
             struct stat before{};
@@ -2704,7 +2727,7 @@ void qualification_cleanup_test() {
     simulated_unmount_calls = 1;
     fs::path retained_tree, retained_fixture;
     {
-        QualificationTree tree("/tmp");
+        QualificationTree tree(athena::test::temporary_root());
         directory(tree.base / "container");
         QualificationMounts outer(tree.base, tree.preserve);
         outer.unmount = simulated_unmount;
@@ -2903,6 +2926,20 @@ int main(int argc, char** argv) {
             else boundaries(mode.substr(11));
         }
         else if (mode == "limits") limits();
+        else if (mode == "fixture-construction-failure") {
+            const auto parent = fs::temp_directory_path() / ("athena-d4-exception-" + std::to_string(::getpid()));
+            fs::create_directory(parent);
+            const auto before = fs::directory_iterator(parent) == fs::directory_iterator{};
+            require(before, "D4 exception fixture parent initially empty");
+            ::setenv("ATHENA_TEST_FAIL_D4_FIXTURE_SETUP", "1", 1);
+            try { Fixture f(parent); throw std::runtime_error("D4 injected failure was not raised"); }
+            catch (const std::runtime_error& e) {
+                require(std::string(e.what()) == "injected D4 fixture-construction failure", "D4 expected injected exception");
+            }
+            ::unsetenv("ATHENA_TEST_FAIL_D4_FIXTURE_SETUP");
+            require(fs::directory_iterator(parent) == fs::directory_iterator{}, "D4 constructor failure removed owned temporary directory");
+            fs::remove(parent);
+        }
         else if (mode == "bounds") bounds();
         else if (mode == "kills") kills();
         else if (mode == "processes") processes();

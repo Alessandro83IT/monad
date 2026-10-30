@@ -167,6 +167,23 @@ void mounts(bool bind) {
 
 }
 int main(int argc,char** argv) {
+    if (argc > 1 && std::string(argv[1]) == "fixture-construction-failure") {
+        try {
+            const auto parent = fs::temp_directory_path() / ("athena-d6-exception-" + std::to_string(::getpid()));
+            fs::create_directory(parent);
+            require(fs::directory_iterator(parent) == fs::directory_iterator{}, "D6 exception fixture parent initially empty");
+            require(::setenv("ATHENA_EXECUTION_TEST_TMPDIR", parent.c_str(), 1) == 0, "D6 exception fixture parent");
+            require(::setenv("ATHENA_TEST_FAIL_D6_FIXTURE_SETUP", "1", 1) == 0, "D6 failure injection");
+            try { execution_test::Fixture f; throw std::runtime_error("D6 injected failure was not raised"); }
+            catch (const std::runtime_error& e) {
+                require(std::string(e.what()) == "injected D6 fixture-construction failure", "D6 expected injected exception");
+            }
+            ::unsetenv("ATHENA_TEST_FAIL_D6_FIXTURE_SETUP");
+            require(fs::directory_iterator(parent) == fs::directory_iterator{}, "D6 constructor failure removed owned temporary directory");
+            fs::remove(parent);
+            return 0;
+        } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
+    }
     if(::geteuid()!=0){std::cout<<"SKIP: Debian qualification VM root required\n";return 77;}
     __user_cap_header_struct header{_LINUX_CAPABILITY_VERSION_3,0};__user_cap_data_struct data[2]{};
     if(::syscall(SYS_capget,&header,data)<0 || !(data[CAP_SYS_ADMIN/32].effective & (1u << (CAP_SYS_ADMIN%32)))) {std::cout<<"SKIP: CAP_SYS_ADMIN required for complete scanner/mount inspection\n";return 77;}

@@ -5,6 +5,7 @@
 #undef NDEBUG
 #endif
 #include "filesystem_fixture_support.hpp"
+#include "test_tmp_root.hpp"
 #include "generation/generation.hpp"
 #include <algorithm>
 #include <cassert>
@@ -108,10 +109,7 @@ int main() {
         rejects([&] { serialize(Generation{1, {{"x", path}}}); });
     // Above codecs use nonexistent references and never inspect any payload.
     // Persistence writes metadata only; loading does not rewrite old documents.
-    char pattern[] = "/tmp/athena-membership-XXXXXX";
-    auto* directory = mkdtemp(pattern);
-    assert(directory);
-    const std::filesystem::path root(directory);
+    const auto root = athena::test::make_temporary_directory("athena-membership");
     fixture_fs::create_directories(root / "generations/7");
     const auto file = root / "generations/7/generation.toml";
     { std::ofstream out(file); out << old; }

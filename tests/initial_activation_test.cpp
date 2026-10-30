@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "activation/initial_activation.hpp"
 #include "activation_execution_support.hpp"
+#include "test_tmp_root.hpp"
 #include "artifact/identity.hpp"
 #include "store/gc.hpp"
 #include "store/manifest.hpp"
@@ -19,10 +20,7 @@ struct Fresh {
     std::unique_ptr<ProjectionState> state;
     Fresh()
         : root([] {
-              char pattern[] = "/tmp/athena-d8a-XXXXXX";
-              auto p = ::mkdtemp(pattern);
-              require(p, "temp");
-              return fs::path(p);
+              return athena::test::make_temporary_directory("athena-d8a");
           }()),
           binding{d1_test::projection_id, (root / "generations").native(),
                   (root / "store").native(), (root / "projection").native()},

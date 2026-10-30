@@ -6,6 +6,9 @@ project(athena
     LANGUAGES CXX
 )
 
+# CMake's project VERSION stays numeric; this is the package/CLI release string.
+set(ATHENA_RELEASE_VERSION "0.1.0-alpha.1")
+
 include(cmake/AthenaPackaging.cmake)
 
 find_package(OpenSSL REQUIRED COMPONENTS Crypto)
@@ -27,6 +30,9 @@ add_library(athena_core SHARED
     ${ATHENA_CORE_SOURCES}
 )
 add_library(Athena::Core ALIAS athena_core)
+target_compile_definitions(athena_core PRIVATE
+    ATHENA_RELEASE_VERSION="${ATHENA_RELEASE_VERSION}"
+)
 target_include_directories(athena_core
     PUBLIC "${PROJECT_SOURCE_DIR}/include"
     PRIVATE "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/third_party"
@@ -110,9 +116,12 @@ set(ATHENA_TESTS
     artifact_scanner_test
     artifact_contract_test
     arch_repository_test
+    arch_repository_security_test
     arch_repository_adapter_test
     arch_version_test
     cmake_backend_test
+    process_invocation_test
+    archive_security_test
     version_test
     package_loader_test
     dependency_resolver_test
@@ -154,10 +163,12 @@ set(ATHENA_TESTS
 foreach(test_name IN LISTS ATHENA_TESTS)
     add_athena_test(${test_name})
 endforeach()
+target_link_libraries(archive_security_test PRIVATE LibArchive::LibArchive)
+target_link_libraries(arch_repository_security_test PRIVATE LibArchive::LibArchive)
 set_tests_properties(package_loader_test PROPERTIES
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
 )
-set_tests_properties(installed_semantics_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+set_tests_properties(installed_semantics_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90 LABELS "privileged")
 set_tests_properties(artifact_identity_scanner_test PROPERTIES SKIP_RETURN_CODE 77)
 set_tests_properties(artifact_scanner_test PROPERTIES SKIP_RETURN_CODE 77)
 set_tests_properties(object_store_scanner_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
@@ -172,15 +183,15 @@ target_include_directories(arch_repository_live_test PRIVATE "${PROJECT_SOURCE_D
 # The planning acceptance consumer sees only exported headers.
 set_property(TARGET public_planning_test PROPERTY INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/include")
 
-set_tests_properties(generation_activation_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+set_tests_properties(generation_activation_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90 LABELS "privileged")
 
-set_tests_properties(realization_executor_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+set_tests_properties(realization_executor_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90 LABELS "privileged")
 
-set_tests_properties(install_transaction_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
-set_tests_properties(cli_install_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+set_tests_properties(install_transaction_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90 LABELS "privileged")
+set_tests_properties(cli_install_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90 LABELS "privileged")
 
 add_test(NAME removal_realization_integration_test COMMAND removal_realization_test integration)
-set_tests_properties(removal_realization_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90)
+set_tests_properties(removal_realization_integration_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90 LABELS "privileged")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     athena_add_packaging_smoke_test("${PROJECT_SOURCE_DIR}/include")
@@ -198,7 +209,7 @@ set_tests_properties(locking_test durable_filesystem_test PROPERTIES TIMEOUT 30)
 set_tests_properties(immutable_publication_test PROPERTIES TIMEOUT 60)
 
 add_test(NAME immutable_object_publication_test COMMAND immutable_publication_test objects)
-set_tests_properties(immutable_object_publication_test PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 77)
+set_tests_properties(immutable_object_publication_test PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 77 LABELS "privileged")
 
 add_test(NAME transaction_gc_crash_test COMMAND transaction_gc_test crash)
 add_test(NAME transaction_gc_concurrency_test COMMAND transaction_gc_test concurrency)
@@ -217,12 +228,23 @@ set_tests_properties(activation_schema_test PROPERTIES TIMEOUT 180)
 add_executable(activation_execution_privileged_test tests/activation_execution_privileged_test.cpp)
 target_link_libraries(activation_execution_privileged_test PRIVATE Athena::Core)
 target_include_directories(activation_execution_privileged_test PRIVATE "${PROJECT_SOURCE_DIR}/src")
+add_test(NAME activation_execution_fixture_constructor_cleanup_test
+    COMMAND activation_execution_privileged_test fixture-construction-failure)
+set_tests_properties(activation_execution_fixture_constructor_cleanup_test PROPERTIES TIMEOUT 30)
 foreach(case sources legacy owner bind nested ext4)
     add_test(NAME activation_execution_privileged_${case}_test COMMAND activation_execution_privileged_test ${case})
     set_tests_properties(activation_execution_privileged_${case}_test PROPERTIES LABELS "privileged" SKIP_RETURN_CODE 77 TIMEOUT 180)
 endforeach()
 set_tests_properties(activation_selection_test activation_reconciliation_test PROPERTIES TIMEOUT 180)
-set_tests_properties(activation_selection_test PROPERTIES TIMEOUT 600)
+foreach(kind IN ITEMS open pread)
+    add_test(NAME activation_selection_io_faults_${kind}_test COMMAND activation_selection_test io-faults-${kind})
+    set_tests_properties(activation_selection_io_faults_${kind}_test PROPERTIES TIMEOUT 600)
+endforeach()
+foreach(shard RANGE 1 8)
+    add_test(NAME activation_selection_io_faults_stat_shard${shard}_test
+        COMMAND activation_selection_test io-faults-stat ${shard} 8)
+    set_tests_properties(activation_selection_io_faults_stat_shard${shard}_test PROPERTIES TIMEOUT 600)
+endforeach()
 add_test(NAME activation_selection_metadata_test COMMAND activation_selection_test metadata)
 set_tests_properties(activation_selection_metadata_test PROPERTIES TIMEOUT 30)
 # These purity checks snapshot their whole working directory. Other CTest cases
@@ -231,6 +253,9 @@ set_tests_properties(public_planning_test resolution_result_test PROPERTIES RUN_
 set_tests_properties(activation_projection_fs_test PROPERTIES TIMEOUT 60)
 set_tests_properties(activation_plan_persistence_test PROPERTIES TIMEOUT 120)
 set_tests_properties(activation_plan_retention_test PROPERTIES TIMEOUT 180)
+add_test(NAME activation_plan_retention_fixture_constructor_cleanup_test
+    COMMAND activation_plan_retention_test fixture-construction-failure)
+set_tests_properties(activation_plan_retention_fixture_constructor_cleanup_test PROPERTIES TIMEOUT 30)
 foreach(mode IN ITEMS limits budgets processes kills)
     add_test(NAME activation_plan_retention_${mode}_test COMMAND activation_plan_retention_test ${mode})
     set_tests_properties(activation_plan_retention_${mode}_test PROPERTIES TIMEOUT 300)
@@ -247,6 +272,9 @@ add_library(athena_d4_locator_fault SHARED tests/activation_plan_persistence_tes
 target_compile_definitions(athena_d4_locator_fault PRIVATE ATHENA_D4_LOCATOR_FAULT_LIBRARY)
 target_link_libraries(activation_plan_persistence_test PRIVATE ${CMAKE_DL_LIBS})
 add_dependencies(activation_plan_persistence_test athena_d4_locator_fault)
+add_test(NAME activation_plan_persistence_fixture_constructor_cleanup_test
+    COMMAND activation_plan_persistence_test fixture-construction-failure)
+set_tests_properties(activation_plan_persistence_fixture_constructor_cleanup_test PROPERTIES TIMEOUT 30)
 add_test(NAME activation_plan_persistence_locator-cloexec_test
     COMMAND ${CMAKE_COMMAND} -E env "LD_PRELOAD=$<TARGET_FILE:athena_d4_locator_fault>"
         $<TARGET_FILE:activation_plan_persistence_test> locator-cloexec)
@@ -265,10 +293,18 @@ add_test(NAME activation_plan_persistence_concluding_callback_diagnostics
     COMMAND activation_plan_persistence_test concluding-callback-diagnostics)
 set_tests_properties(activation_plan_persistence_concluding_callback_diagnostics
     PROPERTIES TIMEOUT 180 LABELS "diagnostic;D4-A")
-foreach(path IN ITEMS fresh bootstrap reused published)
-    add_test(NAME activation_plan_persistence_boundaries_${path}_test COMMAND activation_plan_persistence_test boundaries-${path})
-    set_tests_properties(activation_plan_persistence_boundaries_${path}_test PROPERTIES TIMEOUT 600)
+foreach(path IN ITEMS fresh bootstrap reused)
+    foreach(shard RANGE 1 4)
+        math(EXPR first "(${shard} - 1) * 3000 + 1")
+        math(EXPR last "${shard} * 3000")
+        add_test(NAME activation_plan_persistence_boundaries_${path}_shard${shard}_test
+            COMMAND activation_plan_persistence_test boundaries-${path} ${first} ${last})
+        set_tests_properties(activation_plan_persistence_boundaries_${path}_shard${shard}_test PROPERTIES TIMEOUT 600)
+    endforeach()
 endforeach()
+add_test(NAME activation_plan_persistence_boundaries_published_test
+    COMMAND activation_plan_persistence_test boundaries-published)
+set_tests_properties(activation_plan_persistence_boundaries_published_test PROPERTIES TIMEOUT 600)
 set_tests_properties(activation_plan_persistence_bounds_test PROPERTIES TIMEOUT 600)
 set_tests_properties(activation_plan_persistence_privileged_test PROPERTIES SKIP_RETURN_CODE 77 LABELS "privileged")
 set_tests_properties(legacy_d3_test PROPERTIES TIMEOUT 60)
@@ -337,7 +373,15 @@ add_test(NAME toml_isolation_test COMMAND "${Python3_EXECUTABLE}"
 set_tests_properties(toml_vendor_reproduction_test toml_isolation_test PROPERTIES TIMEOUT 60)
 add_test(NAME qualification_driver_test COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/qualification_driver_test.py")
-set_tests_properties(qualification_driver_test PROPERTIES TIMEOUT 60)
+add_test(NAME alpha_m1_canary_child_test COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/alpha_m1_canary_child_test.py")
+add_test(NAME alpha_m1_canary_timeout_test COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/alpha_m1_canary_timeout_test.py")
+add_test(NAME alpha_m1_admin_static_test COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/alpha_m1_admin_static_test.py")
+add_test(NAME alpha_m1_orchestrator_test COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/alpha_m1_orchestrator_test.py")
+set_tests_properties(qualification_driver_test alpha_m1_canary_child_test alpha_m1_canary_timeout_test alpha_m1_admin_static_test alpha_m1_orchestrator_test PROPERTIES TIMEOUT 60)
 
 set_tests_properties(package_operation_test PROPERTIES TIMEOUT 120)
 

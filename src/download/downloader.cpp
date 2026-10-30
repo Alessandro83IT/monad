@@ -3,7 +3,8 @@
 
 #include "downloader.hpp"
 
-#include <cstdlib>
+#include "../process/run.hpp"
+
 #include <stdexcept>
 
 namespace athena::download {
@@ -28,17 +29,10 @@ std::filesystem::path download_file(
      * --show-error    Still display errors when --silent is enabled.
      * -o              Write the downloaded data to the destination.
      */
-    const std::string command =
-        "curl -L --fail --silent --show-error "
-        "-o \"" + destination.string() + "\" "
-        "\"" + url + "\"";
-
-    /*
-     * Execute curl and inspect its exit status.
-     *
-     * A non-zero status means that the download failed.
-     */
-    const int result = std::system(command.c_str());
+    const int result = athena::process::run({
+        "curl", "-L", "--fail", "--silent", "--show-error",
+        "-o", destination.string(), "--", url
+    });
 
     if (result != 0) {
         throw std::runtime_error(

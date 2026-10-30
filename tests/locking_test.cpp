@@ -3,6 +3,7 @@
 #undef NDEBUG
 #endif
 #include <athena/core/locking.hpp>
+#include "test_tmp_root.hpp"
 #include "core/detail/filesystem.hpp"
 #include <cassert>
 #include <cerrno>
@@ -137,9 +138,8 @@ int main(int argc, char** argv) {
         send(std::stoi(argv[4])); receive(std::stoi(argv[5])); return 0;
     }
     parser_regressions();
-    char pattern[] = "/tmp/athena-locks-XXXXXX";
-    auto raw = ::mkdtemp(pattern); assert(raw);
-    const std::filesystem::path root(raw), path = root / "lock";
+    const auto root = athena::test::make_temporary_directory("athena-locks");
+    const std::filesystem::path path = root / "lock";
     for (bool killed : {false, true}) {
         Worker worker(path, LockMode::Exclusive);
         assert(contender(path, LockMode::Exclusive) == 1);

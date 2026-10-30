@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "milestones": [
+    {
+      "id": "supervisor-synthetic",
+      "objective": "Implement and qualify the local Codex milestone supervisor with synthetic-only fixtures.",
+      "prompt": "Implement only the authorized synthetic supervisor milestone described in tools/codex-supervisor/milestones.json. Do not inspect or execute Alpha M1 collectors, historical collectors, D6 payloads, privileged tests, sudo, system installation, digest promotion, bootstrap operational files, or real chained milestones. Preserve all pre-existing work. Implement tests and report; Alpha M1 remains BLOCKED.",
+      "allowed_paths": ["tools/codex-supervisor/", "docs/qualification/alpha-m1-session-64-candidate.md"],
+      "tests": [["python3", "-m", "unittest", "discover", "-s", "tools/codex-supervisor", "-p", "test_*.py"]],
+      "timeout_seconds": 3600,
+      "limits": {
+        "max_timeout_seconds": 3600,
+        "max_changed_paths": 100,
+        "max_output_bytes": 67108864
+      },
+      "depends_on": [],
+      "success": ["simulated CLI tests pass", "no protected artifacts change", "report exists"],
+      "stop_conditions": ["CLI mismatch", "timeout", "stop request", "protected path change", "out-of-scope change"]
+    }
+  ]
+}

@@ -6,9 +6,21 @@
 
 #include <cassert>
 #include <iostream>
+#include <stdexcept>
+#include <utility>
 
 int main()
 {
+    for (const auto& [name, version] : {
+             std::pair<std::string, std::string>{"../outside", "1.0"},
+             {"valid-name", "../../outside"},
+             {"/absolute", "1.0"}}) {
+        bool rejected = false;
+        try { athena::package::validate_identity(name, version); }
+        catch (const std::invalid_argument&) { rejected = true; }
+        assert(rejected);
+    }
+
     const auto package =
         athena::package::load_from_file(
             "packages/cmake-test/package.toml"

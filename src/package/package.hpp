@@ -6,10 +6,17 @@
 #include "../dependency/expression.hpp"
 
 #include <string>
+#include <string_view>
 #include <map>
+#include <stdexcept>
 #include <vector>
 
 namespace athena::package {
+
+class PackageIdentityError : public std::invalid_argument {
+public:
+    using std::invalid_argument::invalid_argument;
+};
 
 /*
  * Describes the semantic interfaces exposed by a package.
@@ -104,6 +111,9 @@ struct Package {
     std::vector<std::string> architectures;
     std::vector<std::string> abis;
 };
+
+// Validate identifiers before they are used in package store or work paths.
+void validate_identity(std::string_view name, std::string_view version);
 
 /*
  * Print the basic information contained in a Package.

@@ -1,0 +1,9 @@
+# Session 42 Operations review
+
+**Disposition: PASS for the documented verification-only launch form.** This is not an approval to run it on the qualification VM and does not authorize collector acquisition.
+
+The documented command uses `/usr/bin/cat`, `env -i`, `/usr/bin/python3 -I -S -c`, and `set -o pipefail`. The exact inline `-c` bytes match the test constant and expected digest `feef002511128263daf5fa05fcaa72686a688d58fb717b2f8d1a9d026b205021`. Full bootstrap and runner digests in the command match the current files. The command provides no runner arguments, so its behavior is verification-only. The command form and Python/Linux interfaces are compatible with the expected Debian 13 environment; VM-side availability and identity remain unverified here.
+
+The bootstrap and runner do not require privilege. The runner has no internal wall-clock timeout; an approved external supervisor may interrupt it. Before the runner begins, digest/path/compile errors fail closed. During collector execution, INT/TERM/HUP forwarding and child wait status are recorded when the process can finish; SIGKILL, power loss, or process failure can leave partial evidence. Future `--execute` must use separately approved, pre-existing private no-clobber output/capture paths, preserve stdout/stderr and supervisor status, and classify partial/ambiguous output as incomplete without retry. Those future operations need an independent human decision naming exact VM/snapshot, read scope, hashes, paths, allowed actions, prohibited actions, and stop conditions.
+
+No runner, collector, or VM operation was performed in this review. Actual collector acquisition remains NO-GO until VM identity, read scope, output paths, and separate explicit execution authorization are established. Installation remains unauthorized.

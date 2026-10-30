@@ -16,17 +16,19 @@ The initial implementation is written in C++20.
 
 ## Status
 
-Early development — version 0.1.0.
+Experimental release candidate — version 0.1.0-alpha.1. Monad is not
+production-ready and is not a dependable replacement for pacman, emerge, or
+Nix. Run it only with a dedicated, disposable, non-privileged root.
 
-`athena install <package>` uses the content-addressed pipeline: the existing
+`mpkg install <package>` uses the content-addressed pipeline: the existing
 local catalog under `repository_state/packages` supplies public repository
 candidates, public resolution produces a core install plan, and the install
 transaction realizes artifacts into ObjectStore and activates a new generation.
 The legacy installer remains compatibility code but is no longer the CLI install
 path. Current realization supports only one local `file:///absolute/path` gzip
-tar source and CMake, without build parameters; remote sources, Autotools,
+tar source and CMake, without build parameters. Network sources, Autotools,
 binary import and Athena IR are unsupported. See [install](src/install/README.md)
-and [realization](src/realization/README.md) for the precise limitations.
+and [realization](src/realization/README.md) for implementation details.
 
 M2.4 persists installed dependency semantics with realization records and validates
 complete resulting environments before install/remove activation. Partial removal
@@ -38,26 +40,48 @@ an explicit conservative compatibility policy. See [installed semantic state](sr
 
 Requirements:
 
-- C++20 compiler
-- CMake 3.20 or newer
+- Linux, C++20 compiler, CMake 3.20 or newer, Ninja or Make
+- OpenSSL and LibArchive development files, pthreads
+- Python 3 for parser and packaging checks
 
 Build:
 
 ```bash
-cmake -S . -B build
-cmake --build build
-
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure -LE privileged
 ```
 
 Run:
 
 ```bash
-./build/mpkg
+./build/mpkg --help
+./build/mpkg --version
 ```
+
+## Non-privileged trial
+
+Use a fresh user-owned root for package-manager state:
+
+```bash
+trial_root="$(mktemp -d)"
+./build/mpkg --root "$trial_root" list
+./build/mpkg --root "$trial_root" generation list
+rm -rf "$trial_root"
+```
+
+Install and remove can create persistent state. Try them only with a disposable
+root and a local package fixture. Build scripts run as the current user and
+should be treated as untrusted code. Never run Monad as root or point `--root`
+at a real system. See [install details](src/install/README.md),
+[realization details](src/realization/README.md), and
+[installed-state details](src/installed/README.md).
 
 ## Project goals
 
-Athena aims to provide a package management system that combines the flexibility of source-based package management with the reproducibility and declarative model of functional package managers.
+Monad aims to combine source-based package building with dependency resolution,
+immutable storage, and package generations. Compatibility claims are limited to
+the configurations exercised by this experimental release candidate.
 
 The project is initially developed and tested on Arch Linux.
 

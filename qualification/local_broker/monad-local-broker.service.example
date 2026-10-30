@@ -1,0 +1,40 @@
+[Unit]
+Description=Monad read-only host verification broker
+After=systemd-user-sessions.service dbus.service
+ConditionVirtualization=oracle
+
+[Service]
+Type=simple
+User=root
+Group=alessandro
+RuntimeDirectory=monad-local-broker
+RuntimeDirectoryMode=0750
+UMask=0077
+WorkingDirectory=/usr/local/lib/monad-local-broker
+Environment=PYTHONPATH=/usr/local/lib/monad-local-broker
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStartPre=/usr/bin/sha256sum --check --strict /etc/monad-local-broker/code.sha256
+ExecStart=/usr/bin/python3 -m qualification.local_broker.broker
+Restart=no
+TimeoutStartSec=5
+TimeoutStopSec=3
+KillMode=control-group
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ReadWritePaths=/run/monad-local-broker
+ProtectHome=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictAddressFamilies=AF_UNIX
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

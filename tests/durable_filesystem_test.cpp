@@ -3,6 +3,7 @@
 #undef NDEBUG
 #endif
 #include "core/detail/filesystem.hpp"
+#include "test_tmp_root.hpp"
 #include <cassert>
 #include <cerrno>
 #include <fcntl.h>
@@ -66,9 +67,7 @@ std::string read_file(const std::filesystem::path& path) { std::ifstream f(path)
 template<class F> void rejects(F f) { bool caught = false; try { f(); } catch (const std::exception&) { caught = true; } assert(caught); }
 }
 int main() {
-    char pattern[] = "/tmp/athena-durable-XXXXXX";
-    const auto raw_root = ::mkdtemp(pattern); assert(raw_root);
-    const auto root = std::filesystem::path(raw_root);
+    const auto root = athena::test::make_temporary_directory("athena-durable");
     auto parent = open_directory(root);
     auto private_ops = linux_syscalls(); private_ops.random = random_test; private_ops.mkdir = mkdir_fail;
     rejects([&] { private_directory(parent.get(), private_ops); });

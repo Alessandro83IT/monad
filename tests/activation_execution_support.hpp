@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
+#include "test_tmp_root.hpp"
 #include "activation/selection.hpp"
 #include "activation_schema_support.hpp"
 #include "store/transaction_pins.hpp"
@@ -25,15 +26,24 @@ struct Fixture {
     ProjectionBinding binding;
     athena::store::ObjectStore objects;
     std::unique_ptr<ProjectionState> state;
-    Fixture() : root([] { const auto parent=::getenv("ATHENA_EXECUTION_TEST_TMPDIR"); std::string pattern=std::string(parent?parent:"/tmp")+"/athena-d6-XXXXXX"; std::vector<char> name(pattern.begin(),pattern.end());name.push_back(0); auto p=::mkdtemp(name.data()); require(p,"mkdtemp"); return fs::path(p); }()),
+    Fixture() : root([] { const auto specific=::getenv("ATHENA_EXECUTION_TEST_TMPDIR"); const fs::path parent=specific?specific:athena::test::temporary_root(); std::string pattern=(parent/"athena-d6-XXXXXX").native(); std::vector<char> name(pattern.begin(),pattern.end());name.push_back(0); auto p=::mkdtemp(name.data()); require(p,"mkdtemp"); return fs::path(p); }()),
         binding{d1_test::projection_id,(root/"generations").native(),(root/"store").native(),(root/"projection").native()}, objects(root/"store") {
+      try {
         for (auto name : {"generations","store","projection"}) fixture_fs::create_directories(root/name);
+        if (::getenv("ATHENA_TEST_FAIL_D6_FIXTURE_SETUP"))
+            throw std::runtime_error("injected D6 fixture-construction failure");
         state = std::make_unique<ProjectionState>(binding.generation_authority);
         auto context = ProjectionContext::create_binding(binding,objects,*state);
         for (unsigned n=0;n<3;++n) { fs::create_directory(root/"generations"/std::to_string(n));
             fs::permissions(root/"generations"/std::to_string(n),fs::perms::owner_all);
             write(root/"generations"/std::to_string(n)/"generation.toml",athena::generation::serialize(athena::generation::make_generation(n,{})));
             fs::permissions(root/"generations"/std::to_string(n)/"generation.toml",fs::perms::owner_read|fs::perms::owner_write); }
+      } catch (...) {
+        state.reset();
+        std::error_code ignored;
+        fs::remove_all(root, ignored);
+        throw;
+      }
     }
     ~Fixture() { state.reset(); fs::remove_all(root); }
     auto open(ProjectionIo io={}) { return ProjectionContext::open(binding,objects,std::move(io)); }

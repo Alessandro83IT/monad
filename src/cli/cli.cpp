@@ -30,6 +30,10 @@ namespace athena::cli {
 
 namespace {
 
+#ifndef ATHENA_RELEASE_VERSION
+#define ATHENA_RELEASE_VERSION "0.1.0-alpha.1"
+#endif
+
 std::filesystem::path package_manifest(
     const athena::core::Config& config,
     const std::string& name
@@ -53,7 +57,7 @@ std::filesystem::path package_manifest(
 void print_help()
 {
     std::cout
-        << "Monad Package Manager 0.1.0\n\n"
+        << "Monad Package Manager " << ATHENA_RELEASE_VERSION << "\n\n"
         << "Usage:\n"
         << "  mpkg <command> [options]\n\n"
         << "Commands:\n"
@@ -90,7 +94,7 @@ int run(int argc, char* argv[])
     if (command_line.command == "--version" ||
         command_line.command == "-V") {
 
-        std::cout << "Monad Package Manager 0.1.0\n";
+        std::cout << "Monad Package Manager " << ATHENA_RELEASE_VERSION << "\n";
         return 0;
     }
 

@@ -8,13 +8,21 @@
 #include "../src/package/package.hpp"
 #include "../src/paths/paths.hpp"
 #include "../src/store/metadata.hpp"
+#include "../src/store/manifest.hpp"
 #include "../src/store/store.hpp"
 
 #include <filesystem>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <csignal>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 namespace {
 
@@ -97,6 +105,82 @@ int main()
             ),
             "Il file metadata.toml non è stato creato."
         );
+
+        // An existing (even incomplete) destination is user state. A failed
+        // publication must preserve it and leave no private staging tree.
+        const auto occupied = store_path.parent_path() / "occupied-1.0";
+        std::filesystem::create_directories(occupied);
+        std::ofstream(occupied / "sentinel") << "preserve";
+        auto occupied_package = package;
+        occupied_package.name = "occupied";
+        bool collision_rejected = false;
+        try { (void)athena::store::install(staging, occupied_package); }
+        catch (const std::runtime_error&) { collision_rejected = true; }
+        require(collision_rejected, "Existing store destination was not rejected");
+        require(std::filesystem::exists(occupied / "sentinel"), "Existing store data was removed");
+        for (const auto& item : std::filesystem::directory_iterator(occupied.parent_path()))
+            require(!item.path().filename().string().starts_with(".monad-store-stage-"),
+                    "Failed store publication leaked private staging data");
+
+        // Inject an actual write failure after private staging has begun.
+        const auto failed_staging = test_root / "copy-failure-staging";
+        std::filesystem::create_directories(failed_staging / "usr" / "share");
+        std::ofstream payload(failed_staging / "usr" / "share" / "large.bin", std::ios::binary);
+        payload << std::string(64 * 1024, 'x');
+        payload.close();
+        auto failed_package = package;
+        failed_package.name = "copy-failure-test";
+        struct rlimit old_limit{};
+        require(::getrlimit(RLIMIT_FSIZE, &old_limit) == 0, "Cannot inspect file-size limit for failure injection");
+        struct sigaction old_action{}, ignore_action{};
+        ignore_action.sa_handler = SIG_IGN;
+        sigemptyset(&ignore_action.sa_mask);
+        require(::sigaction(SIGXFSZ, &ignore_action, &old_action) == 0, "Cannot configure file-size failure injection");
+        struct rlimit limited = old_limit;
+        limited.rlim_cur = old_limit.rlim_max == RLIM_INFINITY ? 1024 : std::min<rlim_t>(1024, old_limit.rlim_max);
+        const bool limit_set = ::setrlimit(RLIMIT_FSIZE, &limited) == 0;
+        bool copy_failed = false;
+        if (limit_set) {
+            try { (void)athena::store::install(failed_staging, failed_package); }
+            catch (const std::exception&) { copy_failed = true; }
+        }
+        const bool limit_restored = ::setrlimit(RLIMIT_FSIZE, &old_limit) == 0;
+        const bool action_restored = ::sigaction(SIGXFSZ, &old_action, nullptr) == 0;
+        require(limit_set && limit_restored && action_restored, "Could not run/restore file-size failure injection");
+        require(copy_failed, "Store copy did not fail under injected file-size limit");
+        require(!std::filesystem::exists(store_path.parent_path() / "copy-failure-test-1.0"),
+                "Failed store copy published a partial destination");
+        for (const auto& item : std::filesystem::directory_iterator(store_path.parent_path()))
+            require(!item.path().filename().string().starts_with(".monad-store-stage-"),
+                    "Failed store copy did not clean its private staging tree");
+
+        // Model an abrupt publisher death with a private stage left behind.
+        // Recovery is inspection only: even this known synthetic orphan is
+        // reported and preserved, never automatically adopted or deleted.
+        const auto orphan = store_path.parent_path() / ".monad-store-stage-crash-fixture";
+        const pid_t child = ::fork();
+        require(child >= 0, "Could not fork crash-recovery fixture");
+        if (child == 0) {
+            if (::mkdir(orphan.c_str(), 0700) != 0) _exit(90);
+            const auto marker = orphan / "partial-copy";
+            const int fd = ::open(marker.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+            if (fd < 0) _exit(91);
+            constexpr char bytes[] = "interrupted";
+            if (::write(fd, bytes, sizeof(bytes)) != static_cast<ssize_t>(sizeof(bytes))) _exit(92);
+            ::close(fd);
+            ::kill(::getpid(), SIGKILL);
+            _exit(93);
+        }
+        int child_status = 0;
+        require(::waitpid(child, &child_status, 0) == child && WIFSIGNALED(child_status) &&
+                    WTERMSIG(child_status) == SIGKILL,
+                "Crash fixture publisher did not terminate with SIGKILL");
+        const auto candidates = athena::store::inspect_recovery_candidates(store_path.parent_path());
+        require(candidates.size() == 1 && candidates.front().path == orphan &&
+                    candidates.front().type == std::filesystem::file_type::directory,
+                "Recovery inspection did not report the interrupted stage");
+        require(std::filesystem::exists(orphan / "partial-copy"),
+                "Recovery inspection changed the interrupted stage");
 
         /*
          * Inspect the serialized TOML directly.
@@ -260,6 +344,52 @@ int main()
             legacy.dependencies.empty(),
             "I metadata legacy devono avere dipendenze vuote."
         );
+
+        // Staging links must not be followed into files outside the package.
+        const auto external_secret = test_root / "outside-secret";
+        std::ofstream(external_secret) << "must not enter the package store";
+        const auto linked_staging = test_root / "linked-staging";
+        std::filesystem::create_directories(linked_staging / "usr" / "bin");
+        std::filesystem::create_symlink(external_secret, linked_staging / "usr" / "bin" / "leak");
+        auto linked_package = package;
+        linked_package.name = "linked-stage-test";
+        bool rejected_link = false;
+        try {
+            (void)athena::store::install(linked_staging, linked_package);
+        } catch (const std::runtime_error& error) {
+            rejected_link = std::string(error.what()).find("collegamenti simbolici") != std::string::npos;
+        }
+        require(rejected_link, "Staging symlink was not rejected");
+        require(std::filesystem::exists(external_secret), "External staging target was changed");
+        require(!std::filesystem::exists(test_root / "var" / "lib" / "athena" / "store" / "linked-stage-test-1.0"),
+                "Rejected staging tree left a partial store entry");
+
+        const auto root_link_staging = test_root / "root-link-staging";
+        std::filesystem::create_directories(root_link_staging);
+        std::filesystem::create_directory_symlink(test_root / "staging" / "usr", root_link_staging / "usr");
+        auto root_link_package = package;
+        root_link_package.name = "linked-root-stage-test";
+        bool rejected_root_link = false;
+        try {
+            (void)athena::store::install(root_link_staging, root_link_package);
+        } catch (const std::runtime_error&) {
+            rejected_root_link = true;
+        }
+        require(rejected_root_link, "Staging root symlink was not rejected");
+
+        const auto manifest_fixture = test_root / "manifest-roundtrip";
+        const std::string unusual_path = "share/quote\" and\nnewline";
+        athena::store::write_manifest(manifest_fixture, {{unusual_path}});
+        const auto unusual_entries = athena::store::read_manifest(manifest_fixture);
+        require(unusual_entries.size() == 1 && unusual_entries.front().path == unusual_path,
+                "Manifest TOML did not preserve an escaped filename");
+        bool rejected_traversal = false;
+        try {
+            athena::store::write_manifest(manifest_fixture, {{"../outside"}});
+        } catch (const std::runtime_error&) {
+            rejected_traversal = true;
+        }
+        require(rejected_traversal, "Manifest writer accepted a traversal path");
 
         athena::paths::reset_root();
 

@@ -3,98 +3,49 @@
 
 #include "verifier.hpp"
 
-#include <cstdio>
+#include <openssl/evp.h>
+
+#include <array>
+#include <cerrno>
+#include <fcntl.h>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
-#include <string>
-
-namespace {
-
-/*
- * RAII wrapper for the FILE* returned by popen().
- *
- * pclose() must be called when the pipe is no longer needed.
- * Using a custom deleter allows std::unique_ptr to perform this
- * cleanup automatically.
- */
-struct PipeCloser {
-    void operator()(FILE* pipe) const
-    {
-        if (pipe != nullptr) {
-            pclose(pipe);
-        }
-    }
-};
-
-}
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace athena::verify {
 
-/*
- * Calculate and verify the SHA-256 checksum of a file.
- *
- * The expected checksum comes from package.toml.
- * The calculated checksum is obtained from the system sha256sum
- * utility and compared with the expected value.
- */
-bool verify_sha256(
-    const std::filesystem::path& file,
-    const std::string& expected_hash
-)
+bool verify_sha256(const std::filesystem::path& file, const std::string& expected_hash)
 {
-    /*
-     * Ask the operating system to calculate the SHA-256 checksum.
-     *
-     * sha256sum normally produces output in this form:
-     *
-     *   <hash>  <filename>
-     *
-     * We only need the first field.
-     */
-    const std::string command =
-        "sha256sum \"" + file.string() + "\"";
-
-    /*
-     * Open a pipe to sha256sum.
-     *
-     * unique_ptr takes ownership of the FILE* and guarantees that
-     * pclose() is called when the function exits.
-     */
-    std::unique_ptr<FILE, PipeCloser> pipe(
-        popen(command.c_str(), "r")
-    );
-
-    if (!pipe) {
-        throw std::runtime_error(
-            "Impossibile calcolare SHA-256 per: " + file.string()
-        );
+    const int fd = ::open(file.c_str(), O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC);
+    if (fd < 0) throw std::runtime_error("Impossibile aprire file per SHA-256: " + file.string());
+    struct CloseFd { int value; ~CloseFd() { if (value >= 0) ::close(value); } } close_fd{fd};
+    struct stat st{};
+    if (::fstat(fd, &st) != 0 || !S_ISREG(st.st_mode))
+        throw std::runtime_error("Il file SHA-256 non è un file regolare: " + file.string());
+    using Context = std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)>;
+    Context context(EVP_MD_CTX_new(), EVP_MD_CTX_free);
+    if (!context || EVP_DigestInit_ex(context.get(), EVP_sha256(), nullptr) != 1)
+        throw std::runtime_error("Impossibile inizializzare SHA-256");
+    std::array<char, 65536> buffer{};
+    for (;;) {
+        const auto count = ::read(fd, buffer.data(), buffer.size());
+        if (count < 0 && errno == EINTR) continue;
+        if (count < 0) throw std::runtime_error("Errore di lettura durante SHA-256: " + file.string());
+        if (count == 0) break;
+        if (EVP_DigestUpdate(context.get(), buffer.data(), static_cast<std::size_t>(count)) != 1)
+            throw std::runtime_error("Errore durante SHA-256: " + file.string());
     }
-
-    /*
-     * Read the output produced by sha256sum.
-     */
-    char buffer[256];
-
-    if (!fgets(buffer, sizeof(buffer), pipe.get())) {
-        throw std::runtime_error(
-            "Impossibile leggere SHA-256 per: " + file.string()
-        );
-    }
-
-    const std::string output(buffer);
-
-    /*
-     * Extract the checksum from the beginning of the sha256sum
-     * output. The checksum ends at the first space character.
-     */
-    const std::string calculated_hash =
-        output.substr(0, output.find(' '));
-
-    /*
-     * The file is valid only when the calculated checksum exactly
-     * matches the checksum declared by the package.
-     */
-    return calculated_hash == expected_hash;
+    std::array<unsigned char, EVP_MAX_MD_SIZE> digest{};
+    unsigned int length = 0;
+    if (EVP_DigestFinal_ex(context.get(), digest.data(), &length) != 1)
+        throw std::runtime_error("Impossibile completare SHA-256");
+    std::ostringstream result;
+    result << std::hex << std::setfill('0');
+    for (unsigned int i = 0; i < length; ++i) result << std::setw(2) << static_cast<unsigned int>(digest[i]);
+    return result.str() == expected_hash;
 }
 
 }

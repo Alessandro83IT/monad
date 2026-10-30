@@ -1,0 +1,22 @@
+# Install as /etc/sudoers.d/athena-alpha-m1 only after local review.
+# Each command has one exact, fixed CTest argument; no wildcard or shell.
+Cmnd_Alias ATHENA_ALPHA_M1 = \
+    /usr/local/sbin/athena-alpha-m1-runner activation_execution_privileged_sources_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_execution_privileged_legacy_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_execution_privileged_owner_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_execution_privileged_bind_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_execution_privileged_nested_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_execution_privileged_ext4_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_plan_retention_privileged_owner_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_plan_retention_privileged_bind_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_plan_retention_privileged_nested_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_plan_retention_privileged_ext4_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_plan_persistence_privileged_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_plan_persistence_privileged_owner_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_plan_persistence_privileged_bind_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_plan_persistence_privileged_nested_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_plan_persistence_privileged_tmpfs_test, \
+    /usr/local/sbin/athena-alpha-m1-runner activation_plan_persistence_privileged_ext4_test, \
+    /usr/local/sbin/athena-alpha-m1-runner legacy_d3_scanner_test, \
+    /usr/local/sbin/athena-alpha-m1-runner initial_activation_migration_test
+alessandro ALL=(root) NOPASSWD: ATHENA_ALPHA_M1

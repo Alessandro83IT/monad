@@ -2,6 +2,7 @@
 #include "activation/legacy.hpp"
 #include "activation_schema_support.hpp"
 #include "filesystem_fixture_support.hpp"
+#include "test_tmp_root.hpp"
 #include "generation/generation.hpp"
 #include "store/manifest.hpp"
 #include "store/metadata.hpp"
@@ -26,7 +27,7 @@ struct Fixture {
     ProjectionBinding binding;
     athena::store::ObjectStore store;
     std::unique_ptr<ProjectionState> state;
-    static fs::path temporary() { char b[] = "/tmp/athena-d3-XXXXXX"; auto p = ::mkdtemp(b); require(p, "mkdtemp"); return p; }
+    static fs::path temporary() { return athena::test::make_temporary_directory("athena-d3"); }
     Fixture(bool payload = true) : base(temporary()), binding{d1_test::projection_id,
         (base / "generations").native(), (base / "store").native(), (base / "projection").native()}, store(base / "store") {
         fixture_fs::create_directories(base / "store"); fixture_fs::create_directories(base / "projection");

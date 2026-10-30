@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "activation_schema_support.hpp"
+#include "test_tmp_root.hpp"
 #include "activation/codec_detail.hpp"
 #include "hash/sha256.hpp"
 #include <filesystem>
@@ -14,8 +15,7 @@ namespace {
 struct Fixture {
     fs::path root;
     Fixture() {
-        std::string pattern = "/tmp/athena-d1-document-XXXXXX";
-        require(::mkdtemp(pattern.data()) != nullptr, "mkdtemp"); root = pattern;
+        root = athena::test::make_temporary_directory("athena-d1-document");
         fs::create_directory(root / "7");
     }
     ~Fixture() { std::error_code error; fs::remove_all(root, error); }

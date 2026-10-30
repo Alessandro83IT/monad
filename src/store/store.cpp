@@ -13,8 +13,95 @@
 #include <stdexcept>
 #include <vector>
 #include <algorithm>
+#include <cerrno>
+#include <system_error>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <array>
+#include <cerrno>
+#include <sys/syscall.h>
+#include <linux/fs.h>
 
 namespace athena::store {
+
+std::vector<RecoveryCandidate> inspect_recovery_candidates(
+    const std::filesystem::path& store_directory)
+{
+    std::error_code error;
+    const auto root_status = std::filesystem::symlink_status(store_directory, error);
+    if (error == std::errc::no_such_file_or_directory) return {};
+    if (error) throw std::system_error(error, "inspect store recovery root");
+    if (std::filesystem::is_symlink(root_status) || !std::filesystem::is_directory(root_status))
+        throw std::runtime_error("Store recovery root is not a real directory");
+
+    std::vector<RecoveryCandidate> candidates;
+    for (const auto& entry : std::filesystem::directory_iterator(store_directory)) {
+        const auto name = entry.path().filename().string();
+        if (!name.starts_with(".monad-store-stage-")) continue;
+        const auto status = entry.symlink_status(error);
+        if (error) throw std::system_error(error, "inspect store recovery candidate");
+        candidates.push_back({entry.path(), status.type()});
+    }
+    std::sort(candidates.begin(), candidates.end(), [](const auto& left, const auto& right) {
+        return left.path.filename().native() < right.path.filename().native();
+    });
+    return candidates;
+}
+
+namespace {
+void copy_staged_file_no_follow(const std::filesystem::path& root,
+                                const std::filesystem::path& relative,
+                                const std::filesystem::path& output)
+{
+    int parent = ::open(root.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+    if (parent < 0) throw std::system_error(errno, std::generic_category(), "open staging root");
+    auto close_fd = [](int fd) { if (fd >= 0) ::close(fd); };
+    std::vector<std::string> components;
+    for (const auto& part : relative) components.push_back(part.string());
+    if (components.empty()) { close_fd(parent); throw std::runtime_error("Empty staging path"); }
+    for (std::size_t i = 0; i + 1 < components.size(); ++i) {
+        const int next = ::openat(parent, components[i].c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+        const int saved = errno;
+        close_fd(parent);
+        if (next < 0) throw std::system_error(saved, std::generic_category(), "open staging directory without following links");
+        parent = next;
+    }
+    const int source = ::openat(parent, components.back().c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK);
+    const int source_error = errno;
+    close_fd(parent);
+    if (source < 0) throw std::system_error(source_error, std::generic_category(), "open staged file without following links");
+    struct stat status{};
+    if (::fstat(source, &status) != 0) {
+        const int error = errno;
+        close_fd(source);
+        throw std::system_error(error, std::generic_category(), "staged entry is not a regular file");
+    }
+    if (!S_ISREG(status.st_mode)) { close_fd(source); throw std::runtime_error("Staged entry is not a regular file"); }
+    const int target = ::open(output.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
+    if (target < 0) {
+        const int error = errno; close_fd(source);
+        throw std::system_error(error, std::generic_category(), "create private store file");
+    }
+    std::array<char, 65536> buffer{};
+    try {
+        for (;;) {
+            const ssize_t count = ::read(source, buffer.data(), buffer.size());
+            if (count < 0) { if (errno == EINTR) continue; throw std::system_error(errno, std::generic_category(), "read staged file"); }
+            if (count == 0) break;
+            ssize_t offset = 0;
+            while (offset < count) {
+                const ssize_t written = ::write(target, buffer.data() + offset, static_cast<std::size_t>(count - offset));
+                if (written < 0) { if (errno == EINTR) continue; throw std::system_error(errno, std::generic_category(), "write store file"); }
+                offset += written;
+            }
+        }
+        if (::fchmod(target, status.st_mode & 0777) != 0)
+            throw std::system_error(errno, std::generic_category(), "set store file permissions");
+    } catch (...) { close_fd(source); close_fd(target); throw; }
+    close_fd(source); close_fd(target);
+}
+}
 
 /*
  * Install a staged package into the Athena package store.
@@ -41,6 +128,7 @@ std::filesystem::path install(
     const std::filesystem::path& store_directory
 )
 {
+    athena::package::validate_identity(package.name, package.version);
     /*
      * Construct the destination path for the package.
      *
@@ -52,27 +140,11 @@ std::filesystem::path install(
         store_directory /
         (package.name + "-" + package.version);
 
-    if (std::filesystem::exists(destination)) {
-        /*
-         * A complete store entry is immutable and must never be
-         * overwritten. An older/incomplete entry without a manifest,
-         * however, is not a valid store entry and can be replaced by
-         * the freshly built package.
-         */
-        const std::filesystem::path manifest_file =
-            destination /
-            ".athena" /
-            "manifest.toml";
-
-        if (std::filesystem::exists(manifest_file)) {
-            throw std::runtime_error(
-                "Il pacchetto è già presente nello store: " +
-                destination.string()
-            );
-        }
-
-        std::filesystem::remove_all(destination);
-    }
+    std::filesystem::create_directories(store_directory);
+    if (std::filesystem::is_symlink(std::filesystem::symlink_status(store_directory)))
+        throw std::runtime_error("La directory dello store non può essere un collegamento simbolico");
+    if (std::filesystem::exists(destination))
+        throw std::runtime_error("Destinazione store già esistente; recovery manuale conservativa richiesta: " + destination.string());
 
     /*
      * The staging directory contains a DESTDIR-style installation.
@@ -88,17 +160,39 @@ std::filesystem::path install(
     const std::filesystem::path installed_root =
         staging_directory / "usr";
 
-    if (!std::filesystem::is_directory(installed_root)) {
+    const auto installed_root_status = std::filesystem::symlink_status(installed_root);
+    if (std::filesystem::is_symlink(installed_root_status) ||
+        !std::filesystem::is_directory(installed_root_status)) {
         throw std::runtime_error(
             "Directory di installazione non trovata: " +
             installed_root.string()
         );
     }
 
-    /*
-     * Create the package's store directory before copying its files.
-     */
-    std::filesystem::create_directories(destination);
+    // The legacy package store and manifest represent regular files only.
+    // Reject links explicitly: directory_entry::is_regular_file follows a
+    // symlink, which previously copied an arbitrary target into the store.
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(installed_root)) {
+        const auto status = entry.symlink_status();
+        if (std::filesystem::is_symlink(status))
+            throw std::runtime_error("I collegamenti simbolici nello staging non sono supportati: " + entry.path().string());
+        if (!std::filesystem::is_directory(status) && !std::filesystem::is_regular_file(status))
+            throw std::runtime_error("Tipo di file non supportato nello staging: " + entry.path().string());
+    }
+
+    // Build a private sibling tree. Only a complete tree is published, and
+    // the final rename is no-replace so a concurrent publisher cannot win a
+    // check/rename race or have its object overwritten.
+    std::string stage_pattern = (store_directory / ".monad-store-stage-XXXXXX").string();
+    if (!::mkdtemp(stage_pattern.data()))
+        throw std::system_error(errno, std::generic_category(), "create private store staging directory");
+    const std::filesystem::path private_stage(stage_pattern);
+    bool published = false;
+    struct StageCleanup {
+        const std::filesystem::path& path;
+        bool& published;
+        ~StageCleanup() { if (!published) { std::error_code ignored; std::filesystem::remove_all(path, ignored); } }
+    } cleanup{private_stage, published};
 
     /*
      * Keep track of every regular file installed into the package
@@ -116,7 +210,11 @@ std::filesystem::path install(
     for (const auto& entry :
          std::filesystem::recursive_directory_iterator(installed_root)) {
 
-        if (!entry.is_regular_file()) {
+        const auto status = entry.symlink_status();
+        if (std::filesystem::is_symlink(status)) {
+            throw std::runtime_error("Lo staging è cambiato durante la copia: collegamento simbolico " + entry.path().string());
+        }
+        if (!std::filesystem::is_regular_file(status)) {
             continue;
         }
 
@@ -131,27 +229,20 @@ std::filesystem::path install(
          *
          *     bin/foo
          */
-        const std::filesystem::path relative_path =
-            std::filesystem::relative(
-                entry.path(),
-                installed_root
-            );
+        const std::filesystem::path relative_path = entry.path().lexically_relative(installed_root);
 
         /*
          * Copy the file into the package's store tree while
          * preserving its relative directory structure.
          */
         const std::filesystem::path destination_file =
-            destination / relative_path;
+            private_stage / relative_path;
 
         std::filesystem::create_directories(
             destination_file.parent_path()
         );
 
-        std::filesystem::copy_file(
-            entry.path(),
-            destination_file
-        );
+        copy_staged_file_no_follow(installed_root, relative_path, destination_file);
 
         /*
          * Record the relative path in the package manifest.
@@ -201,7 +292,7 @@ std::filesystem::path install(
     };
 
     write_metadata(
-        destination,
+        private_stage,
         metadata
     );
 
@@ -212,10 +303,18 @@ std::filesystem::path install(
      * exactly which files belong to the package.
      */
     write_manifest(
-        destination,
+        private_stage,
         manifest_entries
     );
 
+    const long result = ::syscall(SYS_renameat2, AT_FDCWD, private_stage.c_str(),
+                                  AT_FDCWD, destination.c_str(), RENAME_NOREPLACE);
+    if (result != 0) {
+        if (errno == EEXIST)
+            throw std::runtime_error("Destinazione store già esistente durante la pubblicazione: " + destination.string());
+        throw std::system_error(errno, std::generic_category(), "atomic store publication failed");
+    }
+    published = true;
     return destination;
 }
 
@@ -240,6 +339,7 @@ std::optional<std::filesystem::path> find(
     const std::filesystem::path& store_directory
 )
 {
+    athena::package::validate_identity(package_name, package_version);
     const std::filesystem::path destination =
         store_directory /
         (package_name + "-" + package_version);

@@ -13,6 +13,19 @@
 
 namespace athena::store {
 
+// A conservative, read-only observation of a legacy store staging entry.
+// Presence does not prove that the entry is abandoned or safe to remove.
+struct RecoveryCandidate {
+    std::filesystem::path path;
+    std::filesystem::file_type type;
+};
+
+// Enumerate names used by legacy store publication without changing them.
+// Callers must preserve every returned candidate until provenance is reviewed.
+std::vector<RecoveryCandidate> inspect_recovery_candidates(
+    const std::filesystem::path& store_directory
+);
+
 /*
  * Install a staged package into the Athena package store.
  *

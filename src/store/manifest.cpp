@@ -9,6 +9,20 @@
 
 namespace athena::store {
 
+namespace {
+void validate_manifest_path(const std::string& value)
+{
+    const std::filesystem::path path(value);
+    if (value.empty() || path.is_absolute() || path.has_root_name() ||
+        path.generic_string() != value || path.begin() == path.end() ||
+        *path.begin() == ".athena")
+        throw std::runtime_error("Percorso non valido nel manifest: " + value);
+    for (const auto& component : path)
+        if (component == "." || component == "..")
+            throw std::runtime_error("Percorso non valido nel manifest: " + value);
+}
+}
+
 /*
  * Write the manifest of an installed package.
  *
@@ -55,11 +69,17 @@ void write_manifest(
      *     [[files]]
      *     path = "share/example/data"
      */
+    toml::table document;
+    toml::array files;
     for (const auto& entry : entries) {
-        output
-            << "[[files]]\n"
-            << "path = \"" << entry.path << "\"\n\n";
+        validate_manifest_path(entry.path);
+        toml::table file;
+        file.insert("path", entry.path);
+        files.push_back(std::move(file));
     }
+    document.insert("files", std::move(files));
+    output << document;
+    if (!output) throw std::runtime_error("Errore di scrittura del manifest: " + manifest_file.string());
 }
 
 /*
@@ -125,9 +145,8 @@ std::vector<ManifestEntry> read_manifest(
                 );
             }
 
-            entries.push_back(
-                ManifestEntry{*path}
-            );
+            validate_manifest_path(*path);
+            entries.push_back(ManifestEntry{*path});
         }
 
         return entries;

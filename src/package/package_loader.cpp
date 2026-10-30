@@ -160,6 +160,7 @@ Package load_from_file(const std::filesystem::path& path)
         };
         package.conflicts = std::move(conflicts);
         package.feature_dependencies = std::move(feature_dependencies);
+        validate_identity(package.name, package.version);
         return package;
     }
     catch (const toml::parse_error& error) {
