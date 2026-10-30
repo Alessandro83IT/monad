@@ -1,8 +1,13 @@
-Athena Package Manager
+Monad Package Manager
 
 Copyright (C) 2026 Alessandro Bifaretti
 
-Athena Package Manager is free software licensed under the
-GNU General Public License, version 3 or (at your option) any later version.
+Monad Package Manager's original source code and documentation are free
+software licensed under the GNU General Public License, version 3 or (at your
+option) any later version. See LICENSE.
+
+Third-party components retain their respective licenses and attributions.
+Logos and other branding are not covered by this license unless expressly
+stated otherwise.
 
 SPDX-License-Identifier: GPL-3.0-or-later

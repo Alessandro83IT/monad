@@ -1,6 +1,7 @@
 # Monad Package Manager
 
-Monad Package Manager is an experimental package manager for Linux.
+Monad is an experimental package manager for Henosix, inspired by pacman,
+emerge, and Nix. Official website: <https://henosix.org>.
 
 The project aims to combine:
 
