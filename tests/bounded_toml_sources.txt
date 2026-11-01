@@ -302,6 +302,8 @@ tests/m34_2_security_audit_test.py
 tests/m34_3_security_regression_test.py
 tests/m34_4_independent_verification_test.py
 tests/metadata_schema_test.cpp
+tests/monad_alpha_e2e_guard_test.py
+tests/monad_alpha_qualify_test.py
 tests/monad_build_attest_test.py
 tests/object_store_scanner_test.cpp
 tests/object_store_test.cpp

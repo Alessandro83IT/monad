@@ -6,7 +6,8 @@ project(athena
     LANGUAGES CXX
 )
 
-# CMake's project VERSION stays numeric; this is the package/CLI release string.
+# Keep the SemVer prerelease suffix here: CMake's project VERSION is numeric,
+# while the CLI and release artifacts use this full release identifier.
 set(ATHENA_RELEASE_VERSION "0.1.0-alpha.1")
 
 include(cmake/AthenaPackaging.cmake)
@@ -43,6 +44,9 @@ target_link_libraries(athena_core PRIVATE OpenSSL::Crypto LibArchive::LibArchive
 add_executable(athena src/main.cpp)
 set_target_properties(athena PROPERTIES OUTPUT_NAME mpkg)
 target_link_libraries(athena PRIVATE Athena::Core)
+add_test(NAME cli_version_test COMMAND athena --version)
+set_tests_properties(cli_version_test PROPERTIES
+    PASS_REGULAR_EXPRESSION "Monad Package Manager ${ATHENA_RELEASE_VERSION}")
 
 athena_install_targets("${PROJECT_SOURCE_DIR}/include")
 
@@ -381,7 +385,24 @@ add_test(NAME alpha_m1_admin_static_test COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/alpha_m1_admin_static_test.py")
 add_test(NAME alpha_m1_orchestrator_test COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/alpha_m1_orchestrator_test.py")
+foreach(guard_case
+        bad_authorization_stops_before_filesystem_or_privilege_checks
+        parent_traversal_rejected_before_privilege_check
+        symlink_component_rejected_before_privilege_check)
+    add_test(NAME monad_alpha_e2e_guard_${guard_case}
+        COMMAND "${Python3_EXECUTABLE}"
+            "${PROJECT_SOURCE_DIR}/tests/monad_alpha_e2e_guard_test.py"
+            "HarnessGuardTests.test_${guard_case}")
+endforeach()
+add_test(NAME monad_alpha_qualify_test COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/monad_alpha_qualify_test.py")
 set_tests_properties(qualification_driver_test alpha_m1_canary_child_test alpha_m1_canary_timeout_test alpha_m1_admin_static_test alpha_m1_orchestrator_test PROPERTIES TIMEOUT 60)
+set_tests_properties(
+    monad_alpha_e2e_guard_bad_authorization_stops_before_filesystem_or_privilege_checks
+    monad_alpha_e2e_guard_parent_traversal_rejected_before_privilege_check
+    monad_alpha_e2e_guard_symlink_component_rejected_before_privilege_check
+    monad_alpha_qualify_test
+    PROPERTIES TIMEOUT 30)
 
 set_tests_properties(package_operation_test PROPERTIES TIMEOUT 120)
 
